@@ -1,0 +1,25 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "EU-03-v02",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex",
+  "nbt_sha256": "737775551ad9a2a495519e79b1ee4f2e00ac409e693c55156ae5d2451cdc637a",
+  "author_sha256": "b532f908cfba654f88425b8c5d8f4d45c81152501ce7ca65a7c0bcd8910f4090",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png"
+  ],
+  "checks": [
+    "保留拱廊与上层市政厅，书记和官员岗位分开。",
+    "实际查看前后外观、去屋顶和首层图；数据与离线通路检查另行核对。"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "作者图审不等于用户审美批准；未验证夜间光照、世界生成与真实NPC行为。"
+  ]
+}

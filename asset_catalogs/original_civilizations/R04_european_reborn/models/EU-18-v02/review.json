@@ -1,0 +1,25 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "EU-18-v02",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex",
+  "nbt_sha256": "7d2747ad731adb3a74b402702748f62f1d4a8ef3a72cde033efe47d540982903",
+  "author_sha256": "7561c625d38b6419f88714fb77b4b7f287ba27de6d8b88bb8a1e34206c9ef57f",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png"
+  ],
+  "checks": [
+    "保留双炉与前店，区分烘焙和售卖岗位。",
+    "实际查看前后外观、去屋顶和首层图；数据与离线通路检查另行核对。"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "作者图审不等于用户审美批准；未验证夜间光照、世界生成与真实NPC行为。"
+  ]
+}

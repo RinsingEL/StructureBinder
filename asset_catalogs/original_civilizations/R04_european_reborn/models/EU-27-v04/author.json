@@ -1,0 +1,144 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "EU-27-v04",
+  "name": "木架小屋 · 两格坡差与上坡寝室",
+  "family": "EU-27",
+  "civilization": "欧洲中世纪新制",
+  "planning_role": "planning_role.fill",
+  "size": [
+    9,
+    14,
+    14
+  ],
+  "terrain": {
+    "选址": "街面脚底 Y=2，屋体脚底 Y=4；沿 +Z 升高两格，模型内台阶连接，不适配任意坡度。"
+  },
+  "rooms": [
+    {
+      "id": "room_0",
+      "name": "生活室",
+      "min": [
+        2,
+        4,
+        6
+      ],
+      "max": [
+        6,
+        7,
+        11
+      ],
+      "purpose": "生活室"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry_0",
+      "kind": "circulation",
+      "pos": [
+        4,
+        4,
+        4
+      ],
+      "name": "门前步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "bed_3",
+      "kind": "bed",
+      "pos": [
+        3,
+        4,
+        10
+      ],
+      "name": "住床",
+      "use": "resident",
+      "approach": [
+        3,
+        4,
+        11
+      ]
+    },
+    {
+      "id": "bed_5",
+      "kind": "bed",
+      "pos": [
+        5,
+        4,
+        10
+      ],
+      "name": "住床",
+      "use": "resident",
+      "approach": [
+        5,
+        4,
+        11
+      ]
+    },
+    {
+      "id": "seat_3",
+      "kind": "seat",
+      "pos": [
+        6,
+        4,
+        7
+      ],
+      "name": "座位",
+      "use": "resident",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        5,
+        4,
+        7
+      ]
+    },
+    {
+      "id": "lower_entry",
+      "kind": "entrance",
+      "pos": [
+        4,
+        2,
+        0
+      ],
+      "name": "低街入口"
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "2026-10-21 紧凑日常建筑；实际房间与通路决定容量；无整块地块平台。"
+  ],
+  "differences": [
+    "相比平地版增加低街入户台阶、两格高差基础；不计为纯平移变体。"
+  ],
+  "floors": [
+    {
+      "name": "首层",
+      "y": 3,
+      "max_y": 7
+    }
+  ],
+  "roof_min_y": 8,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "function_terms": [
+    "家庭居住"
+  ],
+  "workplace_policy": "authored",
+  "source": "tools/structure_studio/studio/european_village.py:BUILDERS",
+  "ground_plane": {
+    "y": 2,
+    "note": "首层脚底 Y=2；仅本体基础与门前踏步，院落另组。"
+  },
+  "preview_context": {
+    "kind": "slope",
+    "land_surface_y": 4,
+    "run": 32,
+    "rise": 2,
+    "slope_origin_z": 3,
+    "padding": 3
+  },
+  "nbt_sha256": "e5d5e36a0fb6c7789d31d77fa592214df507fdf75bb37cd02a8e50291ba475c2"
+}

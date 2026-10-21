@@ -1,0 +1,74 @@
+{
+  "schema": "realmfolk_facilities.v1",
+  "size": [
+    11,
+    13,
+    13
+  ],
+  "sourceSha256": "df8ca53d004730a669f86fa3766e97b2d112c822bb3b7281a6a96d4c1d402474",
+  "capacity": {
+    "residentBeds": 0,
+    "workplaces": 2
+  },
+  "facilities": [
+    {
+      "id": "work:3,2,7",
+      "kind": "work",
+      "pos": [
+        3,
+        2,
+        7
+      ],
+      "block": "minecraft:furnace",
+      "facing": "north",
+      "use": "staff",
+      "room": "room_0",
+      "name": "烘焙",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        3,
+        2,
+        6
+      ]
+    },
+    {
+      "id": "work:8,2,5",
+      "kind": "work",
+      "pos": [
+        8,
+        2,
+        5
+      ],
+      "block": "minecraft:barrel",
+      "facing": "west",
+      "use": "staff",
+      "room": "room_0",
+      "name": "面包售卖",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        7,
+        2,
+        5
+      ]
+    },
+    {
+      "id": "entrance:5,2,1",
+      "kind": "entrance",
+      "pos": [
+        5,
+        2,
+        1
+      ],
+      "block": "minecraft:air",
+      "facing": "north",
+      "use": "building",
+      "room": "",
+      "name": "门前步行入口",
+      "adapter": "stand",
+      "seatHeight": 0.5
+    }
+  ],
+  "warnings": []
+}

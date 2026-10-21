@@ -1,0 +1,27 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "EU-05-v02",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex",
+  "nbt_sha256": "e1780a2cc5d57ced308162ff48637615a7f33cd9561aee1a38eb8878d3b626fc",
+  "author_sha256": "f4937626410045de1944ef4ca577b026ea5d85ba36d39d3a69bdc1422af9defa",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/floor-2.png",
+    "previews/floor-3.png"
+  ],
+  "checks": [
+    "三层住户与公共楼梯隔开，实际九床；楼梯口和寝室俯视均已检查。",
+    "实际查看前后外观、去屋顶和首层图；数据与离线通路检查另行核对。"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "作者图审不等于用户审美批准；未验证夜间光照、世界生成与真实NPC行为。"
+  ]
+}

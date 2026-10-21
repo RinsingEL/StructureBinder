@@ -1,0 +1,81 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "EU-56-v01",
+  "name": "分段木栈桥",
+  "family": "EU-56",
+  "civilization": "欧洲中世纪新制",
+  "planning_role": "planning_role.fill",
+  "size": [
+    7,
+    5,
+    13
+  ],
+  "terrain": {
+    "选址": "岸侧步道 Y=4 接桥头，水面参考 Y=2；桩底 Y=0 需实际承载，不能放在任意深水。"
+  },
+  "rooms": [],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        3,
+        4,
+        0
+      ],
+      "name": "岸侧栈桥入口"
+    },
+    {
+      "id": "end",
+      "kind": "circulation",
+      "pos": [
+        3,
+        4,
+        12
+      ],
+      "name": "水侧装卸端"
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "2026-10-21 紧凑日常建筑；实际房间与通路决定容量；无整块地块平台。"
+  ],
+  "differences": [
+    "分段木栈桥：按真实作业空间设计，独立于大型城镇同用途地标。"
+  ],
+  "floors": [
+    {
+      "name": "栈桥",
+      "y": 3,
+      "max_y": 6
+    }
+  ],
+  "roof_min_y": 7,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "function_terms": [
+    "步行通行",
+    "装卸"
+  ],
+  "workplace_policy": "authored",
+  "source": "tools/structure_studio/studio/european_village.py:BUILDERS",
+  "ground_plane": {
+    "y": 4,
+    "note": "桥面脚底 Y=4，水面参考 Y=2；桩底 Y=0。"
+  },
+  "preview_context": {
+    "kind": "shore",
+    "land_surface_y": 4,
+    "shore_z": 2,
+    "water_surface_y": 2,
+    "bed_y": 0,
+    "padding": 3
+  },
+  "asset_tags": [
+    "infrastructure"
+  ],
+  "nbt_sha256": "9b26a5c59ce845397a92eaa6afdfa8820db2b1fb791371f3020d5cff2e725d5f"
+}

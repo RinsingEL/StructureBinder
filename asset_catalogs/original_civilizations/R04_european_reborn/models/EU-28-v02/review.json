@@ -1,0 +1,26 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "EU-28-v02",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex",
+  "nbt_sha256": "5fb4b9efaf2d432f0be31a16e829cadadf70d33d64adb4ab4ed346ee7eacdc40",
+  "author_sha256": "ab57fe92e7b16e14fcc707b4a19c568ce0199fa2e92d2f36e1b91c9a146e7735",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png",
+    "previews/floor-2.png"
+  ],
+  "checks": [
+    "双层与L形家宅有不同体量和起居安排，上层床位与楼梯开口可辨。",
+    "实际查看前后外观、去屋顶和首层图；数据与离线通路检查另行核对。"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "作者图审不等于用户审美批准；未验证夜间光照、世界生成与真实NPC行为。"
+  ]
+}

@@ -1,0 +1,74 @@
+{
+  "schema": "realmfolk_facilities.v1",
+  "size": [
+    13,
+    14,
+    15
+  ],
+  "sourceSha256": "d7622773fe07c495b3f2582ad9cdabcfeabd180c0b5682100ad3df979e3f5752",
+  "capacity": {
+    "residentBeds": 0,
+    "workplaces": 2
+  },
+  "facilities": [
+    {
+      "id": "work:2,2,4",
+      "kind": "work",
+      "pos": [
+        2,
+        2,
+        4
+      ],
+      "block": "minecraft:barrel",
+      "facing": "east",
+      "use": "staff",
+      "room": "room_0",
+      "name": "称量装袋",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        3,
+        2,
+        4
+      ]
+    },
+    {
+      "id": "work:4,3,8",
+      "kind": "work",
+      "pos": [
+        4,
+        3,
+        8
+      ],
+      "block": "minecraft:grindstone",
+      "facing": "north",
+      "use": "staff",
+      "room": "room_0",
+      "name": "磨粮",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        4,
+        2,
+        6
+      ]
+    },
+    {
+      "id": "entrance:6,2,1",
+      "kind": "entrance",
+      "pos": [
+        6,
+        2,
+        1
+      ],
+      "block": "minecraft:air",
+      "facing": "north",
+      "use": "building",
+      "room": "",
+      "name": "门前步行入口",
+      "adapter": "stand",
+      "seatHeight": 0.5
+    }
+  ],
+  "warnings": []
+}

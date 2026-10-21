@@ -1,0 +1,557 @@
+{
+  "schema": "realmfolk_facilities.v1",
+  "size": [
+    19,
+    22,
+    23
+  ],
+  "sourceSha256": "bb3389f5339560f0b9edc96384c88cad997e737b34a58623ed08ae233d546b0b",
+  "capacity": {
+    "residentBeds": 24,
+    "workplaces": 1
+  },
+  "facilities": [
+    {
+      "id": "work:2,2,4",
+      "kind": "work",
+      "pos": [
+        2,
+        2,
+        4
+      ],
+      "block": "minecraft:lectern",
+      "facing": "east",
+      "use": "staff",
+      "room": "room_0",
+      "name": "营房值班",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        3,
+        2,
+        4
+      ]
+    },
+    {
+      "id": "bed:3,2,7",
+      "kind": "bed",
+      "pos": [
+        3,
+        2,
+        7
+      ],
+      "block": "minecraft:red_bed",
+      "facing": "north",
+      "use": "resident",
+      "room": "room_0",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        3,
+        2,
+        9
+      ]
+    },
+    {
+      "id": "bed:3,2,12",
+      "kind": "bed",
+      "pos": [
+        3,
+        2,
+        12
+      ],
+      "block": "minecraft:red_bed",
+      "facing": "north",
+      "use": "resident",
+      "room": "room_0",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        3,
+        2,
+        14
+      ]
+    },
+    {
+      "id": "bed:3,2,17",
+      "kind": "bed",
+      "pos": [
+        3,
+        2,
+        17
+      ],
+      "block": "minecraft:red_bed",
+      "facing": "north",
+      "use": "resident",
+      "room": "room_0",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        3,
+        2,
+        19
+      ]
+    },
+    {
+      "id": "bed:3,7,7",
+      "kind": "bed",
+      "pos": [
+        3,
+        7,
+        7
+      ],
+      "block": "minecraft:red_bed",
+      "facing": "north",
+      "use": "resident",
+      "room": "room_1",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        3,
+        7,
+        9
+      ]
+    },
+    {
+      "id": "bed:3,7,12",
+      "kind": "bed",
+      "pos": [
+        3,
+        7,
+        12
+      ],
+      "block": "minecraft:red_bed",
+      "facing": "north",
+      "use": "resident",
+      "room": "room_1",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        3,
+        7,
+        14
+      ]
+    },
+    {
+      "id": "bed:3,7,17",
+      "kind": "bed",
+      "pos": [
+        3,
+        7,
+        17
+      ],
+      "block": "minecraft:red_bed",
+      "facing": "north",
+      "use": "resident",
+      "room": "room_1",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        3,
+        7,
+        19
+      ]
+    },
+    {
+      "id": "bed:5,2,7",
+      "kind": "bed",
+      "pos": [
+        5,
+        2,
+        7
+      ],
+      "block": "minecraft:red_bed",
+      "facing": "north",
+      "use": "resident",
+      "room": "room_0",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        5,
+        2,
+        9
+      ]
+    },
+    {
+      "id": "bed:5,2,12",
+      "kind": "bed",
+      "pos": [
+        5,
+        2,
+        12
+      ],
+      "block": "minecraft:red_bed",
+      "facing": "north",
+      "use": "resident",
+      "room": "room_0",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        5,
+        2,
+        14
+      ]
+    },
+    {
+      "id": "bed:5,2,17",
+      "kind": "bed",
+      "pos": [
+        5,
+        2,
+        17
+      ],
+      "block": "minecraft:red_bed",
+      "facing": "north",
+      "use": "resident",
+      "room": "room_0",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        5,
+        2,
+        19
+      ]
+    },
+    {
+      "id": "bed:5,7,7",
+      "kind": "bed",
+      "pos": [
+        5,
+        7,
+        7
+      ],
+      "block": "minecraft:red_bed",
+      "facing": "north",
+      "use": "resident",
+      "room": "room_1",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        5,
+        7,
+        9
+      ]
+    },
+    {
+      "id": "bed:5,7,12",
+      "kind": "bed",
+      "pos": [
+        5,
+        7,
+        12
+      ],
+      "block": "minecraft:red_bed",
+      "facing": "north",
+      "use": "resident",
+      "room": "room_1",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        5,
+        7,
+        14
+      ]
+    },
+    {
+      "id": "bed:5,7,17",
+      "kind": "bed",
+      "pos": [
+        5,
+        7,
+        17
+      ],
+      "block": "minecraft:red_bed",
+      "facing": "north",
+      "use": "resident",
+      "room": "room_1",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        5,
+        7,
+        19
+      ]
+    },
+    {
+      "id": "bed:9,2,7",
+      "kind": "bed",
+      "pos": [
+        9,
+        2,
+        7
+      ],
+      "block": "minecraft:red_bed",
+      "facing": "north",
+      "use": "resident",
+      "room": "room_0",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        9,
+        2,
+        9
+      ]
+    },
+    {
+      "id": "bed:9,2,12",
+      "kind": "bed",
+      "pos": [
+        9,
+        2,
+        12
+      ],
+      "block": "minecraft:red_bed",
+      "facing": "north",
+      "use": "resident",
+      "room": "room_0",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        9,
+        2,
+        14
+      ]
+    },
+    {
+      "id": "bed:9,2,17",
+      "kind": "bed",
+      "pos": [
+        9,
+        2,
+        17
+      ],
+      "block": "minecraft:red_bed",
+      "facing": "north",
+      "use": "resident",
+      "room": "room_0",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        9,
+        2,
+        19
+      ]
+    },
+    {
+      "id": "bed:9,7,7",
+      "kind": "bed",
+      "pos": [
+        9,
+        7,
+        7
+      ],
+      "block": "minecraft:red_bed",
+      "facing": "north",
+      "use": "resident",
+      "room": "room_1",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        9,
+        7,
+        9
+      ]
+    },
+    {
+      "id": "bed:9,7,12",
+      "kind": "bed",
+      "pos": [
+        9,
+        7,
+        12
+      ],
+      "block": "minecraft:red_bed",
+      "facing": "north",
+      "use": "resident",
+      "room": "room_1",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        9,
+        7,
+        14
+      ]
+    },
+    {
+      "id": "bed:9,7,17",
+      "kind": "bed",
+      "pos": [
+        9,
+        7,
+        17
+      ],
+      "block": "minecraft:red_bed",
+      "facing": "north",
+      "use": "resident",
+      "room": "room_1",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        9,
+        7,
+        19
+      ]
+    },
+    {
+      "id": "bed:11,2,7",
+      "kind": "bed",
+      "pos": [
+        11,
+        2,
+        7
+      ],
+      "block": "minecraft:red_bed",
+      "facing": "north",
+      "use": "resident",
+      "room": "room_0",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        11,
+        2,
+        9
+      ]
+    },
+    {
+      "id": "bed:11,2,12",
+      "kind": "bed",
+      "pos": [
+        11,
+        2,
+        12
+      ],
+      "block": "minecraft:red_bed",
+      "facing": "north",
+      "use": "resident",
+      "room": "room_0",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        11,
+        2,
+        14
+      ]
+    },
+    {
+      "id": "bed:11,2,17",
+      "kind": "bed",
+      "pos": [
+        11,
+        2,
+        17
+      ],
+      "block": "minecraft:red_bed",
+      "facing": "north",
+      "use": "resident",
+      "room": "room_0",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        11,
+        2,
+        19
+      ]
+    },
+    {
+      "id": "bed:11,7,7",
+      "kind": "bed",
+      "pos": [
+        11,
+        7,
+        7
+      ],
+      "block": "minecraft:red_bed",
+      "facing": "north",
+      "use": "resident",
+      "room": "room_1",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        11,
+        7,
+        9
+      ]
+    },
+    {
+      "id": "bed:11,7,12",
+      "kind": "bed",
+      "pos": [
+        11,
+        7,
+        12
+      ],
+      "block": "minecraft:red_bed",
+      "facing": "north",
+      "use": "resident",
+      "room": "room_1",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        11,
+        7,
+        14
+      ]
+    },
+    {
+      "id": "bed:11,7,17",
+      "kind": "bed",
+      "pos": [
+        11,
+        7,
+        17
+      ],
+      "block": "minecraft:red_bed",
+      "facing": "north",
+      "use": "resident",
+      "room": "room_1",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        11,
+        7,
+        19
+      ]
+    },
+    {
+      "id": "entrance:9,2,1",
+      "kind": "entrance",
+      "pos": [
+        9,
+        2,
+        1
+      ],
+      "block": "minecraft:air",
+      "facing": "north",
+      "use": "building",
+      "room": "",
+      "name": "门前步行入口",
+      "adapter": "stand",
+      "seatHeight": 0.5
+    }
+  ],
+  "warnings": []
+}

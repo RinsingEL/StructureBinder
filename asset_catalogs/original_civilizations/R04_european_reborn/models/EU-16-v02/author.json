@@ -1,0 +1,100 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "EU-16-v02",
+  "name": "城镇钟楼 · 石基木钟室与四面表盘",
+  "family": "EU-16",
+  "civilization": "欧洲中世纪新制",
+  "planning_role": "planning_role.key",
+  "size": [
+    39,
+    54,
+    43
+  ],
+  "terrain": {
+    "选址": "连续稳定承载基面；模型自带台基、高差与支承构件，保留完整外轮廓净空。"
+  },
+  "rooms": [],
+  "points": [
+    {
+      "id": "street",
+      "kind": "entrance",
+      "pos": [
+        19,
+        2,
+        0
+      ],
+      "name": "临街步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "clock",
+      "kind": "work",
+      "pos": [
+        19,
+        26,
+        23
+      ],
+      "name": "守钟人",
+      "approach": [
+        19,
+        26,
+        23
+      ],
+      "use": "staff"
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "2026-10-05 第二轮结构重做；按结构轮廓、构件连接、立面进深、室内空间与文明差异核对。"
+  ],
+  "differences": [
+    "2026-10-21 按实际岗位命名并启用 authored 工位策略，装饰工作方块不自动增加容量；旧版保留。"
+  ],
+  "floors": [
+    {
+      "name": "入口",
+      "y": 1,
+      "max_y": 8
+    },
+    {
+      "name": "第一平台",
+      "y": 9,
+      "max_y": 16
+    },
+    {
+      "name": "第二平台",
+      "y": 17,
+      "max_y": 24
+    },
+    {
+      "name": "报时检修",
+      "y": 25,
+      "max_y": 40
+    }
+  ],
+  "roof_min_y": 42,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "function_terms": [
+    "报时",
+    "公共瞭望"
+  ],
+  "asset_tags": [],
+  "source": "tools/structure_studio/studio/european_revisions.py:BUILDERS",
+  "ground_plane": {
+    "y": 2,
+    "note": "外围道路脚底 Y=2；高层须有模型内实体楼梯。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3,
+    "surface": "grass"
+  },
+  "design_revision": 2,
+  "workplace_policy": "authored",
+  "nbt_sha256": "06627e57ab8e2f59cac10193909e55c8a18d48ada0c7998d245a2dd8ecd7f856"
+}

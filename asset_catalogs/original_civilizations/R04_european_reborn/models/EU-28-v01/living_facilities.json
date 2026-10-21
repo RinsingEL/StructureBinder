@@ -1,0 +1,158 @@
+{
+  "schema": "realmfolk_facilities.v1",
+  "size": [
+    13,
+    19,
+    15
+  ],
+  "sourceSha256": "9e7c4da29a7843d084f8f1de7e583a44ac32e747a19e2deafaf1952d41c1c565",
+  "capacity": {
+    "residentBeds": 4,
+    "workplaces": 0
+  },
+  "facilities": [
+    {
+      "id": "bed:3,7,5",
+      "kind": "bed",
+      "pos": [
+        3,
+        7,
+        5
+      ],
+      "block": "minecraft:red_bed",
+      "facing": "north",
+      "use": "resident",
+      "room": "room_1",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        3,
+        7,
+        7
+      ]
+    },
+    {
+      "id": "bed:3,7,10",
+      "kind": "bed",
+      "pos": [
+        3,
+        7,
+        10
+      ],
+      "block": "minecraft:red_bed",
+      "facing": "north",
+      "use": "resident",
+      "room": "room_1",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        3,
+        7,
+        12
+      ]
+    },
+    {
+      "id": "bed:5,7,5",
+      "kind": "bed",
+      "pos": [
+        5,
+        7,
+        5
+      ],
+      "block": "minecraft:red_bed",
+      "facing": "north",
+      "use": "resident",
+      "room": "room_1",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        5,
+        7,
+        7
+      ]
+    },
+    {
+      "id": "bed:5,7,10",
+      "kind": "bed",
+      "pos": [
+        5,
+        7,
+        10
+      ],
+      "block": "minecraft:red_bed",
+      "facing": "north",
+      "use": "resident",
+      "room": "room_1",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        5,
+        7,
+        12
+      ]
+    },
+    {
+      "id": "entrance:5,2,1",
+      "kind": "entrance",
+      "pos": [
+        5,
+        2,
+        1
+      ],
+      "block": "minecraft:air",
+      "facing": "north",
+      "use": "building",
+      "room": "",
+      "name": "门前步行入口",
+      "adapter": "stand",
+      "seatHeight": 0.5
+    },
+    {
+      "id": "seat:3,2,5",
+      "kind": "seat",
+      "pos": [
+        3,
+        2,
+        5
+      ],
+      "block": "minecraft:spruce_stairs",
+      "facing": "east",
+      "use": "resident",
+      "room": "room_0",
+      "name": "座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        4,
+        2,
+        5
+      ]
+    },
+    {
+      "id": "seat:3,2,7",
+      "kind": "seat",
+      "pos": [
+        3,
+        2,
+        7
+      ],
+      "block": "minecraft:spruce_stairs",
+      "facing": "east",
+      "use": "resident",
+      "room": "room_0",
+      "name": "座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        4,
+        2,
+        7
+      ]
+    }
+  ],
+  "warnings": []
+}

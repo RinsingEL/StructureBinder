@@ -1,0 +1,80 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "EU-49-v01",
+  "name": "独立粮食晒场",
+  "family": "EU-49",
+  "civilization": "欧洲中世纪新制",
+  "planning_role": "planning_role.fill",
+  "size": [
+    13,
+    3,
+    13
+  ],
+  "terrain": {
+    "选址": "建筑基础轮廓需稳定承载；门前与街面脚底高程 Y=2，屋檐不可侵入相邻建筑。"
+  },
+  "rooms": [],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        6,
+        2,
+        0
+      ],
+      "name": "晒场入口"
+    },
+    {
+      "id": "work_1",
+      "kind": "work",
+      "pos": [
+        2,
+        2,
+        10
+      ],
+      "name": "晒粮翻粮",
+      "use": "staff",
+      "approach": [
+        3,
+        2,
+        10
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "2026-10-21 紧凑日常建筑；实际房间与通路决定容量；无整块地块平台。"
+  ],
+  "differences": [
+    "独立粮食晒场：按真实作业空间设计，独立于大型城镇同用途地标。"
+  ],
+  "floors": [
+    {
+      "name": "首层",
+      "y": 1,
+      "max_y": 5
+    }
+  ],
+  "roof_min_y": 6,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "function_terms": [
+    "粮食晾晒"
+  ],
+  "workplace_policy": "authored",
+  "source": "tools/structure_studio/studio/european_village.py:BUILDERS",
+  "ground_plane": {
+    "y": 2,
+    "note": "首层脚底 Y=2；仅本体基础与门前踏步，院落另组。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3
+  },
+  "nbt_sha256": "95073b94576853194e494cfb64242c462fab01165ee3aadb5ea0500dd2a70ca8"
+}

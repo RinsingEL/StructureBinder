@@ -1,0 +1,25 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "EU-67-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex",
+  "nbt_sha256": "6e674f236bfa6a97cb5b3464016e18618eab45c92480d0d484d77a12709c126e",
+  "author_sha256": "2f81264273ee92ceee4c6d1295a536043a9c0a40f137cbadd3ecbbaca8a4ddb3",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png"
+  ],
+  "checks": [
+    "直渠有连续渠壁与侧维护道；仅静态水渠。",
+    "实际查看前后外观、去屋顶和首层图；数据与离线通路检查另行核对。"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "作者图审不等于用户审美批准；未验证夜间光照、世界生成与真实NPC行为。"
+  ]
+}

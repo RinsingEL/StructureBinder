@@ -1,0 +1,74 @@
+{
+  "schema": "realmfolk_facilities.v1",
+  "size": [
+    7,
+    4,
+    5
+  ],
+  "sourceSha256": "d07ef5d878d6f62713087d57cc83be1cfa006a2b8bb9b272f49a0dd5a0a4b7de",
+  "capacity": {
+    "residentBeds": 0,
+    "workplaces": 0
+  },
+  "facilities": [
+    {
+      "id": "entrance:3,2,0",
+      "kind": "entrance",
+      "pos": [
+        3,
+        2,
+        0
+      ],
+      "block": "minecraft:air",
+      "facing": "north",
+      "use": "building",
+      "room": "",
+      "name": "步行接近面",
+      "adapter": "stand",
+      "seatHeight": 0.5
+    },
+    {
+      "id": "seat:2,2,3",
+      "kind": "seat",
+      "pos": [
+        2,
+        2,
+        3
+      ],
+      "block": "minecraft:spruce_stairs",
+      "facing": "north",
+      "use": "public",
+      "room": "",
+      "name": "座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        2,
+        2,
+        2
+      ]
+    },
+    {
+      "id": "seat:4,2,3",
+      "kind": "seat",
+      "pos": [
+        4,
+        2,
+        3
+      ],
+      "block": "minecraft:spruce_stairs",
+      "facing": "north",
+      "use": "public",
+      "room": "",
+      "name": "座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        4,
+        2,
+        2
+      ]
+    }
+  ],
+  "warnings": []
+}

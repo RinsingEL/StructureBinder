@@ -1,0 +1,25 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "EU-54-v01",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex",
+  "nbt_sha256": "1f625234c2ce1d6862846914b3ec5747e8e1c014cb5d6cdfae27d6f85493937c",
+  "author_sha256": "454359416399891c206abdc69d16b8fcce5214aad561192156a9c4cf1f51f507",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png"
+  ],
+  "checks": [
+    "桥头小屋售窗与登记台可辨。",
+    "实际查看前后外观、去屋顶和首层图；数据与离线通路检查另行核对。"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "作者图审不等于用户审美批准；未验证夜间光照、世界生成与真实NPC行为。"
+  ]
+}

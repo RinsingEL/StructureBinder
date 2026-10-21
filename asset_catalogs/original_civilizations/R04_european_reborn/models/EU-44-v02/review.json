@@ -1,0 +1,25 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "EU-44-v02",
+  "status": "accepted",
+  "scope": "offline_asset_review",
+  "reviewer": "Codex",
+  "nbt_sha256": "e5a7de198d271520de82bd405b9d71e958e73854b26ed3b4e7006f36d262ba42",
+  "author_sha256": "fca4f8bb11b7b2fba35ff5d4b6bb0bdbb57eab682d7f4c643f1d042f4f27b501",
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png"
+  ],
+  "checks": [
+    "独立顶龛与贴墙龛有区别，礼仪停留面可辨。",
+    "实际查看前后外观、去屋顶和首层图；数据与离线通路检查另行核对。"
+  ],
+  "revisions": [],
+  "limitations": [
+    "离线几何、外观与作者标记验收；未运行 MC，也未接入国度 Mod 运行时目录。",
+    "地形示意用于核对作者的适用条件，不证明真实地图生成、交通、流体或机器行为。",
+    "作者图审不等于用户审美批准；未验证夜间光照、世界生成与真实NPC行为。"
+  ]
+}

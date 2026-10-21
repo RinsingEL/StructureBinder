@@ -1,0 +1,95 @@
+{
+  "schema": "realmfolk_facilities.v1",
+  "size": [
+    9,
+    12,
+    13
+  ],
+  "sourceSha256": "fe30aac313b6083df8ae5581a44029e7124c0937c472fa39e20c49282b61eaf5",
+  "capacity": {
+    "residentBeds": 2,
+    "workplaces": 1
+  },
+  "facilities": [
+    {
+      "id": "work:2,2,4",
+      "kind": "work",
+      "pos": [
+        2,
+        2,
+        4
+      ],
+      "block": "minecraft:cartography_table",
+      "facing": "north",
+      "use": "staff",
+      "room": "room_0",
+      "name": "林务巡护登记",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        3,
+        2,
+        4
+      ]
+    },
+    {
+      "id": "bed:3,2,8",
+      "kind": "bed",
+      "pos": [
+        3,
+        2,
+        8
+      ],
+      "block": "minecraft:red_bed",
+      "facing": "north",
+      "use": "resident",
+      "room": "room_0",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        3,
+        2,
+        10
+      ]
+    },
+    {
+      "id": "bed:5,2,8",
+      "kind": "bed",
+      "pos": [
+        5,
+        2,
+        8
+      ],
+      "block": "minecraft:red_bed",
+      "facing": "north",
+      "use": "resident",
+      "room": "room_0",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        5,
+        2,
+        10
+      ]
+    },
+    {
+      "id": "entrance:4,2,1",
+      "kind": "entrance",
+      "pos": [
+        4,
+        2,
+        1
+      ],
+      "block": "minecraft:air",
+      "facing": "north",
+      "use": "building",
+      "room": "",
+      "name": "门前步行入口",
+      "adapter": "stand",
+      "seatHeight": 0.5
+    }
+  ],
+  "warnings": []
+}

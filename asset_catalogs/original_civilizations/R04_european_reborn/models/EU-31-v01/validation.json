@@ -1,0 +1,43 @@
+{
+  "schema": "structure-studio.validation.v1",
+  "nbt_sha256": "19c1fb9dbc0c094f739bc763f3fdd498b8eda2abf6263c2c81eaa30eb151e96b",
+  "navigation": {
+    "passed": true,
+    "unreachable": [],
+    "nodes": 768,
+    "highest_standing_y": 2.5625,
+    "truncated": false,
+    "scope": "Conservative offline walking audit using 1.20.1 collision AABBs.\n\n0.5-block horizontal samples, 0.6-block step height, 0.6 x 1.8 player body.\nWooden doors are considered opened by the player; iron doors stay as authored.\nNo jumping, flying, ladders, swimming or moving entities are simulated.\n"
+  },
+  "passed": true,
+  "errors": [],
+  "warnings": [],
+  "size": [
+    21,
+    12,
+    23
+  ],
+  "visible_blocks": 1748,
+  "explicit_air": 768,
+  "palette": 25,
+  "block_entities": 16,
+  "agriculture": null,
+  "materials": {
+    "minecraft:brick_stairs": 397,
+    "minecraft:white_terracotta": 348,
+    "minecraft:cobblestone": 314,
+    "minecraft:spruce_planks": 309,
+    "minecraft:dark_oak_log": 207,
+    "minecraft:brick_slab": 51,
+    "minecraft:dark_oak_wood": 30,
+    "minecraft:gravel": 28,
+    "minecraft:glass_pane": 20,
+    "minecraft:red_bed": 16,
+    "minecraft:moss_block": 12,
+    "minecraft:lantern": 7,
+    "minecraft:spruce_door": 4,
+    "minecraft:azalea": 4,
+    "minecraft:lectern": 1
+  },
+  "scope": "NBT、作者角色取值、方块状态、门床配对、杜鹃底座、标记边界和站位净空初筛；楼梯通路、视觉和实际游戏行为另行验收。"
+}

@@ -1,0 +1,555 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "EU-SCALE-SCENE",
+  "name": "欧洲紧凑建筑 · 同尺度对照场景",
+  "family": "EU-SCALE-SCENE",
+  "civilization": "fixture",
+  "planning_role": "planning_role.structure",
+  "size": [
+    60,
+    24,
+    48
+  ],
+  "terrain": {
+    "选址": "离线展示场景，不导入城市模板。"
+  },
+  "rooms": [],
+  "points": [
+    {
+      "id": "EU-27-v01_entry_0",
+      "kind": "entrance",
+      "pos": [
+        7,
+        2,
+        6
+      ],
+      "name": "门前步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "EU-27-v01_bed_3",
+      "kind": "bed",
+      "pos": [
+        6,
+        2,
+        12
+      ],
+      "name": "住床",
+      "use": "resident",
+      "approach": [
+        6,
+        2,
+        13
+      ]
+    },
+    {
+      "id": "EU-27-v01_bed_5",
+      "kind": "bed",
+      "pos": [
+        8,
+        2,
+        12
+      ],
+      "name": "住床",
+      "use": "resident",
+      "approach": [
+        8,
+        2,
+        13
+      ]
+    },
+    {
+      "id": "EU-27-v01_seat_3",
+      "kind": "seat",
+      "pos": [
+        9,
+        2,
+        9
+      ],
+      "name": "座位",
+      "use": "resident",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        8,
+        2,
+        9
+      ]
+    },
+    {
+      "id": "EU-28-v01_entry_0",
+      "kind": "entrance",
+      "pos": [
+        25,
+        2,
+        6
+      ],
+      "name": "门前步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "EU-28-v01_landing_1",
+      "kind": "circulation",
+      "pos": [
+        30,
+        7,
+        14
+      ],
+      "name": "实体楼梯上层平台"
+    },
+    {
+      "id": "EU-28-v01_upper_bed_3",
+      "kind": "bed",
+      "pos": [
+        23,
+        7,
+        16
+      ],
+      "name": "住床",
+      "use": "resident",
+      "approach": [
+        23,
+        7,
+        17
+      ]
+    },
+    {
+      "id": "EU-28-v01_upper_bed_5",
+      "kind": "bed",
+      "pos": [
+        25,
+        7,
+        16
+      ],
+      "name": "住床",
+      "use": "resident",
+      "approach": [
+        25,
+        7,
+        17
+      ]
+    },
+    {
+      "id": "EU-28-v01_front_bed_3",
+      "kind": "bed",
+      "pos": [
+        23,
+        7,
+        11
+      ],
+      "name": "住床",
+      "use": "resident",
+      "approach": [
+        23,
+        7,
+        12
+      ]
+    },
+    {
+      "id": "EU-28-v01_front_bed_5",
+      "kind": "bed",
+      "pos": [
+        25,
+        7,
+        11
+      ],
+      "name": "住床",
+      "use": "resident",
+      "approach": [
+        25,
+        7,
+        12
+      ]
+    },
+    {
+      "id": "EU-28-v01_seat_6",
+      "kind": "seat",
+      "pos": [
+        23,
+        2,
+        10
+      ],
+      "name": "座位",
+      "use": "resident",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        24,
+        2,
+        10
+      ]
+    },
+    {
+      "id": "EU-28-v01_seat_7",
+      "kind": "seat",
+      "pos": [
+        23,
+        2,
+        12
+      ],
+      "name": "座位",
+      "use": "resident",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        24,
+        2,
+        12
+      ]
+    },
+    {
+      "id": "EU-33-v01_entry_0",
+      "kind": "entrance",
+      "pos": [
+        46,
+        2,
+        6
+      ],
+      "name": "门前步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "EU-33-v01_work_1",
+      "kind": "work",
+      "pos": [
+        47,
+        2,
+        13
+      ],
+      "name": "店员理货与售卖",
+      "use": "staff",
+      "approach": [
+        46,
+        2,
+        13
+      ]
+    },
+    {
+      "id": "EU-40-v01_entry_0",
+      "kind": "entrance",
+      "pos": [
+        9,
+        2,
+        28
+      ],
+      "name": "门前步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "EU-40-v01_bed_3",
+      "kind": "bed",
+      "pos": [
+        6,
+        2,
+        38
+      ],
+      "name": "住床",
+      "use": "resident",
+      "approach": [
+        6,
+        2,
+        39
+      ]
+    },
+    {
+      "id": "EU-40-v01_bed_5",
+      "kind": "bed",
+      "pos": [
+        8,
+        2,
+        38
+      ],
+      "name": "住床",
+      "use": "resident",
+      "approach": [
+        8,
+        2,
+        39
+      ]
+    },
+    {
+      "id": "EU-40-v01_bed_7",
+      "kind": "bed",
+      "pos": [
+        10,
+        2,
+        38
+      ],
+      "name": "住床",
+      "use": "resident",
+      "approach": [
+        10,
+        2,
+        39
+      ]
+    },
+    {
+      "id": "EU-40-v01_bed_9",
+      "kind": "bed",
+      "pos": [
+        12,
+        2,
+        38
+      ],
+      "name": "住床",
+      "use": "resident",
+      "approach": [
+        12,
+        2,
+        39
+      ]
+    },
+    {
+      "id": "EU-40-v01_seat_5",
+      "kind": "seat",
+      "pos": [
+        12,
+        2,
+        31
+      ],
+      "name": "座位",
+      "use": "resident",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        11,
+        2,
+        31
+      ]
+    },
+    {
+      "id": "EU-40-v01_seat_6",
+      "kind": "seat",
+      "pos": [
+        12,
+        2,
+        33
+      ],
+      "name": "座位",
+      "use": "resident",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        11,
+        2,
+        33
+      ]
+    },
+    {
+      "id": "EU-42-v01_entry_0",
+      "kind": "entrance",
+      "pos": [
+        29,
+        2,
+        28
+      ],
+      "name": "门前步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "EU-42-v01_entry_1",
+      "kind": "entrance",
+      "pos": [
+        29,
+        2,
+        28
+      ],
+      "name": "门前步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "EU-42-v01_work_2",
+      "kind": "work",
+      "pos": [
+        26,
+        2,
+        32
+      ],
+      "name": "木工装配台",
+      "use": "staff",
+      "approach": [
+        27,
+        2,
+        32
+      ]
+    },
+    {
+      "id": "EU-42-v01_work_3",
+      "kind": "work",
+      "pos": [
+        32,
+        2,
+        34
+      ],
+      "name": "锯切占位工台",
+      "use": "staff",
+      "approach": [
+        31,
+        2,
+        34
+      ]
+    },
+    {
+      "id": "EU-43-v01_entry_0",
+      "kind": "entrance",
+      "pos": [
+        48,
+        2,
+        28
+      ],
+      "name": "门前步行入口",
+      "facing": "north"
+    },
+    {
+      "id": "EU-43-v01_seat_1",
+      "kind": "seat",
+      "pos": [
+        46,
+        2,
+        32
+      ],
+      "name": "座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        47,
+        2,
+        32
+      ]
+    },
+    {
+      "id": "EU-43-v01_seat_2",
+      "kind": "seat",
+      "pos": [
+        50,
+        2,
+        32
+      ],
+      "name": "座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        49,
+        2,
+        32
+      ]
+    },
+    {
+      "id": "EU-43-v01_seat_3",
+      "kind": "seat",
+      "pos": [
+        46,
+        2,
+        35
+      ],
+      "name": "座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        47,
+        2,
+        35
+      ]
+    },
+    {
+      "id": "EU-43-v01_seat_4",
+      "kind": "seat",
+      "pos": [
+        50,
+        2,
+        35
+      ],
+      "name": "座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        49,
+        2,
+        35
+      ]
+    },
+    {
+      "id": "EU-43-v01_seat_5",
+      "kind": "seat",
+      "pos": [
+        46,
+        2,
+        38
+      ],
+      "name": "座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        47,
+        2,
+        38
+      ]
+    },
+    {
+      "id": "EU-43-v01_seat_6",
+      "kind": "seat",
+      "pos": [
+        50,
+        2,
+        38
+      ],
+      "name": "座位",
+      "use": "public",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        49,
+        2,
+        38
+      ]
+    },
+    {
+      "id": "EU-43-v01_work_7",
+      "kind": "work",
+      "pos": [
+        48,
+        2,
+        41
+      ],
+      "name": "礼拜主持",
+      "use": "staff",
+      "approach": [
+        48,
+        2,
+        40
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "统一相机同时查看六栋实物；不是规划生成、人口验收或游戏证据。"
+  ],
+  "differences": [],
+  "floors": [
+    {
+      "name": "统一地面",
+      "y": 1,
+      "max_y": 5
+    }
+  ],
+  "roof_min_y": 6,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "ground_plane": {
+    "y": 2,
+    "note": "对照场景统一地面，仅用于离线同尺度查看。"
+  },
+  "function_terms": [
+    "尺度对照"
+  ],
+  "workplace_policy": "authored",
+  "nbt_sha256": "ed9dc87eb7d7e5d44ca864eee7c0b6fe9b7c927e3d296a48bd0f40b67ab1cc3e"
+}
