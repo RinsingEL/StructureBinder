@@ -202,6 +202,12 @@ public final class CityOutdoorBlueprintCompiler {
         Map<String, String> resolvedParentParcelIds = new LinkedHashMap<>(
                 capacityReservation.parentParcelIds());
         for (CityBlueprint.Landscape landscape : blueprint.outdoorPlan().landscapes()) {
+            if(landscape.growth()!=null&&landscape.growth().preserveVegetation()) {
+                // Its frozen capacity is already a landscape exclusion for urban ground and roads.
+                // Do not enqueue a fill/clearing operation on authored preserved countryside.
+                outdoorWarnings.add("RURAL_WOODLAND_PRESERVED:"+landscape.landscapeId());
+                continue;
+            }
             CityBlueprintReferenceCatalog.LandscapeProfile profile = catalog.landscapeProfiles().get(
                     landscape.landscapeProfileRef());
             if (profile == null) {

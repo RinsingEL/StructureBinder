@@ -180,6 +180,7 @@ public final class CityBlueprintService {
         contextCore.add("scaleDesignTask", CityScaleDesignTask.describe(
                 com.rinsing.geomantia.systems.city.domain.model.CityScale.fromContractName(string(seed, "theoreticalScale")), seed));
         contextCore.add("citySeed", seed.deepCopy());
+        contextCore.add("terrainLines", CityTerrainLines.describe(terrainField));
         contextCore.add("d3ReviewPackage", d3.deepCopy());
         contextCore.add("catalogSnapshot", snapshot.deepCopy());
         String contextId = sha256(CityJson.GSON.toJson(contextCore));

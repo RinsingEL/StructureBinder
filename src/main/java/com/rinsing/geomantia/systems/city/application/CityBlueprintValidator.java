@@ -118,6 +118,8 @@ public final class CityBlueprintValidator {
                     path + ".algorithmProfileRef");
             if(group.layout()!=null)validateRectangle(issues,group.layout(),catalog.algorithmsByProfileRef().get(group.algorithmProfileRef()),
                     group.structureCount()==null?group.requiredStructureRefs().size():group.structureCount(),path+".layout");
+            if(group.layout()!=null&&group.layout().natural()!=null&&group.anchorBlock()!=null)
+                add(issues,CityBlueprintReasonCode.CITY_BLUEPRINT_ARRAY_COMPOSITION_INVALID,path+".anchorBlock","Terrain-line placement comes from lineRef; omit anchorBlock instead of providing a second origin.");
             if ("CENTER_SYMMETRIC".equals(catalog.algorithmsByProfileRef().get(group.algorithmProfileRef()))
                     && group.structureCount() != null && group.structureCount() % 2 == 0)
                 add(issues, CityBlueprintReasonCode.CITY_BLUEPRINT_CENTER_SYMMETRIC_REQUIRED_COUNT_INVALID,
@@ -311,6 +313,10 @@ public final class CityBlueprintValidator {
                         path + ".memberGroupIds",
                         "Add an existing groupId to memberGroupIds, distinct from centerGroupId. CENTER_SYMMETRIC requires an even member count.");
             }
+            for(var member:groupsById.values())if((composition.centerGroupId().equals(member.groupId())||composition.memberGroupIds().contains(member.groupId()))&&member.layout()!=null&&member.layout().natural()!=null)
+                add(issues,CityBlueprintReasonCode.CITY_BLUEPRINT_ARRAY_COMPOSITION_INVALID,path,"Terrain-line groups are rooted in the D3 line and cannot be moved inside a composition.");
+            if(composition.layout()!=null&&composition.layout().natural()!=null&&compositions.stream().anyMatch(parent->parent!=composition&&(parent.centerGroupId().equals(composition.centerGroupId())||parent.memberGroupIds().contains(composition.centerGroupId()))))
+                add(issues,CityBlueprintReasonCode.CITY_BLUEPRINT_ARRAY_COMPOSITION_INVALID,path,"A SCATTER composition is rooted in its terrain search site and cannot itself be moved by a parent composition.");
             List<String> participants = new ArrayList<>();
             participants.add(composition.centerGroupId());
             participants.addAll(composition.memberGroupIds());
@@ -604,6 +610,13 @@ public final class CityBlueprintValidator {
     }
 
     private static void validateRectangle(List<Issue> issues,CityBlueprint.RectangleLayout layout,String algorithm,int count,String path) {
+        if(layout.natural()!=null) {
+            boolean leaf=path.startsWith("$.groups[");
+            if(layout.faceInward() || leaf && (!"TERRAIN_LINE".equals(layout.natural().mode())||!"LINEAR".equals(algorithm))
+                    || !leaf && (!"SCATTER".equals(layout.natural().mode())||!"GRID".equals(algorithm)))
+                add(issues,CityBlueprintReasonCode.CITY_BLUEPRINT_ARRAY_COMPOSITION_INVALID,path,"TERRAIN_LINE uses a LINEAR building group; SCATTER uses a GRID composition of complete child arrays; faceInward is not applicable.");
+            return;
+        }
         if(!Set.of("GRID","LINEAR","COURTYARD").contains(algorithm==null?"":algorithm)
                 || "COURTYARD".equals(algorithm)&&count>4 || layout.faceInward()&&!"COURTYARD".equals(algorithm))
             add(issues,CityBlueprintReasonCode.CITY_BLUEPRINT_ARRAY_COMPOSITION_INVALID,path,

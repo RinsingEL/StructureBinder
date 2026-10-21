@@ -303,13 +303,27 @@ public record CityBlueprint(
 
     /** Optional intentional geometry. Coordinates and template rotations remain compiler-owned. */
     public record RectangleLayout(int gapBlocks,int columns,int courtWidth,int courtDepth,
-                                  boolean faceInward,String crossAlign,String purpose) {
+                                  boolean faceInward,String crossAlign,String purpose, NaturalLayout natural) {
+        public RectangleLayout(int gapBlocks,int columns,int courtWidth,int courtDepth,boolean faceInward,String crossAlign,String purpose) {
+            this(gapBlocks,columns,courtWidth,courtDepth,faceInward,crossAlign,purpose,null);
+        }
         public RectangleLayout {
             if(gapBlocks<4||gapBlocks>40||columns<1||columns>180||courtWidth<8||courtWidth>256||courtDepth<8||courtDepth>256)
                 throw new IllegalArgumentException("CITY_RECTANGLE_LAYOUT_DIMENSIONS_INVALID");
             if(!java.util.Set.of("START","CENTER","END").contains(crossAlign))
                 throw new IllegalArgumentException("CITY_RECTANGLE_LAYOUT_ALIGNMENT_INVALID");
             if(purpose==null||purpose.isBlank())throw new IllegalArgumentException("CITY_RECTANGLE_LAYOUT_PURPOSE_REQUIRED");
+        }
+    }
+
+    /** D3-driven layouts; no authored polyline or per-building coordinates. */
+    public record NaturalLayout(String mode,String lineRef,int rows,int spacingBlocks,int setbackBlocks,int radiusBlocks) {
+        public NaturalLayout {
+            if(!java.util.Set.of("TERRAIN_LINE","SCATTER").contains(mode))throw new IllegalArgumentException("CITY_NATURAL_LAYOUT_MODE");
+            lineRef=lineRef==null||lineRef.isBlank()?null:lineRef;
+            if(mode.equals("TERRAIN_LINE")&&lineRef==null)throw new IllegalArgumentException("CITY_TERRAIN_LINE_REF_REQUIRED");
+            if(rows<1||rows>8||spacingBlocks<8||spacingBlocks>512||setbackBlocks<0||setbackBlocks>128||radiusBlocks<16||radiusBlocks>2048)
+                throw new IllegalArgumentException("CITY_NATURAL_LAYOUT_DIMENSIONS");
         }
     }
 
@@ -403,8 +417,12 @@ public record CityBlueprint(
 
     /** Independent coarse-cell design demand; actual capacity is allowed to be smaller. */
     public record LandscapeGrowth(com.rinsing.geomantia.systems.city.domain.model.BlockPoint seed,
-                                  int targetCellCount, List<String> allowedLandformTypes) {
+                                  int targetCellCount, List<String> allowedLandformTypes, boolean ruralMosaic, boolean preserveVegetation) {
+        public LandscapeGrowth(com.rinsing.geomantia.systems.city.domain.model.BlockPoint seed,int targetCellCount,List<String> types) {
+            this(seed,targetCellCount,types,false,false);
+        }
         public LandscapeGrowth {
+            if(preserveVegetation&&!ruralMosaic)throw new IllegalArgumentException("CITY_PRESERVED_WOODLAND_REQUIRES_RURAL_MOSAIC");
             java.util.Objects.requireNonNull(seed, "seed");
             if (targetCellCount <= 0) throw new IllegalArgumentException("Landscape targetCellCount must be positive");
             allowedLandformTypes = List.copyOf(allowedLandformTypes);

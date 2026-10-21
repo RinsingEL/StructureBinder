@@ -27,6 +27,68 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityBlueprintCompilerServiceTest {
+    @Test void terrainLineCompilesRealAnchorsAndCurvedStreetGuide() throws Exception {
+        java.util.concurrent.atomic.AtomicReference<String> lineRef=new java.util.concurrent.atomic.AtomicReference<>();
+        var fixture=acceptedFixture("terrain_line","city:terrain_line",8,8,"SMALL",
+                CityBlueprintCompilerServiceTest::configureCoarseCenteredGrid,field->{
+                    for(var item:field.getAsJsonArray("cells")) {
+                        var cell=item.getAsJsonObject();int x=cell.get("blockMinX").getAsInt(),z=cell.get("blockMinZ").getAsInt();
+                        if(x>=48+Math.floorDiv(z,64)*16){cell.addProperty("water",true);cell.addProperty("elevation",60);cell.addProperty("waterDepth",4);}
+                    }
+                    var terrain=new com.rinsing.geomantia.systems.city.application.landuse.LandUseTerrainFieldCodec().fromJson(field);
+                    lineRef.set(CityTerrainLines.extract(terrain).stream().max(java.util.Comparator.comparingInt(l->l.samples().size())).orElseThrow().id());
+                },bp->{
+                    var group=bp.getAsJsonArray("groups").get(0).getAsJsonObject();group.addProperty("algorithmProfileRef","algorithm:street_band");group.addProperty("structureCount",4);
+                    group.add("layout",JsonParser.parseString("{natural:{mode:'TERRAIN_LINE',lineRef:'"+lineRef.get()+"',spacingBlocks:64,setbackBlocks:16}}"));
+                });
+        var result=new CityBlueprintCompilerService().compile(temporary,fixture.runId(),fixture.cityId());
+        assertTrue(result.ok(),result.message());
+        var anchors=result.structureAnchorPlan().getAsJsonArray("anchors");
+        assertEquals(4,anchors.size(),result.structureAnchorPlan().toString());
+        for(var anchor:anchors) {
+            assertEquals(lineRef.get(),anchor.getAsJsonObject().getAsJsonObject("blueprintLayout").get("terrainLineRef").getAsString());
+            var entrance=anchor.getAsJsonObject().getAsJsonObject("templatePlacementPlan").getAsJsonObject("transformed").getAsJsonArray("roadEntrances").get(0).getAsJsonObject();
+            assertTrue(java.util.Set.of("EAST","NORTH").contains(entrance.get("direction").getAsString()),entrance.toString());
+        }
+        Path evidence=Path.of("build/reports/city-natural-layout");Files.createDirectories(evidence);
+        Files.writeString(evidence.resolve("terrain-line.json"),result.structureAnchorPlan().toString());
+        Files.copy(fixture.runDir().resolve("city_land_use_"+safe(fixture.cityId())).resolve("land_use_terrain_field.json"),evidence.resolve("terrain.json"),java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+        assertTrue(anchors.asList().stream().map(a->a.getAsJsonObject().getAsJsonObject("collisionEnvelope").get("minX").getAsInt()).distinct().count()>1);
+    }
+
+    @Test void opposingCliffArraysUseExplicitDryCanyonBridge() throws Exception {
+        List<String> lines=new java.util.ArrayList<>();
+        var fixture=acceptedFixture("canyon_line","city:canyon_line",8,8,"SMALL",
+                CityBlueprintCompilerServiceTest::configureCoarseCenteredGrid,field->{
+                    for(var item:field.getAsJsonArray("cells")) {var cell=item.getAsJsonObject();int x=cell.get("blockMinX").getAsInt();if(x==0)cell.addProperty("elevation",40);}
+                    var terrain=new com.rinsing.geomantia.systems.city.application.landuse.LandUseTerrainFieldCodec().fromJson(field);
+                    CityTerrainLines.extract(terrain).stream().filter(l->l.kind().equals("CLIFF")).forEach(l->lines.add(l.id()));
+                },catalog->{for(var road:catalog.getAsJsonArray("roadProfiles"))road.getAsJsonObject().addProperty("hierarchy","HIERARCHICAL");},bp->{
+                    var a=bp.getAsJsonArray("groups").get(0).getAsJsonObject();a.addProperty("algorithmProfileRef","algorithm:street_band");a.addProperty("structureCount",1);
+                    a.add("layout",JsonParser.parseString("{natural:{mode:'TERRAIN_LINE',lineRef:'"+lines.get(0)+"',spacingBlocks:32,setbackBlocks:8}}"));
+                    var b=a.deepCopy();b.addProperty("groupId","other_bank");b.addProperty("priority","STANDARD");b.getAsJsonObject("layout").getAsJsonObject("natural").addProperty("lineRef",lines.get(1));bp.getAsJsonArray("groups").add(b);
+                    bp.add("relations",JsonParser.parseString("[{fromGroupId:'civic',toGroupId:'other_bank',relationKind:'CONNECTION',strength:'HARD',distancePreference:'NONE',directionPreference:'NONE'}]"));
+                });
+        var result=new CityBlueprintCompilerService().compile(temporary,fixture.runId(),fixture.cityId());
+        assertTrue(result.ok(),result.message());var roads=result.structureAnchorPlan().getAsJsonObject("cityMainRoadPlan");
+        assertTrue(roads.getAsJsonArray("bridgeConnections").asList().stream().anyMatch(b->"DRY_CANYON".equals(b.getAsJsonObject().get("crossingType").getAsString())),roads.toString());
+    }
+
+    @Test void scatterCompositionCompilesWholeFarmsteadUnits() throws Exception {
+        var fixture=acceptedFixture("rural_scatter","city:rural_scatter",8,8,"SMALL",
+                CityBlueprintCompilerServiceTest::configureCoarseCenteredGrid,bp->{
+                    var root=bp.getAsJsonArray("groups").get(0).getAsJsonObject();root.addProperty("algorithmProfileRef","algorithm:grid");root.addProperty("structureCount",2);
+                    for(String id:List.of("farm_b","farm_c")){var child=root.deepCopy();child.addProperty("groupId",id);child.addProperty("priority","STANDARD");bp.getAsJsonArray("groups").add(child);}
+                    bp.add("arrayCompositions",JsonParser.parseString("[{compositionId:'fields',algorithmProfileRef:'algorithm:grid',centerGroupId:'civic',memberGroupIds:['farm_b','farm_c'],layout:{natural:{mode:'SCATTER',radiusBlocks:120,spacingBlocks:32}}}]"));
+                });
+        var result=new CityBlueprintCompilerService().compile(temporary,fixture.runId(),fixture.cityId());
+        assertTrue(result.ok(),result.message());assertEquals(6,result.structureAnchorPlan().getAsJsonArray("anchors").size(),result.structureAnchorPlan().toString());
+        var roads=result.structureAnchorPlan().getAsJsonObject("cityMainRoadPlan");
+        assertEquals(2,roads.getAsJsonArray("connections").size(),roads.toString());
+        Path evidence=Path.of("build/reports/city-natural-layout");Files.createDirectories(evidence);Files.writeString(evidence.resolve("scatter.json"),result.structureAnchorPlan().toString());
+        assertTrue(result.structureAnchorPlan().getAsJsonArray("streetBands").asList().stream().map(JsonElement::getAsJsonObject).anyMatch(b->b.has("widthBlocks")&&b.get("widthBlocks").getAsInt()==3));
+    }
+
     @Test void intentionalCourtyardUsesFourRealBuildingsAndReservesPublicSpace() throws Exception {
         var fixture=acceptedFixture("rectangle_court","city:rectangle_court",12,12,"SMALL",
                 CityBlueprintCompilerServiceTest::configureCoarseCenteredGrid,blueprint->{

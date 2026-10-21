@@ -22,6 +22,19 @@ import static org.junit.jupiter.api.Assertions.assertTimeout;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityLandscapeCapacityReservationPlannerTest {
+    @Test void ruralMosaicKeepsThousandsOfBlocksPerParcelInProductionReservation() throws Exception {
+        var source=blueprint(4);var old=source.outdoorPlan().landscapes().get(0);
+        var landscape=new CityBlueprint.Landscape(old.landscapeId(),old.landscapeProfileRef(),old.purpose(),old.originMode(),old.owner(),old.placementDomain(),old.instanceCount(),old.parcelCount(),old.preferredPatchRefs(),old.terrainPolicy(),old.required(),old.fillSelection(),new CityBlueprint.LandscapeGrowth(new BlockPoint(128,128),800,List.of(),true,false));
+        var design=new CityBlueprint(source.schema(),source.cityId(),source.sourceD3Ref(),source.catalogSnapshotRef(),source.generationSeed(),source.designIntent(),source.styleProfile(),source.groups(),source.arrayCompositions(),source.relations(),source.roadProfile(),source.surfaceDetailProfile(),new CityBlueprint.OutdoorPlan(source.outdoorPlan().mode(),source.outdoorPlan().envelopeProfile(),source.outdoorPlan().foundationProfileRef(),source.outdoorPlan().foundationGroupIds(),List.of(landscape)));
+        var field=terrain(new BlockBounds(0,0,255,255));
+        var planner=new CityLandscapeCapacityReservationPlanner();var result=planner.plan(design,catalog(1,12),field,new JsonArray());
+        assertTrue(result.ok());assertEquals(result.plan(),planner.plan(design,catalog(1,12),field,new JsonArray()).plan());
+        var parcels=result.plan().getAsJsonArray("instances").get(0).getAsJsonObject().getAsJsonArray("parcelReservations");
+        assertEquals(4,parcels.size());
+        var evidence=java.nio.file.Path.of("build/reports/city-natural-layout");java.nio.file.Files.createDirectories(evidence);java.nio.file.Files.writeString(evidence.resolve("mosaic.json"),result.plan().toString());
+        for(var parcel:parcels)assertTrue(parcel.getAsJsonObject().get("actualAreaBlocks").getAsInt()>1000,parcel.toString());
+    }
+
     @Test void landscapeCanStartWithoutAnySurvivingBuildingOrExplicitSeed() {
         var planner = new CityLandscapeCapacityReservationPlanner();
         var first = planner.plan(blueprint(3), catalog(1, 12), terrain(new BlockBounds(0, 0, 255, 255)), new JsonArray());

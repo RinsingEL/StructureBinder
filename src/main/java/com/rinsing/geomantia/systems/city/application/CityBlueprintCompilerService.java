@@ -229,7 +229,7 @@ public final class CityBlueprintCompilerService {
             }
             compositionSlots = planArrayCompositions(blueprint,
                     groupsById, patches, review.grid().cellStepBlocks(), cityPlanningBounds, catalog,
-                    spatialDemands, interGroupRoadReserveBlocks, templates, editPolicy);
+                    spatialDemands, interGroupRoadReserveBlocks, templates, editPolicy, terrainField);
         } catch (CompositionPlacementFailure failure) {
             JsonObject failureTrace = trace(blueprint, context, new JsonArray(), Map.of(),
                     ConnectivityPlan.empty(), "failed", failure.reasonCode);
@@ -329,7 +329,7 @@ public final class CityBlueprintCompilerService {
                 state.contiguousOrigins = contiguousOrigins(blueprint, group, refs, catalog, templates);
             state.layoutFrame = plannedFrame(state.layoutAlgorithm(), state.layoutFrame().center(),
                     plannedTemplate(blueprint, group, refs.get(0), catalog, templates));
-            if(group.layout()!=null) state.rectangleGeometry = rectangleGeometry(blueprint,group,refs,catalog,templates);
+            if(group.layout()!=null) state.rectangleGeometry = rectangleGeometry(blueprint,group,refs,catalog,templates,terrainField);
             for (int index = 0; index < group.requiredStructureRefs().size(); index++) {
                 state.plannedSlot = index;
                 placePlannedMember(runDir, review, structureSource, templateCatalogJson, templates, blueprint,
@@ -640,9 +640,37 @@ public final class CityBlueprintCompilerService {
         return List.copyOf(refs);
     }
 
-    private record RectangleGeometry(List<BlockPoint> origins,List<String> rotations) { }
+    private record RectangleGeometry(List<BlockPoint> origins,List<String> rotations,JsonArray terrainRoadGuide) {
+        RectangleGeometry(List<BlockPoint> origins,List<String> rotations){this(origins,rotations,null);}
+    }
     private RectangleGeometry rectangleGeometry(CityBlueprint blueprint,CityBlueprint.Group group,List<String> refs,
-            CatalogIndex catalog,CityTemplateCatalog templates) {
+            CatalogIndex catalog,CityTemplateCatalog templates,LandUseTerrainField terrainField) {
+        if(group.layout().natural()!=null) {
+            var spans=refs.stream().map(ref->{var t=plannedTemplate(blueprint,group,ref,catalog,templates);return Math.max(t.width(),t.depth())+t.clearanceBlocks()*2;}).toList();
+            var slots=CityNaturalLayoutPlanner.line(group.layout().natural(),terrainField,spans);
+            List<BlockPoint> origins=new ArrayList<>();List<String> turns=new ArrayList<>();
+            for(int i=0;i<refs.size();i++) {
+                var t=plannedTemplate(blueprint,group,refs.get(i),catalog,templates);var slot=slots.get(i);
+                var choice=orientationSolver.rank(t,t.allowedMirrors().get(0),"",slot.origin(),
+                        CityTemplateOrientationSolver.FacingTarget.point("terrain_line",slot.facing())).get(0);
+                if(choice.alignmentScore()<0.70)throw fail("CITY_BLUEPRINT_INTERNAL_FRONTAGE_UNAVAILABLE",group.groupId());
+                origins.add(slot.origin());turns.add(choice.rotation().name());
+            }
+            JsonArray road=new JsonArray();
+            var natural=group.layout().natural();
+            var line=CityTerrainLines.extract(terrainField).stream().filter(l->l.id().equals(natural.lineRef())).findFirst().orElseThrow();
+            int perRow=(refs.size()+natural.rows()-1)/natural.rows();
+            double limit=Math.max(natural.spacingBlocks(),spans.stream().mapToInt(i->i).max().orElse(1)+8)*Math.max(1,perRow-1);
+            double distance=0;BlockPoint previous=null;
+            for(var sample:line.samples()) {
+                if(previous!=null)distance+=Math.hypot(previous.x()-sample.point().x(),previous.z()-sample.point().z());
+                previous=sample.point();
+                JsonObject point=new JsonObject();point.addProperty("x",sample.point().x()-sample.normalX()*Math.max(3,natural.setbackBlocks()/2));
+                point.addProperty("z",sample.point().z()-sample.normalZ()*Math.max(3,natural.setbackBlocks()/2));road.add(point);
+                if(distance>=limit)break;
+            }
+            return new RectangleGeometry(List.copyOf(origins),List.copyOf(turns),road);
+        }
         List<CityRectangleLayoutPlanner.Size> sizes=new ArrayList<>();List<String> rotations=new ArrayList<>();
         String algorithm=catalog.algorithm(group.algorithmProfileRef());
         List<BlockPoint> inward=List.of(new BlockPoint(0,10000),new BlockPoint(10000,0),new BlockPoint(-10000,0),new BlockPoint(0,-10000));
@@ -2084,7 +2112,7 @@ public final class CityBlueprintCompilerService {
             BlockBounds fullPlanningBounds,
             CatalogIndex catalog,
             Map<String, CityGroupSpatialDemand> spatialDemands,
-            int interGroupRoadReserveBlocks, CityTemplateCatalog templates, CityD4LayoutPolicy editPolicy) {
+            int interGroupRoadReserveBlocks, CityTemplateCatalog templates, CityD4LayoutPolicy editPolicy, LandUseTerrainField terrainField) {
         // Compose local envelopes first. Terrain filters members later and never moves siblings.
         Map<String, BlockBounds> envelopes = new LinkedHashMap<>();
         Map<String, BlockPoint> firstOrigins = new LinkedHashMap<>();
@@ -2104,7 +2132,7 @@ public final class CityBlueprintCompilerService {
             var clusterLayout = "COMPACT".equals(algorithm) ? meanderingLayout(memberRefs, catalog, templates,
                     groupLayoutPlanner.parameters(algorithm, group.densityClass()),
                     blueprint.generationSeed() ^ group.groupId().hashCode()) : null;
-            var rectangle = group.layout()==null?null:rectangleGeometry(blueprint,group,memberRefs,catalog,templates);
+            var rectangle = group.layout()==null?null:rectangleGeometry(blueprint,group,memberRefs,catalog,templates,terrainField);
             for (int i = 0; i < memberRefs.size(); i++) {
                 var proposal = groupLayoutPlanner.propose(algorithm, group.densityClass(), blueprint.generationSeed(),
                         group.groupId(), i, localFrame,
@@ -2163,8 +2191,12 @@ public final class CityBlueprintCompilerService {
             List<BlockBounds> siblingBounds = new ArrayList<>(); siblingBounds.add(combined);
             if(composition.layout()!=null) {
                 List<String> ids=new ArrayList<>();ids.add(centerId);ids.addAll(composition.memberGroupIds());
-                var origins=CityRectangleLayoutPlanner.plan(algorithm,composition.layout(),new BlockPoint(0,0),0,
-                        ids.stream().map(id->{var b=envelopes.get(id);return new CityRectangleLayoutPlanner.Size(b.widthBlocks(),b.heightBlocks());}).toList());
+                var sizes=ids.stream().map(id->{var b=envelopes.get(id);return new CityRectangleLayoutPlanner.Size(b.widthBlocks(),b.heightBlocks());}).toList();
+                var origins=composition.layout().natural()==null
+                        ?CityRectangleLayoutPlanner.plan(algorithm,composition.layout(),new BlockPoint(0,0),0,sizes)
+                        :CityNaturalLayoutPlanner.scatter(composition.layout().natural(),terrainField,
+                            composition.anchorBlock()!=null?composition.anchorBlock():fullPlanningBounds.center(),sizes,
+                            blueprint.generationSeed()^composition.compositionId().hashCode());
                 combinedOffsets.clear();combined=null;
                 for(int i=0;i<ids.size();i++) {
                     String id=ids.get(i);var box=envelopes.get(id);var p=origins.get(i);var shift=new BlockPoint(p.x()-box.minX(),p.z()-box.minZ());
@@ -2272,6 +2304,8 @@ public final class CityBlueprintCompilerService {
             BlockPoint explicitOrigin = blueprint.arrayCompositions().stream()
                     .filter(c -> c.centerGroupId().equals(root.groupId()) && c.anchorBlock()!=null)
                     .map(CityBlueprint.ArrayComposition::anchorBlock).findFirst().orElse(root.anchorBlock());
+            if(root.layout()!=null&&root.layout().natural()!=null || blueprint.arrayCompositions().stream().anyMatch(c->c.centerGroupId().equals(root.groupId())&&c.layout()!=null&&c.layout().natural()!=null))
+                explicitOrigin=new BlockPoint(0,0);
             BlockPoint chosen = explicitOrigin != null ? explicitOrigin : patchPlacementOrigin(root, patches, patchStepBlocks, fullPlanningBounds);
             if (chosen == null) {
                 var cell = preferredZoneCell(preferredPatches(root, patches), root.preferredPatchZone(), patchStepBlocks, fullPlanningBounds);
@@ -3322,7 +3356,11 @@ public final class CityBlueprintCompilerService {
         plan.add("candidateOrigins", guides);
         JsonObject layoutTrace = layout.traceJson();
         if(state.rectangleGeometry!=null) {
-            layoutTrace.addProperty("layoutMode","ACTUAL_RECTANGLE_ENVELOPES");
+            layoutTrace.addProperty("layoutMode",state.group().layout().natural()==null?"ACTUAL_RECTANGLE_ENVELOPES":state.group().layout().natural().mode());
+            if(state.group().layout().natural()!=null) {
+                layoutTrace.addProperty("terrainLineRef",state.group().layout().natural().lineRef());
+                layoutTrace.add("terrainRoadGuide",state.rectangleGeometry.terrainRoadGuide().deepCopy());
+            }
             layoutTrace.addProperty("purpose",state.group().layout().purpose());
             if ("GRID".equals(state.layoutAlgorithm())) {
                 // Existing street reservations call the X index row and the Z index column.

@@ -93,7 +93,7 @@ final class CityPlanningDecisionView {
         task.remove("suggestedInitialLeafArraysMax");
         task.remove("counting");
         task.addProperty("designTask", "结合本城服务地位、功能需求、实际地形和素材体量组织城市；规模名称提供背景，不规定建筑或阵列数量。通过当前预览判断功能、地形关联、整体性和体量是否充分。");
-        task.addProperty("placementResponsibility", "设计者用世界方块坐标确定根组或根组合的位置，嵌套成员由父布局组织；程序负责成员编译、边界/碰撞校验与实际保留反馈。");
+        task.addProperty("placementResponsibility", "普通根组或根组合用世界方块坐标定位；沿地形线的根组选择 terrainLines.lineRef，由程序定位，不再填写 anchorBlock；乡野 SCATTER 根组合围绕 anchorBlock 搜索完整单位位置，嵌套成员由父布局组织；程序负责成员编译、边界/碰撞校验与实际保留反馈。");
         return task;
     }
 

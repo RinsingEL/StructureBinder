@@ -40,7 +40,8 @@ final class CityInternalStreetPlanner {
                 .map(Anchor::parse)
                 .toList();
         if (anchors.isEmpty()) return List.of();
-        List<JsonObject> planned = switch (algorithm) {
+        List<JsonObject> terrainRoads=terrainLineSkeleton(groupId,parameters,anchors);
+        List<JsonObject> planned = terrainRoads!=null?terrainRoads:switch (algorithm) {
             case "GRID" -> gridSkeleton(groupId, parameters, anchors,
                     Math.max(4, plannedStructureCount));
             case "COURTYARD" -> courtyard(groupId, parameters, anchors);
@@ -392,6 +393,19 @@ final class CityInternalStreetPlanner {
         BlockPoint end = new BlockPoint(start.x() + dx * length, start.z() + dz * length);
         return List.of(segment(groupId, "LINEAR_BLOCK_SKELETON", "LINEAR_STREET_BAND", 0,
                 parameters.streetBandWidthBlocks(), start, end));
+    }
+
+    private static List<JsonObject> terrainLineSkeleton(String groupId,CityBlueprintGroupLayoutPlanner.Parameters parameters,List<Anchor> anchors) {
+        for(var anchor:anchors)if(anchor.layout().has("terrainRoadGuide")) {
+            var guide=anchor.layout().getAsJsonArray("terrainRoadGuide");List<JsonObject> result=new ArrayList<>();
+            for(int i=1;i<guide.size();i++) {
+                var from=point(guide.get(i-1).getAsJsonObject());var to=point(guide.get(i).getAsJsonObject());var bend=new BlockPoint(to.x(),from.z());
+                if(!from.equals(bend))result.add(segment(groupId,"TERRAIN_LINE_SPINE","TERRAIN_LINE_PATH",result.size(),Math.min(3,parameters.streetBandWidthBlocks()),from,bend));
+                if(!bend.equals(to))result.add(segment(groupId,"TERRAIN_LINE_SPINE","TERRAIN_LINE_PATH",result.size(),Math.min(3,parameters.streetBandWidthBlocks()),bend,to));
+            }
+            return result;
+        }
+        return null;
     }
 
     private static List<JsonObject> compactSkeleton(String groupId,

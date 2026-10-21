@@ -657,7 +657,7 @@ export const cityBlueprintSchema = strictObject({
           requiredStructureRef: nonEmptyString("旧方案可选的位置参考模板，不是景观存续依赖；新方案省略。"),
         }, ["groupId"]),
         growth: strictObject({seed: strictObject({x: {type:"integer"}, z: {type:"integer"}}, ["x","z"]),
-          targetCellCount: positiveInteger("景观独立目标 cell 数。"), allowedLandformTypes: {type:"array",items:{type:"string"}}
+          targetCellCount: positiveInteger("景观独立目标 cell 数。"), ruralMosaic:{type:"boolean"}, preserveVegetation:{type:"boolean"}, allowedLandformTypes: {type:"array",items:{type:"string"}}
         }, ["seed","targetCellCount","allowedLandformTypes"]),
         placementDomain: { type: "string",
           enum: ["URBAN_RESIDUAL", "FOUNDATION_EDGE", "BETWEEN_GROUPS", "ALONG_WATER"] },
@@ -1628,6 +1628,7 @@ function decorationVariant(type: string, params: Record<string, unknown>, requir
 
 function rectangleLayoutSchema() {
   return { ...strictObject({
+    natural: strictObject({mode:{type:"string",enum:["TERRAIN_LINE","SCATTER"],description:"TERRAIN_LINE 用于根 LINEAR 建筑组，按 context.terrainLines 选择 lineRef，不填 anchorBlock；SCATTER 用于根 GRID 组合，以完整小阵列为单位稀疏散布并连接乡间小路。"},lineRef:{type:"string"},rows:{type:"integer",minimum:1,maximum:8},spacingBlocks:{type:"integer",minimum:8,maximum:512},setbackBlocks:{type:"integer",minimum:0,maximum:128},radiusBlocks:{type:"integer",minimum:16,maximum:2048}},["mode"]),
     gapBlocks: { type: "integer", minimum: 4, maximum: 40, description: "完整边界间距，默认 8。" },
     columns: { type: "integer", minimum: 1, maximum: 180, description: "GRID 列数，默认 2。" },
     courtWidth: { type: "integer", minimum: 8, maximum: 256, description: "院落留空宽度，默认 36。" },

@@ -23,6 +23,17 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class CityMainRoadPlannerTest {
     private final CityMainRoadPlanner planner = new CityMainRoadPlanner();
 
+    @Test void canyonBridgeAdmissionRejectsUnknownClashingOrUnequalBanks() {
+        List<LandUseTerrainField.Cell> cells=new ArrayList<>();
+        for(int x=0;x<3;x++)cells.add(new LandUseTerrainField.Cell(x,0,x*32,0,32,x==1?40:64,0,0,0,false,0,100,"plains","plain","p",true));
+        var field=new LandUseTerrainField(LandUseTerrainField.SCHEMA,"city",new BlockBounds(0,0,95,31),32,cells);
+        assertTrue(CityMainRoadPlanner.dryCanyonLegal(field,new BlockPoint(20,16),new BlockPoint(76,16),5,List.of()));
+        assertFalse(CityMainRoadPlanner.dryCanyonLegal(field,new BlockPoint(20,16),new BlockPoint(76,16),5,List.of(new BlockBounds(40,14,44,18))));
+        assertFalse(CityMainRoadPlanner.dryCanyonLegal(field,new BlockPoint(20,16),new BlockPoint(76,17),5,List.of()));
+        var unknown=new LandUseTerrainField(field.schema(),field.cityId(),field.planningBounds(),32,List.of(cells.get(0),cells.get(2)));
+        assertFalse(CityMainRoadPlanner.dryCanyonLegal(unknown,new BlockPoint(20,16),new BlockPoint(76,16),5,List.of()));
+    }
+
     @Test void arrayReservesBothStreetEndsBeforeFillWithoutMovingBuildings() {
         List<JsonObject> anchors = List.of(anchor("a",new BlockBounds(8,8,14,14),new BlockPoint(14,15)));
         String original = anchors.toString();

@@ -21,6 +21,22 @@ final class CityBridgeSpanPlanner {
             int end=horizontal?band.bounds().maxX():band.bounds().maxZ();
             int acrossStart=horizontal?band.bounds().minZ():band.bounds().minX();
             int acrossEnd=horizontal?band.bounds().maxZ():band.bounds().maxX();
+            var firstBank=sample(samples,terrain,band,horizontal,start);
+            var lastBank=sample(samples,terrain,band,horizontal,end);
+            boolean drySpan=band.bridge()&&firstBank!=null&&lastBank!=null&&firstBank.sampled()&&lastBank.sampled()&&!firstBank.water()&&!lastBank.water()&&Math.abs(firstBank.elevation()-lastBank.elevation())<=4;
+            int dryDeck=drySpan?(int)Math.ceil(Math.max(firstBank.elevation(),lastBank.elevation())):0;
+            boolean hasGap=false;
+            for(int a=start;drySpan&&a<=end;a++) {var c=sample(samples,terrain,band,horizontal,a);if(c==null||!c.sampled()||c.water()||!Double.isFinite(c.elevation())||c.elevation()>dryDeck+1)drySpan=false;else if(c.elevation()<=dryDeck-8)hasGap=true;}
+            if(drySpan&&hasGap) {
+                for(int a=start;a<=end;a++)for(int cross=acrossStart;cross<=acrossEnd;cross++) {
+                    int x=horizontal?a:cross,z=horizontal?cross:a;var old=cells.get(new Key(x,z,0));
+                    if(old==null||!old.sourceId().equals(band.streetBandId()))continue;
+                    cells.put(new Key(x,z,0),new FeatureCell(old.sourceId(),x,z,band.surfaceBlockId(),0,FeatureKind.BRIDGE_DECK,HorizontalFacing.NONE,dryDeck));
+                    if(a==start||a==end)cells.remove(new Key(x,z,1));
+                    if(a>start&&a<end&&(cross==acrossStart||cross==acrossEnd))cells.put(new Key(x,z,1),new FeatureCell(old.sourceId(),x,z,band.bridgeRailBlockId().isBlank()?"minecraft:stone_brick_wall":band.bridgeRailBlockId(),1,FeatureKind.BRIDGE_RAIL,HorizontalFacing.NONE,dryDeck));
+                }
+                continue;
+            }
             for(int along=start;along<=end;along++) {
                 var water=sample(samples,terrain,band,horizontal,along);
                 if(water==null || !water.sampled() || !water.water())continue;

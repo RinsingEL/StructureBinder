@@ -467,6 +467,9 @@ public final class ProviderPlanningToolCatalog {
 
     private static JsonObject rectangleLayoutSchema() {
         return described(object(properties(
+                "natural", object(properties("mode",described(enumeration("TERRAIN_LINE","SCATTER"),"TERRAIN_LINE: root LINEAR building group follows context.terrainLines lineRef; no anchorBlock or parent composition. SCATTER: root GRID composition places complete child arrays irregularly around its anchorBlock and connects actual entrances with rural paths."),"lineRef",string(),
+                        "rows",boundedInteger(1,8,"Terrain line rows, default 1."),"spacingBlocks",boundedInteger(8,512,"Along-line pitch or minimum gap between complete farmstead units."),
+                        "setbackBlocks",boundedInteger(0,128,"Landward setback, default 8."),"radiusBlocks",boundedInteger(16,2048,"Scatter search radius, default 192.")),"mode"),
                 "gapBlocks", boundedInteger(4,40,"Complete envelope separation; default 8."),
                 "columns", boundedInteger(1,180,"GRID columns; default 2."),
                 "courtWidth", boundedInteger(8,256,"Reserved courtyard width; default 36."),
@@ -522,7 +525,7 @@ public final class ProviderPlanningToolCatalog {
                 "terrainPolicy", enumeration("CONFORM", "BALANCED", "ASSERTIVE"), "required", bool(),
                 "fillSelection", fillSelectionSchema(),
                 "growth", object(properties("seed",object(properties("x",integer(),"z",integer()),"x","z"),
-                        "targetCellCount",integer(),"allowedLandformTypes",array(string())),
+                        "targetCellCount",integer(),"allowedLandformTypes",array(string()),"ruralMosaic",bool(),"preserveVegetation",bool()),
                         "seed","targetCellCount","allowedLandformTypes"));
         return object(values, "landscapeId", "landscapeProfileRef", "purpose", "originMode",
                 "instanceCount", "parcelCount", "preferredPatchRefs", "terrainPolicy", "required",

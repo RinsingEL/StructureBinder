@@ -47,6 +47,15 @@ class CityBlueprintCodecTest {
         assertThrows(CityBlueprintContractException.class,()->codec.read(json));
     }
 
+    @Test void naturalLayoutRoundTripsAndRejectsUnknownCoordinateInstructions() throws IOException {
+        var json=fixture("valid_city_blueprint.json");var group=json.getAsJsonArray("groups").get(0).getAsJsonObject();
+        group.add("layout",JsonParser.parseString("{natural:{mode:'TERRAIN_LINE',lineRef:'shore_east',rows:2,spacingBlocks:32}}"));
+        var blueprint=codec.read(json);assertEquals(blueprint,codec.read(codec.write(blueprint)));
+        var scatter=json.deepCopy();scatter.getAsJsonArray("groups").get(0).getAsJsonObject().getAsJsonObject("layout").add("natural",JsonParser.parseString("{mode:'SCATTER',radiusBlocks:128}"));
+        assertEquals(codec.read(scatter),codec.read(codec.write(codec.read(scatter))));
+        group.getAsJsonObject("layout").getAsJsonObject("natural").addProperty("x",2);
+        assertThrows(CityBlueprintContractException.class,()->codec.read(json));
+    }
     private final CityBlueprintCodec codec = new CityBlueprintCodec();
     @Test void intentionalLayoutRoundTripsOnLeafAndNestedComposition() throws IOException {
         var json=fixture("valid_city_blueprint.json");

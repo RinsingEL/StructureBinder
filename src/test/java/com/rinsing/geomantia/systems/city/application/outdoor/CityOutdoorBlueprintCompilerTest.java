@@ -30,6 +30,16 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityOutdoorBlueprintCompilerTest {
+    @Test void ruralPreservationReservesLandWithoutEnqueuingClearingOrPlanting() {
+        var codec=new com.rinsing.geomantia.systems.city.application.CityBlueprintCodec();
+        var json=codec.write(blueprint());var landscape=json.getAsJsonObject("outdoorPlan").getAsJsonArray("landscapes").get(0).getAsJsonObject();
+        landscape.add("growth",JsonParser.parseString("{seed:{x:70,z:70},targetCellCount:64,allowedLandformTypes:[],ruralMosaic:true,preserveVegetation:true}"));
+        var design=codec.read(json);var d6=d6Plan();var reservation=capacity(design,d6);
+        var result=new CityOutdoorBlueprintCompiler().compile(design,d6,terrain(),catalog(),reservation);
+        String id=landscape.get("landscapeId").getAsString();
+        assertFalse(result.resolution().seedGroups().stream().anyMatch(g->g.groupId().startsWith(id+"::")));
+        assertTrue(result.resolution().warnings().stream().anyMatch(w->w.equals("RURAL_WOODLAND_PRESERVED:"+id)));
+    }
     @Test void publicRealmRunsThroughProductionLandUsePlanningAndFreezesItsReport() {
         var compiled=compile(d6Plan());
         var spec=new com.rinsing.geomantia.systems.city.domain.blueprint.CityPublicRealmSpec(JsonParser.parseString(

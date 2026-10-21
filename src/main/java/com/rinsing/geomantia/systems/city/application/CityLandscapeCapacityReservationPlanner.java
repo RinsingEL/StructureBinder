@@ -137,13 +137,17 @@ public final class CityLandscapeCapacityReservationPlanner {
             int parcel = (int)Math.min(subject.landscape().parcelCount()-1,
                     (long)selected.size() * subject.landscape().parcelCount() / target);
             selected.put(node.key(), parcel);
-            for (int[] direction : DIRECTIONS) {
+            int[][] growthDirections=intent.ruralMosaic()?new int[][]{{0,-1},{1,0},{0,1},{-1,0},{1,1},{1,-1},{-1,1},{-1,-1}}:DIRECTIONS;
+            for (int[] direction : growthDirections) {
+                if(direction[0]!=0&&direction[1]!=0 && (!passable(terrain.cells.get(new CellKey(node.key().x()+direction[0],node.key().z()))) || !passable(terrain.cells.get(new CellKey(node.key().x(),node.key().z()+direction[1])))))continue;
                 CellKey next = new CellKey(node.key().x()+direction[0], node.key().z()+direction[1]);
                 LandUseTerrainField.Cell neighbor = terrain.cells.get(next);
                 if (neighbor == null || !LandscapeTerrainContinuity.allows(subject.landscape().terrainPolicy().name(), cell, neighbor)
                         || !visited.add(next)) continue;
-                frontier.add(new Node(next, node.cost() + terrainStepCost(subject, neighbor)
-                        + valueNoise(seed, next.x(), next.z(), 3)*0.35));
+                double stepCost=intent.ruralMosaic()
+                        ?terrainStepCost(subject,neighbor)*Math.hypot(direction[0],direction[1])*Math.exp(valueNoise(seed^0x6a09e667f3bcc909L,next.x(),next.z(),8)*1.4)
+                        :terrainStepCost(subject, neighbor)+valueNoise(seed,next.x(),next.z(),3)*0.35;
+                frontier.add(new Node(next,node.cost()+stepCost));
             }
         }
         List<ParcelCapacity> parcels = new ArrayList<>();
@@ -165,7 +169,7 @@ public final class CityLandscapeCapacityReservationPlanner {
                     double bottom=lerp(selected.containsKey(new CellKey(ix,iz+1))?1:0,
                             selected.containsKey(new CellKey(ix+1,iz+1))?1:0,fx);
                     if (lerp(top,bottom,fz) < 0.5 + valueNoise(seed,x,z,Math.max(2,step/2))*0.06) continue;
-                    if (usesOneBlockSeparator(subject.landscape())) {
+                    if (!intent.ruralMosaic() && usesOneBlockSeparator(subject.landscape())) {
                         boolean separator=false;
                         for (int[] d:DIRECTIONS) {
                             Integer other=selected.get(new CellKey(Math.floorDiv(x+d[0],step),Math.floorDiv(z+d[1],step)));
@@ -176,6 +180,10 @@ public final class CityLandscapeCapacityReservationPlanner {
                     points.add(point);
                 }
             }
+        }
+        if(intent.ruralMosaic()) {
+            Set<BlockPoint> domain=new LinkedHashSet<>();byParcel.values().forEach(domain::addAll);
+            byParcel=CityRuralMosaic.partition(domain,subject.landscape().parcelCount(),field,seed^subject.landscape().landscapeId().hashCode());
         }
         for (Set<BlockPoint> points : byParcel.values()) {
             if (points.isEmpty()) continue;

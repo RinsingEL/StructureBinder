@@ -49,10 +49,12 @@ final class CityMainRoadPlanner {
         String hierarchy = string(roadProfile, "hierarchy");
         int internalWidth = internalStreetBands.stream()
                 .mapToInt(road -> intValue(road, "widthBlocks", 1)).max().orElse(1);
-        int mainWidth = nextOdd(Math.max(MINIMUM_MAIN_ROAD_WIDTH_BLOCKS, internalWidth + 2));
-        JsonObject plan = basePlan(blueprint, roadProfile, internalWidth, mainWidth);
+        int defaultWidth = nextOdd(Math.max(MINIMUM_MAIN_ROAD_WIDTH_BLOCKS, internalWidth + 2));
+        JsonObject plan = basePlan(blueprint, roadProfile, internalWidth, defaultWidth);
         plan.addProperty("skippedParentLinkCount", excludedRelationPairKeys.size());
-        if (!"HIERARCHICAL".equals(hierarchy)) {
+        boolean rural=blueprint.arrayCompositions().stream().anyMatch(c->c.layout()!=null&&c.layout().natural()!=null&&"SCATTER".equals(c.layout().natural().mode()));
+        if(rural)plan.addProperty("planningOwner","BLUEPRINT_TRAFFIC_AND_RURAL_SCATTER_PATHS");
+        if (!"HIERARCHICAL".equals(hierarchy) && !rural) {
             plan.addProperty("status", "not_required");
             plan.addProperty("reasonCode", "CITY_MAIN_ROAD_PROFILE_NOT_HIERARCHICAL");
             return Result.ok(List.of(), plan);
@@ -68,8 +70,8 @@ final class CityMainRoadPlanner {
         plan.addProperty("bridgeConnectionCount", bridgeConnections.size());
         List<Link> links;
         try {
-            links = desiredLinks(blueprint, groups, mainWidth + 2, structureObstacles,
-                    excludedRelationPairKeys);
+            links = desiredLinks(blueprint, groups, defaultWidth + 2, structureObstacles,
+                    excludedRelationPairKeys, "HIERARCHICAL".equals(hierarchy));
         } catch (IllegalArgumentException exception) {
             return Result.failed("CITY_BLUEPRINT_MAIN_ROAD_PARENT_GRAPH_DISCONNECTED",
                     exception.getMessage(), failedPlan(plan,
@@ -88,6 +90,7 @@ final class CityMainRoadPlanner {
         int sharedReuseBlocks = 0;
         int connectionIndex = 0;
         for (Link link : links) {
+            int mainWidth="RURAL_SCATTER_PATH".equals(link.graphRole())?3:defaultWidth;
             GroupGeometry from = groups.get(link.fromGroupId());
             GroupGeometry to = groups.get(link.toGroupId());
             if (from == null || to == null) { skippedConnections.add(skippedConnection(link, "CITY_MAIN_ROAD_ENDPOINT_GROUP_EMPTY", null, 0)); continue; }
@@ -107,7 +110,7 @@ final class CityMainRoadPlanner {
                         connectors = candidate; cellPath = candidateCells; selectedPolyline = candidatePolyline; break;
                     }
                 } else {
-                    var bridge = bridgeRoute(terrain, candidate, mainWidth + 2, structureObstacles);
+                    var bridge = bridgeRoute(terrain, candidate, mainWidth + 2, structureObstacles, canyonLink(blueprint,link));
                     if (bridge != null) { connectors = candidate; selectedBridge = bridge; break; }
                 }
             }
@@ -138,6 +141,7 @@ final class CityMainRoadPlanner {
                     }
                     List<JsonObject> bridgeBands = classifiedBridgeBands(connectionId, link, mainWidth,
                             bridge.polyline(), terrain);
+                    if(bridge.dryGap())bridgeBands=List.of(band(connectionId,link,0,mainWidth,bridge.polyline().get(0),bridge.polyline().get(bridge.polyline().size()-1),"CITY_BRIDGE"));
                     bridgeBands.forEach(band -> {
                         segmentIds.add(band.get("streetBandId").getAsString());
                         bands.add(band);
@@ -150,6 +154,7 @@ final class CityMainRoadPlanner {
                     bridgeJson.addProperty("provider", "city_surface_print");
                     bridgeJson.addProperty("bridgePolicy", "INDEPENDENT_BRIDGE_DECK_AND_RAIL");
                     bridgeJson.addProperty("waterSpanBlocks", bridge.waterSpanBlocks());
+                    bridgeJson.addProperty("crossingType",bridge.dryGap()?"DRY_CANYON":"WATER");
                     bridgeJson.addProperty("maximumBridgeLengthBlocks", MAXIMUM_BRIDGE_LENGTH_BLOCKS);
                     bridgeJson.add("streetBandIds", segmentIds);
                     bridgeConnections.add(bridgeJson);
@@ -258,7 +263,7 @@ final class CityMainRoadPlanner {
     private static BridgeRoute bridgeRoute(LandUseTerrainField terrain,
                                            ConnectorPair connectors,
                                            int width,
-                                           List<BlockBounds> obstacles) {
+                                           List<BlockBounds> obstacles, boolean allowCanyon) {
         BlockPoint from = connectors.from().point();
         BlockPoint to = connectors.to().point();
         List<List<BlockPoint>> candidates = new ArrayList<>();
@@ -268,16 +273,38 @@ final class CityMainRoadPlanner {
             candidates.add(List.of(from, new BlockPoint(to.x(), from.z()), to));
             candidates.add(List.of(from, new BlockPoint(from.x(), to.z()), to));
         }
+        if(allowCanyon && (from.x()==to.x()||from.z()==to.z()) && dryCanyonLegal(terrain,from,to,width,obstacles))
+            return new BridgeRoute(List.of(from,to),0,true);
         return candidates.stream()
                 .map(CityMainRoadPlanner::withoutDuplicatePoints)
                 .filter(points -> bridgePolylineLegal(points, terrain, width, obstacles))
-                .map(points -> new BridgeRoute(points, maximumConsecutiveWaterBlocks(points, terrain)))
+                .map(points -> new BridgeRoute(points, maximumConsecutiveWaterBlocks(points, terrain),false))
                 .filter(route -> route.waterSpanBlocks() > 0
                         && route.waterSpanBlocks() <= MAXIMUM_BRIDGE_LENGTH_BLOCKS)
                 .min(Comparator.comparingInt((BridgeRoute route) -> route.polyline().size())
                         .thenComparingInt(route -> polylineLength(route.polyline()))
                         .thenComparing(route -> route.polyline().toString()))
                 .orElse(null);
+    }
+
+    private static boolean canyonLink(CityBlueprint blueprint,Link link) {
+        return java.util.stream.Stream.of(link.fromGroupId(),link.toGroupId()).allMatch(id->blueprint.groups().stream().anyMatch(g->g.groupId().equals(id)&&g.layout()!=null&&g.layout().natural()!=null&&g.layout().natural().lineRef()!=null&&g.layout().natural().lineRef().startsWith("cliff_")));
+    }
+    static boolean dryCanyonLegal(LandUseTerrainField terrain,BlockPoint from,BlockPoint to,int width,List<BlockBounds> obstacles) {
+        if(from.x()!=to.x()&&from.z()!=to.z() || manhattan(from,to)>MAXIMUM_BRIDGE_LENGTH_BLOCKS)return false;
+        var a=terrain.cellAt(from.x(),from.z()).orElse(null);var b=terrain.cellAt(to.x(),to.z()).orElse(null);
+        if(a==null||b==null||!passable(a,false)||!passable(b,false)||Math.abs(a.elevation()-b.elevation())>4)return false;
+        double deck=Math.max(a.elevation(),b.elevation());boolean gap=false;
+        for(var point:unitPolyline(List.of(from,to))) {
+            if(!fullWidthInside(point,width,terrain.planningBounds())||blocked(point,width,obstacles))return false;
+            for(int cross=-width/2;cross<=width/2;cross++) {
+                int x=point.x()+(from.x()==to.x()?cross:0),z=point.z()+(from.z()==to.z()?cross:0);
+                var c=terrain.cellAt(x,z).orElse(null);
+                if(c==null||!c.sampled()||!Double.isFinite(c.elevation())||c.water()||c.elevation()>deck+1)return false;
+                if(c.elevation()<=deck-8)gap=true;
+            }
+        }
+        return gap;
     }
 
     private static List<BlockPoint> withoutDuplicatePoints(List<BlockPoint> points) {
@@ -538,14 +565,28 @@ final class CityMainRoadPlanner {
 
     private static List<Link> desiredLinks(CityBlueprint blueprint, Map<String, GroupGeometry> groups,
                                            int width, List<BlockBounds> obstacles,
-                                           Set<String> excludedRelationPairKeys) {
+                                           Set<String> excludedRelationPairKeys, boolean explicitConnections) {
         Map<String, Link> result = new LinkedHashMap<>();
         blueprint.relations().stream()
-                .filter(relation -> relation.relationKind() == CityBlueprint.RelationKind.CONNECTION)
+                .filter(relation -> explicitConnections && relation.relationKind() == CityBlueprint.RelationKind.CONNECTION)
                 .sorted(Comparator.comparing(CityBlueprint.Relation::fromGroupId)
                         .thenComparing(CityBlueprint.Relation::toGroupId))
                 .forEach(relation -> addLink(result, new Link(relation.fromGroupId(), relation.toGroupId(),
                         "BLUEPRINT_" + relation.relationKind().name(), "relation")));
+        for(var composition:blueprint.arrayCompositions()) {
+            if(composition.layout()==null||composition.layout().natural()==null||!"SCATTER".equals(composition.layout().natural().mode()))continue;
+            List<String> members=new ArrayList<>();members.add(composition.centerGroupId());members.addAll(composition.memberGroupIds());
+            members.removeIf(id->!groups.containsKey(id));if(members.isEmpty())continue;
+            Set<String> connected=new LinkedHashSet<>();connected.add(members.remove(0));
+            while(!members.isEmpty()) {
+                String from=null,to=null;double best=Double.POSITIVE_INFINITY;
+                for(String a:connected)for(String b:members) {
+                    var p=groups.get(a).center();var q=groups.get(b).center();double distance=Math.hypot(p.x()-q.x(),p.z()-q.z());
+                    if(distance<best){best=distance;from=a;to=b;}
+                }
+                addLink(result,new Link(from,to,"RURAL_SCATTER_PATH",composition.compositionId()));connected.add(to);members.remove(to);
+            }
+        }
         return List.copyOf(result.values());
     }
 
@@ -1014,7 +1055,7 @@ final class CityMainRoadPlanner {
     private record ConnectorPair(Connector from, Connector to) {
     }
 
-    private record BridgeRoute(List<BlockPoint> polyline, int waterSpanBlocks) {
+    private record BridgeRoute(List<BlockPoint> polyline, int waterSpanBlocks, boolean dryGap) {
         private BridgeRoute {
             polyline = List.copyOf(polyline);
         }

@@ -200,14 +200,16 @@ public final class CityBlueprintCodec {
     }
 
     private static CityBlueprint.LandscapeGrowth landscapeGrowth(JsonObject object, String path) {
-        exactFields(object, Set.of("seed", "targetCellCount", "allowedLandformTypes"), path);
+        exactFields(object, Set.of("seed", "targetCellCount", "allowedLandformTypes","ruralMosaic","preserveVegetation"), Set.of("ruralMosaic","preserveVegetation"), path);
         JsonObject seed = requiredObject(object, "seed", path + ".seed");
         exactFields(seed, Set.of("x", "z"), path + ".seed");
         return new CityBlueprint.LandscapeGrowth(new com.rinsing.geomantia.systems.city.domain.model.BlockPoint(
                 requiredInt(seed, "x", path + ".seed.x"), requiredInt(seed, "z", path + ".seed.z")),
                 positiveInt(object, "targetCellCount", path + ".targetCellCount"),
                 stringList(requiredArray(object, "allowedLandformTypes", path + ".allowedLandformTypes"),
-                        path + ".allowedLandformTypes"));
+                        path + ".allowedLandformTypes"),
+                object.has("ruralMosaic")&&requiredBoolean(object,"ruralMosaic",path),
+                object.has("preserveVegetation")&&requiredBoolean(object,"preserveVegetation",path));
     }
 
     private static CityBlueprint.LandscapeOwner landscapeOwner(JsonObject object, String path) {
@@ -443,7 +445,7 @@ public final class CityBlueprintCodec {
     }
 
     public static CityBlueprint.RectangleLayout layout(JsonObject value,String path) {
-        Set<String> fields=Set.of("gapBlocks","columns","courtWidth","courtDepth","faceInward","crossAlign","purpose");
+        Set<String> fields=Set.of("gapBlocks","columns","courtWidth","courtDepth","faceInward","crossAlign","purpose","natural");
         exactFields(value,fields,fields,path);
         return new CityBlueprint.RectangleLayout(value.has("gapBlocks")?requiredInt(value,"gapBlocks",path):8,
                 value.has("columns")?requiredInt(value,"columns",path):2,
@@ -451,7 +453,16 @@ public final class CityBlueprintCodec {
                 value.has("courtDepth")?requiredInt(value,"courtDepth",path):28,
                 value.has("faceInward")&&requiredBoolean(value,"faceInward",path),
                 value.has("crossAlign")?requiredString(value,"crossAlign",path):"START",
-                value.has("purpose")?requiredString(value,"purpose",path):"public-space");
+                value.has("purpose")?requiredString(value,"purpose",path):"public-space",
+                value.has("natural")?naturalLayout(requiredObject(value,"natural",path+".natural"),path+".natural"):null);
+    }
+    private static CityBlueprint.NaturalLayout naturalLayout(JsonObject value,String path) {
+        exactFields(value,Set.of("mode","lineRef","rows","spacingBlocks","setbackBlocks","radiusBlocks"),Set.of("lineRef","rows","spacingBlocks","setbackBlocks","radiusBlocks"),path);
+        return new CityBlueprint.NaturalLayout(requiredString(value,"mode",path),optionalString(value,"lineRef",path),
+                value.has("rows")?requiredInt(value,"rows",path):1,
+                value.has("spacingBlocks")?requiredInt(value,"spacingBlocks",path):64,
+                value.has("setbackBlocks")?requiredInt(value,"setbackBlocks",path):8,
+                value.has("radiusBlocks")?requiredInt(value,"radiusBlocks",path):192);
     }
     private static JsonObject layoutJson(CityBlueprint.RectangleLayout layout) {
         return new com.google.gson.Gson().toJsonTree(layout).getAsJsonObject();
@@ -829,6 +840,8 @@ public final class CityBlueprintCodec {
                 growth.add("seed", seed);
                 growth.addProperty("targetCellCount", landscape.growth().targetCellCount());
                 growth.add("allowedLandformTypes", strings(landscape.growth().allowedLandformTypes()));
+                if(landscape.growth().ruralMosaic())growth.addProperty("ruralMosaic",true);
+                if(landscape.growth().preserveVegetation())growth.addProperty("preserveVegetation",true);
                 item.add("growth", growth);
             }
             item.add("preferredPatchRefs", strings(landscape.preferredPatchRefs()));

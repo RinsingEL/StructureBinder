@@ -8,6 +8,20 @@ import static org.junit.jupiter.api.Assertions.*;
 import static com.rinsing.geomantia.systems.city.application.landuse.CityLandUseSurfacePrintPlan.*;
 
 class CityBridgeSpanPlannerTest {
+    @Test void explicitDryCanyonBridgeFreezesOneDeckHeightWithoutFillingValley() {
+        List<FeatureCell> features=new ArrayList<>();List<LandUseTerrainField.Cell> terrain=new ArrayList<>();
+        for(int x=0;x<=40;x++)for(int z=-2;z<=2;z++) {
+            features.add(new FeatureCell("bridge",x,z,"minecraft:stone_bricks",0,FeatureKind.BRIDGE_DECK,HorizontalFacing.NONE));
+            terrain.add(new LandUseTerrainField.Cell(x,z,x,z,1,x>3&&x<37?40:64,0,0,0,false,0,100,"plain","plain","p",true));
+        }
+        var field=new LandUseTerrainField(LandUseTerrainField.SCHEMA,"city",new BlockBounds(0,-2,40,2),1,terrain);
+        var band=new LandUseSourceResolver.RoadBand("bridge","network","CITY_BRIDGE",new BlockPoint(0,0),new BlockPoint(40,0),field.planningBounds(),5,"BRIDGE_DECK_RAIL");
+        var result=CityBridgeSpanPlanner.plan(features,List.of(band),field);
+        assertEquals(205,result.stream().filter(c->c.kind()==FeatureKind.BRIDGE_DECK&&c.targetSurfaceY()==64).count());
+        assertTrue(result.stream().allMatch(c->c.kind()==FeatureKind.BRIDGE_DECK||c.kind()==FeatureKind.BRIDGE_RAIL));
+        assertEquals(result,CityBridgeSpanPlanner.plan(features,List.of(band),field));
+    }
+
     @Test void waterRoadBecomesOneLevelBridgeWithBanksAndOpenCrossing() {
         List<FeatureCell> cells=new ArrayList<>();
         for(int x=-8;x<=24;x++)for(int z=-2;z<=2;z++)cells.add(new FeatureCell("road",x,z,
