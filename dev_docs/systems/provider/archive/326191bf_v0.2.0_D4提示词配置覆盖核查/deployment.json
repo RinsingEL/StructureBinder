@@ -1,0 +1,132 @@
+{
+  "instance": "D:\\PCL2-2.8.12\\.minecraft\\versions\\1.20.1-Forge_47.4.23",
+  "backup": "D:\\PCL2-2.8.12\\.minecraft\\versions\\1.20.1-Forge_47.4.23\\codex_backups\\20261020-115938_latest-d4-prompts",
+  "source_commit": "eaf91397d676643b16e6000d748cdc9c469be7cf",
+  "status": "verified",
+  "files": [
+    {
+      "source": "E:\\Mod_Dev\\StructureBinder\\build\\libs\\geomantia-0.2.0.jar",
+      "relative": "mods/geomantia-0.2.0.jar",
+      "kind": "mod",
+      "old_sha256": "15490466f3efc136961924ab2962a83930164a12586be34dcd719f8adc650eb5",
+      "new_sha256": "c7f3bdfe404e69d1b0c239c7fbd1ffc66f4ef536ab066f88ea7ee75812146f4a",
+      "changed": true
+    },
+    {
+      "source": "E:\\Mod_Dev\\StructureBinder\\build\\libs\\geomantia-0.2.0-harness.jar",
+      "relative": "mods/geomantia-0.2.0-harness.jar",
+      "kind": "mod",
+      "old_sha256": "0c369c51a732856f59a9bc166d49f44d2367902a27933deb431f3671e47ddaa1",
+      "new_sha256": "6e2d8c5c3943d44cd0857074d785acd7e50a6a945defdd86d39fbce362d71614",
+      "changed": true
+    },
+    {
+      "source": "E:\\Mod_Dev\\StructureBinder\\build\\libs\\geomantia-0.2.0-map.jar",
+      "relative": "mods/geomantia-0.2.0-map.jar",
+      "kind": "mod",
+      "old_sha256": "5080daafd021eaaa4d3da2c673ac441d67e141e52f5bd6dbef6fe0eb2b40351d",
+      "new_sha256": "503d63136eecf24c5ff358aa026e0f98ce312e984e0e64940673eace361d6a55",
+      "changed": true
+    },
+    {
+      "source": "E:\\Mod_Dev\\StructureBinder\\src\\main\\resources\\geomantia\\prompts\\README.md",
+      "relative": "config/geomantia/prompts/README.md",
+      "kind": "prompt",
+      "old_sha256": "e838e8cbf772e672b0110ff614a187ab6715ba81d972044b7b8153b5bb317db7",
+      "new_sha256": "e838e8cbf772e672b0110ff614a187ab6715ba81d972044b7b8153b5bb317db7",
+      "changed": false
+    },
+    {
+      "source": "E:\\Mod_Dev\\StructureBinder\\src\\main\\resources\\geomantia\\prompts\\agent.md",
+      "relative": "config/geomantia/prompts/agent.md",
+      "kind": "prompt",
+      "old_sha256": "d8f144b6a76749598974427dee64f68c1a699ec63f3a069e8ddcb60c8f68b514",
+      "new_sha256": "d8f144b6a76749598974427dee64f68c1a699ec63f3a069e8ddcb60c8f68b514",
+      "changed": false
+    },
+    {
+      "source": "E:\\Mod_Dev\\StructureBinder\\src\\main\\resources\\geomantia\\prompts\\realm\\t1.md",
+      "relative": "config/geomantia/prompts/realm/t1.md",
+      "kind": "prompt",
+      "old_sha256": "4d9f8bf9a2008821cc11cb4e05e3043400bafa05cbefcd305d6924580436b787",
+      "new_sha256": "4d9f8bf9a2008821cc11cb4e05e3043400bafa05cbefcd305d6924580436b787",
+      "changed": false
+    },
+    {
+      "source": "E:\\Mod_Dev\\StructureBinder\\src\\main\\resources\\geomantia\\prompts\\realm\\environment_style.md",
+      "relative": "config/geomantia/prompts/realm/environment_style.md",
+      "kind": "prompt",
+      "old_sha256": "f28d60fcd7782fed1409d1d99a9449705b6994161fad1c68ade786ab6a3e40c0",
+      "new_sha256": "f28d60fcd7782fed1409d1d99a9449705b6994161fad1c68ade786ab6a3e40c0",
+      "changed": false
+    },
+    {
+      "source": "E:\\Mod_Dev\\StructureBinder\\src\\main\\resources\\geomantia\\prompts\\providers\\harness.md",
+      "relative": "config/geomantia/prompts/providers/harness.md",
+      "kind": "prompt",
+      "old_sha256": "ab01d3d2fb3c867c38903aa8833d1fedf91c970a7d4ae3ba8a25bf840d127301",
+      "new_sha256": "ab01d3d2fb3c867c38903aa8833d1fedf91c970a7d4ae3ba8a25bf840d127301",
+      "changed": false
+    },
+    {
+      "source": "E:\\Mod_Dev\\StructureBinder\\src\\main\\resources\\geomantia\\prompts\\providers\\direct.md",
+      "relative": "config/geomantia/prompts/providers/direct.md",
+      "kind": "prompt",
+      "old_sha256": "2b3e9cd687528cb543b90bcf140efa2a4c73500399f7fbffa556d9b9dea52dd4",
+      "new_sha256": "2b3e9cd687528cb543b90bcf140efa2a4c73500399f7fbffa556d9b9dea52dd4",
+      "changed": false
+    },
+    {
+      "source": "E:\\Mod_Dev\\StructureBinder\\src\\main\\resources\\geomantia\\prompts\\city\\d4_v2\\overview.md",
+      "relative": "config/geomantia/prompts/city/d4_v2/overview.md",
+      "kind": "prompt",
+      "old_sha256": "61b0f4efb4119232c1e15df0080c4d07a36ea6b4c9a7351c7c8b560dc6c9157a",
+      "new_sha256": "63e82111a13aa6ab5ae205232adfebcd31676633acb8454b6c8f5461460abb56",
+      "changed": true
+    },
+    {
+      "source": "E:\\Mod_Dev\\StructureBinder\\src\\main\\resources\\geomantia\\prompts\\city\\d4_v2\\district.md",
+      "relative": "config/geomantia/prompts/city/d4_v2/district.md",
+      "kind": "prompt",
+      "old_sha256": "df15bd8dbe6bc5075ea4f64f29f6e75d531a519e447f2670d9b000acd0b7b51a",
+      "new_sha256": "1edd86d91691bc65369ef5109976b00accfd647a778263ea923abeb696423f07",
+      "changed": true
+    },
+    {
+      "source": "E:\\Mod_Dev\\StructureBinder\\src\\main\\resources\\geomantia\\prompts\\city\\d4_v2\\integration.md",
+      "relative": "config/geomantia/prompts/city/d4_v2/integration.md",
+      "kind": "prompt",
+      "old_sha256": "647e0ba5a647a6da91436482b45eeeabbf4a38c9642b6dab3569730ac3cfca46",
+      "new_sha256": "708e9ba965923cf77dd4ca8e0a4781d4180d5dc42eefe34005ba3af0de506ed7",
+      "changed": true
+    },
+    {
+      "source": "E:\\Mod_Dev\\StructureBinder\\src\\main\\resources\\geomantia\\prompts\\city\\d4_v2\\finalize.md",
+      "relative": "config/geomantia/prompts/city/d4_v2/finalize.md",
+      "kind": "prompt",
+      "old_sha256": "939e7d5745c124ce311fc12b0d8a75b4835604f583d57a7c3ac2a22b82e1ff43",
+      "new_sha256": "8e87d137e9a976ef5e2e5b606d3ece13c38c4475ddfd7fc33cb1b6028f9c0653",
+      "changed": true
+    },
+    {
+      "source": "E:\\Mod_Dev\\StructureBinder\\src\\main\\resources\\geomantia\\prompts\\city\\d4_v2\\complete.md",
+      "relative": "config/geomantia/prompts/city/d4_v2/complete.md",
+      "kind": "prompt",
+      "old_sha256": "d03af85643e35fae5203eb020ed1e3d29a6ca01849c0496914ff57d37f504816",
+      "new_sha256": "d03af85643e35fae5203eb020ed1e3d29a6ca01849c0496914ff57d37f504816",
+      "changed": false
+    },
+    {
+      "source": "E:\\Mod_Dev\\StructureBinder\\src\\main\\resources\\geomantia\\prompts\\city\\d4_v2\\handbook.md",
+      "relative": "config/geomantia/prompts/city/d4_v2/handbook.md",
+      "kind": "prompt",
+      "old_sha256": "19cfafc2a072c4a6b35be725015a8958fc16c8e7f2ac5e5edcc571964851c9b4",
+      "new_sha256": "395ab25697febfe62a5cfe39f94a6e17808f1477b366e339e7cb2f5c7f3c09d4",
+      "changed": true
+    }
+  ],
+  "protected_config_count": 34357,
+  "save_file_metadata_count": 160505,
+  "other_mod_count": 11,
+  "custom_prompt_count": 1
+}

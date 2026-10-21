@@ -1,0 +1,24 @@
+{
+  "command": "gradlew.bat test coreMcpTest build verifyAddonPackaging --console=plain",
+  "result": "BUILD SUCCESSFUL",
+  "test_results": {
+    "test": {
+      "tests": 1426,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 15
+    },
+    "coreMcpTest": {
+      "tests": 4,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "adventureTest": {
+      "tests": 13,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  }
+}
