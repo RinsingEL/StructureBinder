@@ -244,7 +244,14 @@ public final class CityD4Workflow {
                 for(var body:object(state,"bodies").entrySet()) validateCore(body.getValue().getAsJsonObject());
                 require(array(state,"districts").size()==object(state,"bodies").size(),"请先完成全部功能区设计。");
                 require(request.has("functionsPreserved")&&request.get("functionsPreserved").isJsonPrimitive()&&request.getAsJsonPrimitive("functionsPreserved").isBoolean()&&request.get("functionsPreserved").getAsBoolean(),"确认所有功能区的有效主体仍成立后才能提交；仅剩无关配套不算保留功能。");
-                require(!CityD4GenerationHandoff.describe(draft).get("requiredContentMissing").getAsBoolean(),"当前平面预览缺少核心或必需配套，先定向修订并再编译；不能用可选填充代替必需功能。");
+                JsonObject currentHandoff = CityD4GenerationHandoff.describe(draft);
+                if (currentHandoff.get("requiredContentMissing").getAsBoolean()) {
+                    JsonObject rejected = error(state, "CITY_D4_REQUIRED_CONTENT_MISSING",
+                            "当前平面预览缺少核心或必需配套，先定向修订并再编译；不能用可选填充代替必需功能。");
+                    rejected.add("generationHandoff", currentHandoff);
+                    rejected.add("baseDraftHash", draft.get("baseDraftHash"));
+                    return rejected;
+                }
                 for(var entry:object(state,"bodies").entrySet()) require(CityD4LayoutPolicy.hasContent(draft,entry.getValue().getAsJsonObject()),"功能区 "+entry.getKey()+" 已全部为空，不能提交。");
                 JsonObject review=new JsonObject();review.add("baseDraftHash",draft.get("baseDraftHash"));review.addProperty("overview",true);review.add("assessment",request.get("assessment"));
                 JsonObject assessed=CityDesignReviewWorkflow.submitRequest(dir,contextId,draft,newRequest(review));

@@ -8,6 +8,38 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class CityD4WorkflowTest {
+    @Test void finalizeReturnsCurrentMissingContentAndCollisionEvidenceWithoutCompleting() throws Exception {
+        districts();mark();
+        JsonObject draft = CityBlueprintDraft.current(dir,"ctx","city");
+        JsonObject layout = draft.getAsJsonObject("compiledLayout");
+        layout.getAsJsonArray("anchors").remove(0);
+        JsonObject kept = layout.getAsJsonArray("anchors").get(0).getAsJsonObject();
+        kept.addProperty("anchorId", "retained_b");
+        kept.add("collisionEnvelope", json("{minX:0,minZ:0,maxX:8,maxZ:8}"));
+        layout.add("skippedMembers", JsonParser.parseString("[{groupId:'a',structureRef:'core',reasonCode:'OCCUPIED_ENVELOPE_OVERLAP',plannedBounds:{minX:4,minZ:4,maxX:10,maxZ:10}}]"));
+        Files.writeString(dir.resolve(CityBlueprintDraft.FILE), draft.toString());
+        JsonObject confirm=currentRequest();confirm.addProperty("functionsPreserved",true);
+        int revision=state().get("revision").getAsInt();
+        JsonObject rejected=call("city_d4_finalize",confirm);
+        assertFalse(rejected.get("ok").getAsBoolean());
+        assertEquals("CITY_D4_REQUIRED_CONTENT_MISSING",rejected.get("reasonCode").getAsString());
+        assertEquals(draft.get("baseDraftHash"),rejected.get("baseDraftHash"));
+        JsonObject gap=rejected.getAsJsonObject("generationHandoff").getAsJsonArray("missingRequiredStructures").get(0).getAsJsonObject();
+        assertEquals("a",gap.get("groupId").getAsString());
+        assertEquals("CORE",gap.get("designRole").getAsString());
+        assertEquals("civic",gap.getAsJsonArray("districtIds").get(0).getAsString());
+        assertEquals("retained_b",gap.getAsJsonArray("placementEvidence").get(0).getAsJsonObject()
+                .getAsJsonArray("plannedBoundsOverlaps").get(0).getAsJsonObject().get("anchorId").getAsString());
+        assertEquals(revision,state().get("revision").getAsInt());
+        assertFalse(Files.exists(dir.resolve("city_d4_generation_handoff.json")));
+        assertEquals(2,compiled);
+        // The next response is derived again from the current draft, not cached failure evidence.
+        layout.add("skippedMembers",new JsonArray());
+        Files.writeString(dir.resolve(CityBlueprintDraft.FILE),draft.toString());
+        JsonObject next=call("city_d4_finalize",confirm);
+        assertTrue(next.getAsJsonObject("generationHandoff").getAsJsonArray("missingRequiredStructures")
+                .get(0).getAsJsonObject().getAsJsonArray("placementEvidence").isEmpty());
+    }
     @Test void populationSurvivesSubmissionRevisionExpansionAndReloadWithoutChangingOtherDistricts() throws Exception {
         overview();
         var budget = json("{purpose:'teaching',residents:12,jobs:[{profession:'teacher',name:'Teacher',count:3,functions:['teaching'],servesMeals:false}],housingGroupIds:['a']}");

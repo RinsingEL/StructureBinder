@@ -21,7 +21,38 @@ final class CityD4GenerationHandoff {
                 });
                 boolean core=array(blueprint,"districtDesigns").asList().stream().anyMatch(d->{JsonObject role=d.getAsJsonObject();return groupId.equals(text(role,"coreGroupId"))&&ref.getAsString().equals(text(role,"coreStructureRef"));});
                 item.addProperty("designRole",core?"CORE":"REQUIRED_SUPPORT");item.addProperty("retainedInLayout",retained);required.add(item);
-                if(!retained)missing.add(item.deepCopy());
+                if(!retained) {
+                    JsonObject gap = item.deepCopy();
+                    JsonArray districts = new JsonArray(), evidence = new JsonArray();
+                    for (var d : array(blueprint, "districtDesigns")) {
+                        JsonObject district = d.getAsJsonObject();
+                        if (array(district, "groupIds").asList().stream().anyMatch(id -> groupId.equals(id.getAsString())))
+                            districts.add(text(district, "districtId"));
+                    }
+                    for (var s : array(layout, "skippedMembers")) {
+                        JsonObject skipped = s.getAsJsonObject();
+                        if (!groupId.equals(text(skipped, "groupId")) || !ref.getAsString().equals(text(skipped, "structureRef"))) continue;
+                        JsonObject attempt = skipped.deepCopy();
+                        JsonArray overlaps = new JsonArray();
+                        JsonObject planned = object(skipped, "plannedBounds");
+                        if (hasBounds(planned)) for (var a : array(layout, "anchors")) {
+                            JsonObject anchor = a.getAsJsonObject(), occupied = object(anchor, "collisionEnvelope");
+                            if (hasBounds(occupied) && CityStructureCandidateEnvelope.bounds(planned)
+                                    .overlaps(CityStructureCandidateEnvelope.bounds(occupied))) {
+                                JsonObject collision = new JsonObject();
+                                for (String key : List.of("anchorId", "placementGroupId", "blueprintStructureRef", "collisionEnvelope"))
+                                    if (anchor.has(key)) collision.add(key, anchor.get(key).deepCopy());
+                                overlaps.add(collision);
+                            }
+                        }
+                        // Geometric evidence at the nominal slot, not a claim about every attempted origin.
+                        attempt.add("plannedBoundsOverlaps", overlaps);
+                        evidence.add(attempt);
+                    }
+                    gap.add("districtIds", districts);
+                    gap.add("placementEvidence", evidence);
+                    missing.add(gap);
+                }
             }
         }
         for(var e:array(object(object(draft,"compiledResult"),"compileTrace"),"selections")) {
@@ -38,6 +69,7 @@ final class CityD4GenerationHandoff {
         result.addProperty("instruction","D4 只冻结平面设计。后续生成保留每区核心与必需配套，解决 terrainRequirements 中的高差/水域适配，核对 missingRequiredStructures；不得把跳过内容或预览当作已施工。精确台地、支撑、跨水施工和真实游玩验收另行完成。");
         return result;
     }
+    private static boolean hasBounds(JsonObject o) { return List.of("minX", "minZ", "maxX", "maxZ").stream().allMatch(o::has); }
     private static JsonObject object(JsonObject o,String k){return o.has(k)&&o.get(k).isJsonObject()?o.getAsJsonObject(k):new JsonObject();}
     private static JsonArray array(JsonObject o,String k){return o.has(k)&&o.get(k).isJsonArray()?o.getAsJsonArray(k):new JsonArray();}
     private static String text(JsonObject o,String k){return o.has(k)&&o.get(k).isJsonPrimitive()?o.get(k).getAsString():"";}

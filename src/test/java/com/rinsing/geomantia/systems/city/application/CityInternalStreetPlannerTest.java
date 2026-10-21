@@ -11,6 +11,58 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CityInternalStreetPlannerTest {
+    @Test void trimsEmptyTailBeyondOnlyJunctionWithoutChangingInput() {
+        JsonObject tail = road("tail", -2789, 5269, -2719, 5269);
+        JsonObject main = road("main", -2789, 5250, -2789, 5280);
+        main.addProperty("roadHierarchy", "MAIN");
+        String original = tail.toString();
+        var result = planner.finalizeSkeleton(List.of(tail), List.of(main), List.of());
+        JsonObject kept = result.streetBands().get(0);
+        assertTrue(kept.getAsJsonObject("bounds").get("maxX").getAsInt() < -2780);
+        assertTrue(CityStructureCandidateEnvelope.bounds(kept.getAsJsonObject("bounds"))
+                .overlaps(CityStructureCandidateEnvelope.bounds(main.getAsJsonObject("bounds"))));
+        assertEquals(1, result.trace().get("trimmedUnusedTailSegmentCount").getAsInt());
+        assertEquals(original, tail.toString());
+        assertEquals(result, planner.finalizeSkeleton(List.of(tail), List.of(main), List.of()));
+    }
+
+    @Test void keepsTransitBetweenTwoJunctionsAndTrimsBothVerticalEnds() {
+        JsonObject tail = road("tail", 0, 100, 0, -100);
+        var result = planner.finalizeSkeleton(List.of(tail),
+                List.of(road("a", -10, -20, 10, -20), road("b", -10, 30, 10, 30)), List.of());
+        JsonObject kept = result.streetBands().get(0);
+        assertEquals(-21, kept.getAsJsonObject("bounds").get("minZ").getAsInt());
+        assertEquals(31, kept.getAsJsonObject("bounds").get("maxZ").getAsInt());
+        assertEquals(31, kept.getAsJsonObject("start").get("z").getAsInt());
+        assertEquals(kept.get("bounds"), kept.get("platformBounds"));
+    }
+
+    private static JsonObject road(String id, int x1, int z1, int x2, int z2) {
+        JsonObject road = new JsonObject();
+        road.addProperty("streetBandId", id); road.addProperty("groupId", "compact");
+        road.addProperty("widthBlocks", 3); road.addProperty("roadKind", "LINEAR_STREET_BAND");
+        road.add("start", point(x1, z1)); road.add("end", point(x2, z2));
+        road.add("bounds", CityStructureCandidateEnvelope.boundsJson(
+                new com.rinsing.geomantia.systems.city.domain.model.BlockBounds(
+                        Math.min(x1,x2)-(x1==x2?1:0), Math.min(z1,z2)-(z1==z2?1:0),
+                        Math.max(x1,x2)+(x1==x2?1:0), Math.max(z1,z2)+(z1==z2?1:0))));
+        return road;
+    }
+
+    @Test void trimsFrontageOnlyAfterRemoteEntranceHasConnected() {
+        JsonObject house = anchor("compact_house", "fill", 16, 0, 24, 8, new JsonObject());
+        house.add("templatePlacementPlan", com.google.gson.JsonParser.parseString(
+                "{transformed:{roadEntrances:[{entranceId:'front',direction:'SOUTH',worldPosition:{x:20,z:8}}]}}"));
+        JsonObject street = road("frontage", -100, 20, 100, 20);
+        var result = planner.finalizeSkeleton(List.of(street), List.of(), List.of(house));
+        JsonObject kept = result.streetBands().get(0);
+        var bounds = CityStructureCandidateEnvelope.bounds(kept.getAsJsonObject("bounds"));
+        assertTrue(bounds.minX() > -90 && bounds.maxX() < 90);
+        assertFalse(result.trace().getAsJsonArray("accessOutcomes").get(0).getAsJsonObject()
+                .get("status").getAsString().equals("UNRESOLVED"));
+        assertTrue(result.streetBands().stream().skip(1)
+                .anyMatch(b -> bounds.overlaps(CityStructureCandidateEnvelope.bounds(b.getAsJsonObject("bounds")))));
+    }
     private final CityBlueprintGroupLayoutPlanner layout = new CityBlueprintGroupLayoutPlanner();
     private final CityInternalStreetPlanner planner = new CityInternalStreetPlanner();
 

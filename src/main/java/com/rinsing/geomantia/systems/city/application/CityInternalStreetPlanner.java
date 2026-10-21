@@ -164,6 +164,27 @@ final class CityInternalStreetPlanner {
                 accessOutcomes.add(accessOutcome(entrance, "CONNECTED_BY_SHORT_ALLEY", ""));
             }
         }
+        // Review after access routing so distant frontage keeps its actual alley landing.
+        List<JsonObject> finalNetwork = new ArrayList<>(network);
+        finalNetwork.addAll(shortAlleys);
+        finalNetwork.addAll(networkExtensions);
+        com.google.gson.JsonArray trimmed = new com.google.gson.JsonArray();
+        for (var iterator = retained.iterator(); iterator.hasNext();) {
+            JsonObject band = iterator.next();
+            JsonObject before = band.deepCopy();
+            if (!trimUnusedEnds(band, finalNetwork, parsed)) {
+                removedIds.add(string(band, "streetBandId"));
+                iterator.remove();
+                continue;
+            }
+            if (!before.equals(band)) {
+                JsonObject change = new JsonObject();
+                change.addProperty("streetBandId", string(band, "streetBandId"));
+                change.add("previousBounds", before.get("bounds"));
+                change.add("retainedBounds", band.get("bounds").deepCopy());
+                trimmed.add(change);
+            }
+        }
         int retainedSkeletonCount = retained.size();
         retained.addAll(networkExtensions);
         retained.addAll(shortAlleys);
@@ -173,11 +194,54 @@ final class CityInternalStreetPlanner {
         trace.addProperty("reservedSkeletonSegmentCount", skeletonBands.size());
         trace.addProperty("retainedSkeletonSegmentCount", retainedSkeletonCount);
         trace.addProperty("removedUnusedSegmentCount", removedIds.size());
+        trace.addProperty("trimmedUnusedTailSegmentCount", trimmed.size());
+        trace.add("trimmedStreetBands", trimmed);
         trace.addProperty("networkExtensionSegmentCount", networkExtensions.size());
         trace.addProperty("shortAlleySegmentCount", shortAlleys.size());
         trace.add("removedStreetBandIds", removedIds);
         trace.add("accessOutcomes", accessOutcomes);
         return new Finalization(List.copyOf(retained), trace);
+    }
+
+    private static boolean trimUnusedEnds(JsonObject band, List<JsonObject> network, List<Anchor> anchors) {
+        BlockPoint start = point(object(band, "start")), end = point(object(band, "end"));
+        boolean alongX = start.x() != end.x();
+        BlockBounds original = bounds(band);
+        int low = alongX ? original.minX() : original.minZ();
+        int high = alongX ? original.maxX() : original.maxZ();
+        int usedLow = high, usedHigh = low;
+        boolean used = false;
+        for (JsonObject other : network) {
+            if (other == band || !original.overlaps(bounds(other))) continue;
+            BlockBounds crossing = bounds(other);
+            usedLow = Math.min(usedLow, Math.max(low, alongX ? crossing.minX() : crossing.minZ()));
+            usedHigh = Math.max(usedHigh, Math.min(high, alongX ? crossing.maxX() : crossing.maxZ()));
+            used = true;
+        }
+        for (Anchor anchor : anchors) for (Entrance entrance : entrances(anchor)) {
+            if (distanceToBand(entrance.point(), band) > serviceDistance(band)) continue;
+            int landing = Math.max(low, Math.min(high, alongX ? entrance.point().x() : entrance.point().z()));
+            usedLow = Math.min(usedLow, landing);
+            usedHigh = Math.max(usedHigh, landing);
+            used = true;
+        }
+        if (!used) return false;
+        if (usedLow == low && usedHigh == high) return true;
+        // Keep a directed segment even at a single one-block landing; downstream
+        // cross-section consumers infer the axis from distinct endpoints.
+        if (usedLow == usedHigh && low < high) {
+            if (usedHigh < high) usedHigh++;
+            else usedLow--;
+        }
+        boolean forward = alongX ? start.x() <= end.x() : start.z() <= end.z();
+        int first = forward ? usedLow : usedHigh, last = forward ? usedHigh : usedLow;
+        band.add("start", (alongX ? new BlockPoint(first, start.z()) : new BlockPoint(start.x(), first)).asJson());
+        band.add("end", (alongX ? new BlockPoint(last, end.z()) : new BlockPoint(end.x(), last)).asJson());
+        BlockBounds clipped = alongX ? new BlockBounds(usedLow, original.minZ(), usedHigh, original.maxZ())
+                : new BlockBounds(original.minX(), usedLow, original.maxX(), usedHigh);
+        band.add("bounds", CityStructureCandidateEnvelope.boundsJson(clipped));
+        band.add("platformBounds", CityStructureCandidateEnvelope.boundsJson(clipped));
+        return true;
     }
 
     List<JsonObject> plan(String groupId,
