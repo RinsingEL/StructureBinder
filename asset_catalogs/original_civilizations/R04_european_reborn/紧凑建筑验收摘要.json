@@ -1147,5 +1147,8 @@
       "nbt_sha256": "6e674f236bfa6a97cb5b3464016e18618eab45c92480d0d484d77a12709c126e",
       "author_sha256": "2f81264273ee92ceee4c6d1295a536043a9c0a40f137cbadd3ecbbaca8a4ddb3"
     }
-  ]
+  ],
+  "design_quality": "rejected_by_user",
+  "current_status": "functional_scale_prototypes",
+  "quality_feedback": "2026-10-21 用户认为缺乏特色，不能以离线技术验收代替设计质量。"
 }

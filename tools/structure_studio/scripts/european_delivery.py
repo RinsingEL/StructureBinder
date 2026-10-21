@@ -16,7 +16,7 @@ for key in sorted(get_builders()):
     validation=json.loads((d/'validation.json').read_text(encoding='utf-8'))
     capture=json.loads((d/'previews/capture.json').read_text(encoding='utf-8'))
     living=json.loads((d/'living_facilities.json').read_text(encoding='utf-8'))
-    assert review['status']=='accepted'
+    assert review['status'] in ('accepted','needs_redesign')
     for record in (review,capture):
         assert record['nbt_sha256']==sha256(d/'structure.nbt')
         assert record['author_sha256']==sha256(d/'author.json')
@@ -28,9 +28,9 @@ for key in sorted(get_builders()):
         shots=len(capture['shots']),nbt_sha256=sha256(d/'structure.nbt'),author_sha256=sha256(d/'author.json')))
 write_json(root/'紧凑建筑验收摘要.json',dict(date='2026-10-21',scope='offline_asset_review',
     models=len(rows),new_versions=61,revised_versions=7,shots=sum(r['shots'] for r in rows),
-    runtime_installed=False,worldgen_verified=False,rows=rows))
-lines=['# 欧洲紧凑建筑 · 本轮交付','',
-    '2026-10-21。本轮 68 个版本：EU-27～45 的 19 个新增类型及变体、EU-46～67 的 22 个地域配套类型，共 61 个新建版本；另有 7 个既有类型的修订版。旧版保留，欧洲目录现共 94 个版本、67 个独立编号。','',
+    runtime_installed=False,worldgen_verified=False,design_quality='rejected_by_user',current_status='functional_scale_prototypes',rows=rows))
+lines=['# 欧洲紧凑建筑 · 原型批次记录','','> 用户反馈缺少特色：本批设计质量结论撤回，保留为功能与尺度原型。四栋独立重设计见[特色重设计](特色重设计.md)。','',
+    '2026-10-21。本轮 68 个版本：EU-27～45 的 19 个新增类型及变体、EU-46～67 的 22 个地域配套类型，共 61 个新建版本；另有 7 个既有类型的修订版。旧版保留，原型批次结束时欧洲目录共 94 个版本、67 个独立编号。','',
     '全部完成最终 NBT 数据、离线通路检查与外观／分层图审，逐项 review.json 绑定当前 NBT 和作者文件双哈希。图审是本轮作者判断，不代表用户已认可审美。','',
     '未安装到游戏实例，未验证实际世界生成、NPC 路径、动物通过、流体、机器或夜间照明。坡地小屋目前只声明两格坡差；栈桥声明固定岸高与水位基准，不代表适配所有地形。','',
     '[交互图册](紧凑建筑图册.html) · [逐项验收摘要](紧凑建筑验收摘要.json) · [制作清单](补充建模清单.md)','',
@@ -52,6 +52,6 @@ cards=[]
 for r in rows:
     key=r['id'];w,h,d=r['size_xyz'];search=html.escape(key+' '+r['name']+' '+r['group'],quote=True)
     cards.append(f'<article data-search="{search}" data-group="{r["group"]}"><a href="models/{key}/previews/front.png"><img loading="lazy" src="models/{key}/previews/front.png" alt="{html.escape(r["name"])}"></a><h2>{html.escape(r["name"])}</h2><p>{key} · {w}×{d}×{h} · {r["group"]}</p><nav><a href="models/{key}/previews/roof-off.png">去屋顶</a> <a href="models/{key}/previews/floor-1.png">首层</a> <a href="models/{key}/previews/back.png">背面</a></nav></article>')
-page='''<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>欧洲紧凑建筑图册</title><style>body{margin:0;background:#ece8df;color:#272c2b;font:16px/1.6 system-ui}header{padding:32px 5vw;background:#24332f;color:#faf7ed}h1{margin:0}main{padding:24px 5vw}input,select{padding:10px;border:1px solid #a8b0a8;border-radius:5px;font:inherit;margin:5px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px}article{background:white;border:1px solid #d1d5cc;border-radius:8px;overflow:hidden}article img{width:100%;display:block}h2{font-size:18px;margin:12px 16px 2px}article p,nav{margin:8px 16px}a{color:#17684e}[hidden]{display:none}small{color:#e1e7dd}</style><header><h1>欧洲紧凑建筑 · 68 个版本</h1><p>小屋、街屋、作坊与地域配套。尺寸为宽×深×高，单位为方块。</p><small>离线模型图册；尚未安装或进行游戏生成验收。</small></header><main><input id="q" placeholder="搜索名称或编号"><select id="group"><option value="">全部</option><option>日常与服务</option><option>地域配套</option><option>旧模型修订</option></select><p id="count"></p><div class="grid">'''+''.join(cards)+'''</div></main><script>function filter(){let n=0;for(const a of document.querySelectorAll('article')){a.hidden=!(a.dataset.search.toLowerCase().includes(q.value.toLowerCase())&&(!group.value||a.dataset.group===group.value));if(!a.hidden)n++}count.textContent=`显示 ${n} 个版本`}q.oninput=group.onchange=filter;filter()</script></html>'''
+page='''<!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>欧洲紧凑建筑图册</title><style>body{margin:0;background:#ece8df;color:#272c2b;font:16px/1.6 system-ui}header{padding:32px 5vw;background:#24332f;color:#faf7ed}h1{margin:0}main{padding:24px 5vw}input,select{padding:10px;border:1px solid #a8b0a8;border-radius:5px;font:inherit;margin:5px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px}article{background:white;border:1px solid #d1d5cc;border-radius:8px;overflow:hidden}article img{width:100%;display:block}h2{font-size:18px;margin:12px 16px 2px}article p,nav{margin:8px 16px}a{color:#17684e}[hidden]{display:none}small{color:#e1e7dd}</style><header><h1>欧洲建筑 · 68 个功能与尺度原型</h1><p>小屋、街屋、作坊与地域配套。尺寸为宽×深×高，单位为方块。</p><small>用户反馈缺少特色：本批设计质量未通过，保留为功能与尺度原型。</small></header><main><input id="q" placeholder="搜索名称或编号"><select id="group"><option value="">全部</option><option>日常与服务</option><option>地域配套</option><option>旧模型修订</option></select><p id="count"></p><div class="grid">'''+''.join(cards)+'''</div></main><script>function filter(){let n=0;for(const a of document.querySelectorAll('article')){a.hidden=!(a.dataset.search.toLowerCase().includes(q.value.toLowerCase())&&(!group.value||a.dataset.group===group.value));if(!a.hidden)n++}count.textContent=`显示 ${n} 个版本`}q.oninput=group.onchange=filter;filter()</script></html>'''
 (root/'紧凑建筑图册.html').write_text(page,encoding='utf-8')
 print('Delivery index:',len(rows),'models;',sum(r['shots'] for r in rows),'captured views')

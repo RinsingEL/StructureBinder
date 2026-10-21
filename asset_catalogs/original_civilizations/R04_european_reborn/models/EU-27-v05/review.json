@@ -1,0 +1,23 @@
+{
+  "schema": "structure-studio.review.v1",
+  "id": "EU-27-v05",
+  "status": "pending_user_design_review",
+  "scope": "offline_design_candidate",
+  "reviewer": "Codex",
+  "nbt_sha256": "dff143aa99766be052038d6b5af799fae6a78738bde6cba3b324cba46eb82cca",
+  "author_sha256": "683a3418cbf4d0a77b045fe64a80334ca5e9ea3c4a81c828621e6920d66ff517",
+  "checks": [
+    "偏心石烟囱、长短坡屋顶和低檐生活侧屋，保留二床。",
+    "已查看外观、拆顶、首层与街景玩家高度视图；数据和离线通路另行通过。"
+  ],
+  "evidence": [
+    "previews/front.png",
+    "previews/back.png",
+    "previews/roof-off.png",
+    "previews/floor-1.png"
+  ],
+  "limitations": [
+    "本轮是四栋设计候选，等待用户判断风格；不代表整套已改好。",
+    "没有进行实际Minecraft或世界生成验收。"
+  ]
+}

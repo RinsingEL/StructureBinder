@@ -1,0 +1,129 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "EU-07-v02",
+  "name": "山口铁匠铺 · 石炉背墙与锯齿敞棚",
+  "family": "EU-07",
+  "civilization": "欧洲中世纪新制",
+  "planning_role": "planning_role.fill",
+  "size": [
+    18,
+    13,
+    17
+  ],
+  "terrain": {
+    "选址": "屋体基础需稳定承载；屋檐、外挂构件和门前使用面须保留。"
+  },
+  "rooms": [
+    {
+      "id": "forge",
+      "name": "石炉与储料",
+      "min": [
+        4,
+        2,
+        4
+      ],
+      "max": [
+        8,
+        5,
+        12
+      ],
+      "purpose": "砖砌锻炉和耐火背墙"
+    },
+    {
+      "id": "apron",
+      "name": "敞开锻修棚",
+      "min": [
+        10,
+        2,
+        4
+      ],
+      "max": [
+        15,
+        6,
+        13
+      ],
+      "purpose": "砧台、淬水与搬运面"
+    }
+  ],
+  "points": [
+    {
+      "id": "work_0",
+      "kind": "work",
+      "pos": [
+        6,
+        2,
+        11
+      ],
+      "name": "锻炉操作",
+      "use": "staff",
+      "approach": [
+        6,
+        2,
+        9
+      ]
+    },
+    {
+      "id": "work_1",
+      "kind": "work",
+      "pos": [
+        11,
+        2,
+        7
+      ],
+      "name": "砧台锻造",
+      "use": "staff",
+      "approach": [
+        12,
+        2,
+        7
+      ]
+    },
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        11,
+        2,
+        1
+      ],
+      "name": "开放修理与牵马面",
+      "facing": "north"
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "针对用户“缺少特色”的反馈独立重设计；此前批量风格结论不继承。"
+  ],
+  "differences": [
+    "开放生产棚取代住宅外壳；砖炉罩、侧撑木架和宽作业口主导轮廓。"
+  ],
+  "floors": [
+    {
+      "name": "首层",
+      "y": 1,
+      "max_y": 5
+    }
+  ],
+  "roof_min_y": 7,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "function_terms": [
+    "锻造",
+    "修理"
+  ],
+  "workplace_policy": "authored",
+  "source": "tools/structure_studio/studio/european_character.py:BUILDERS",
+  "ground_plane": {
+    "y": 2,
+    "note": "陆路入口脚底Y=2，抬高的使用层有实体台阶。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3
+  },
+  "nbt_sha256": "fbbebb7b66880c56adf302c6266c560e4b1ca3dbb8d2af85f37f20892c7be6ac"
+}

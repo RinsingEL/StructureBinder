@@ -1,0 +1,146 @@
+{
+  "schema": "structure-studio.author.v1",
+  "id": "EU-27-v05",
+  "name": "灶屋小宅 · 偏心烟囱与低檐侧屋",
+  "family": "EU-27",
+  "civilization": "欧洲中世纪新制",
+  "planning_role": "planning_role.fill",
+  "size": [
+    14,
+    15,
+    15
+  ],
+  "terrain": {
+    "选址": "屋体基础需稳定承载；屋檐、外挂构件和门前使用面须保留。"
+  },
+  "rooms": [
+    {
+      "id": "home",
+      "name": "床与灶边起居",
+      "min": [
+        3,
+        2,
+        4
+      ],
+      "max": [
+        8,
+        5,
+        11
+      ],
+      "purpose": "小户住宅，灶台与起居相连"
+    },
+    {
+      "id": "lean_to",
+      "name": "低檐储物侧屋",
+      "min": [
+        10,
+        2,
+        8
+      ],
+      "max": [
+        11,
+        3,
+        11
+      ],
+      "purpose": "生活工具与储藏，侧屋低于主屋"
+    }
+  ],
+  "points": [
+    {
+      "id": "entry",
+      "kind": "entrance",
+      "pos": [
+        6,
+        2,
+        2
+      ],
+      "name": "陆路主入口",
+      "facing": "north"
+    },
+    {
+      "id": "bed_3",
+      "kind": "bed",
+      "pos": [
+        3,
+        2,
+        10
+      ],
+      "name": "住床",
+      "use": "resident",
+      "approach": [
+        3,
+        2,
+        11
+      ]
+    },
+    {
+      "id": "bed_5",
+      "kind": "bed",
+      "pos": [
+        5,
+        2,
+        10
+      ],
+      "name": "住床",
+      "use": "resident",
+      "approach": [
+        5,
+        2,
+        11
+      ]
+    },
+    {
+      "id": "seat_3",
+      "kind": "seat",
+      "pos": [
+        7,
+        2,
+        6
+      ],
+      "name": "座位",
+      "use": "resident",
+      "adapter": "marker_seat",
+      "seat_height": 0.5,
+      "approach": [
+        6,
+        2,
+        6
+      ]
+    }
+  ],
+  "connections": [],
+  "design_notes": [
+    "针对用户“缺少特色”的反馈独立重设计；此前批量风格结论不继承。"
+  ],
+  "differences": [
+    "不对称长短坡屋顶、低檐侧屋、偏心石烟囱、短老虎窗；实际房间从侧屋连接。"
+  ],
+  "floors": [
+    {
+      "name": "首层",
+      "y": 1,
+      "max_y": 5
+    }
+  ],
+  "roof_min_y": 6,
+  "lifecycle": "draft",
+  "offline_limits": [
+    "不代表运行时世界生成、机器、流体、寻路或交通已经接入。",
+    "作者标记独立保存；导入国度 Mod 须另行映射当前契约。"
+  ],
+  "function_terms": [
+    "家庭居住"
+  ],
+  "workplace_policy": "authored",
+  "source": "tools/structure_studio/studio/european_character.py:BUILDERS",
+  "ground_plane": {
+    "y": 2,
+    "note": "陆路入口脚底Y=2，抬高的使用层有实体台阶。"
+  },
+  "preview_context": {
+    "kind": "flat",
+    "land_surface_y": 2,
+    "padding": 3
+  },
+  "nbt_sha256": "dff143aa99766be052038d6b5af799fae6a78738bde6cba3b324cba46eb82cca"
+}

@@ -1,0 +1,221 @@
+{
+  "schema": "realmfolk_facilities.v1",
+  "size": [
+    20,
+    20,
+    23
+  ],
+  "sourceSha256": "2554593c119fcbcc7c145c8ec7129241645c4215154a9c4a895171a6047e9e6a",
+  "capacity": {
+    "residentBeds": 0,
+    "workplaces": 2
+  },
+  "facilities": [
+    {
+      "id": "work:4,2,13",
+      "kind": "work",
+      "pos": [
+        4,
+        2,
+        13
+      ],
+      "block": "minecraft:barrel",
+      "facing": "east",
+      "use": "staff",
+      "room": "taproom",
+      "name": "酒保",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        5,
+        2,
+        13
+      ]
+    },
+    {
+      "id": "bed:4,7,6",
+      "kind": "bed",
+      "pos": [
+        4,
+        7,
+        6
+      ],
+      "block": "minecraft:green_bed",
+      "facing": "north",
+      "use": "public",
+      "room": "guest",
+      "name": "客床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        4,
+        7,
+        8
+      ]
+    },
+    {
+      "id": "bed:4,7,15",
+      "kind": "bed",
+      "pos": [
+        4,
+        7,
+        15
+      ],
+      "block": "minecraft:green_bed",
+      "facing": "north",
+      "use": "public",
+      "room": "guest",
+      "name": "客床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        4,
+        7,
+        17
+      ]
+    },
+    {
+      "id": "bed:7,7,6",
+      "kind": "bed",
+      "pos": [
+        7,
+        7,
+        6
+      ],
+      "block": "minecraft:green_bed",
+      "facing": "north",
+      "use": "public",
+      "room": "guest",
+      "name": "客床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        7,
+        7,
+        8
+      ]
+    },
+    {
+      "id": "bed:7,7,15",
+      "kind": "bed",
+      "pos": [
+        7,
+        7,
+        15
+      ],
+      "block": "minecraft:green_bed",
+      "facing": "north",
+      "use": "public",
+      "room": "guest",
+      "name": "客床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        7,
+        7,
+        17
+      ]
+    },
+    {
+      "id": "bed:15,2,16",
+      "kind": "bed",
+      "pos": [
+        15,
+        2,
+        16
+      ],
+      "block": "minecraft:brown_bed",
+      "facing": "north",
+      "use": "staff",
+      "room": "kitchen",
+      "name": "住床",
+      "adapter": "bed",
+      "seatHeight": 0.5,
+      "approach": [
+        15,
+        2,
+        18
+      ]
+    },
+    {
+      "id": "work:17,2,15",
+      "kind": "work",
+      "pos": [
+        17,
+        2,
+        15
+      ],
+      "block": "minecraft:smoker",
+      "facing": "west",
+      "use": "staff",
+      "room": "kitchen",
+      "name": "厨师",
+      "adapter": "stand",
+      "seatHeight": 0.5,
+      "approach": [
+        16,
+        2,
+        15
+      ]
+    },
+    {
+      "id": "entrance:10,2,3",
+      "kind": "entrance",
+      "pos": [
+        10,
+        2,
+        3
+      ],
+      "block": "minecraft:air",
+      "facing": "north",
+      "use": "building",
+      "room": "",
+      "name": "陆路主入口",
+      "adapter": "stand",
+      "seatHeight": 0.5
+    },
+    {
+      "id": "seat:7,2,7",
+      "kind": "seat",
+      "pos": [
+        7,
+        2,
+        7
+      ],
+      "block": "minecraft:spruce_stairs",
+      "facing": "east",
+      "use": "public",
+      "room": "taproom",
+      "name": "座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        8,
+        2,
+        7
+      ]
+    },
+    {
+      "id": "seat:7,2,16",
+      "kind": "seat",
+      "pos": [
+        7,
+        2,
+        16
+      ],
+      "block": "minecraft:spruce_stairs",
+      "facing": "east",
+      "use": "public",
+      "room": "taproom",
+      "name": "座位",
+      "adapter": "marker_seat",
+      "seatHeight": 0.5,
+      "approach": [
+        8,
+        2,
+        16
+      ]
+    }
+  ],
+  "warnings": []
+}
