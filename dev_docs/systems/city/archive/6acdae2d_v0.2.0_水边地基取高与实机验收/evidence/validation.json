@@ -1,0 +1,11 @@
+{
+  "tests": 167,
+  "passed": 165,
+  "failures": 0,
+  "skipped": 2,
+  "jarSha256": "ecc6c623cd64ca74f73cc7d973652e52a29afaf06b33fe157f65e25769229f79",
+  "jarBytes": 37845226,
+  "replay": "frozen D4/D5/D6/terrain, original save unchanged",
+  "initialExpandedRun": "test executor OutOfMemoryError; rerun with local 2g test heap passed",
+  "worldAcceptance": "not run"
+}

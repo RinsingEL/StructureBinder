@@ -10,6 +10,56 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 class CityFoundationElevationPlannerTest {
+    @Test void shoreBuildingUsesItsExistingDryDatumWindowBeforeRejectingWetComponent() {
+        var footprint = new BlockBounds(-2865,5505,-2855,5517);
+        var spans = new ArrayList<LandUseAreaPlan.ScanlineSpan>();
+        for (int z=5505;z<=5517;z++) spans.add(new LandUseAreaPlan.ScanlineSpan(z,-2865,-2855));
+        var cells = new ArrayList<LandUseTerrainField.Cell>();
+        for (int z=343;z<=345;z++) for (int x=-180;x<=-178;x++)
+            cells.add(coarseCell(x,z,z!=343 || x==-179, true, z==343 && x!=-179?62:61));
+        var terrain = new LandUseTerrainField(LandUseTerrainField.SCHEMA,"city",
+                new BlockBounds(-2880,5488,-2833,5535),16,cells);
+        var result = CityFoundationElevationPlanner.plan(spans,terrain,List.of(footprint));
+        assertEquals(143,result.stream().mapToInt(s->s.maxX()-s.minX()+1).sum());
+        assertTrue(result.stream().allMatch(s->s.targetY()==62));
+        Collections.reverse(cells);
+        assertEquals(result,CityFoundationElevationPlanner.plan(spans,new LandUseTerrainField(
+                LandUseTerrainField.SCHEMA,"city",terrain.planningBounds(),16,cells),List.of(footprint)));
+        assertThrows(IllegalArgumentException.class,()->CityFoundationElevationPlanner.plan(spans,terrain));
+    }
+
+    @Test void wetCoreCenterCanUseTheSameLocalDryEvidence() {
+        var terrain = coarseTerrain(List.of(coarseCell(0,0,true,true,61),coarseCell(1,0,false,true,65)));
+        var result = CityFoundationElevationPlanner.planForCore(
+                List.of(new LandUseAreaPlan.ScanlineSpan(0,0,0)),terrain,new BlockBounds(0,0,10,10));
+        assertEquals(65,result.get(0).targetY());
+    }
+
+    @Test void unsupportedWaterDoesNotBorrowDistantOrUnrelatedBuildingHeights() {
+        var spans = List.of(new LandUseAreaPlan.ScanlineSpan(0,0,10));
+        var terrain = coarseTerrain(List.of(coarseCell(0,0,true,true,61),coarseCell(4,0,false,true,80)));
+        var ex=assertThrows(IllegalArgumentException.class,()->CityFoundationElevationPlanner.plan(spans,terrain,
+                List.of(new BlockBounds(0,0,10,10),new BlockBounds(64,0,74,10))));
+        assertTrue(ex.getMessage().startsWith("CITY_FOUNDATION_ELEVATION_UNAVAILABLE"));
+    }
+
+    @Test void unsampledOrNonfiniteNeighborCannotSupplyFoundationDatum() {
+        for (var neighbor:List.of(coarseCell(1,0,false,false,65),coarseCell(1,0,false,true,Double.NaN),
+                coarseCell(1,0,false,true,Double.POSITIVE_INFINITY))) {
+            var terrain=coarseTerrain(List.of(coarseCell(0,0,true,true,61),neighbor));
+            assertThrows(IllegalArgumentException.class,()->CityFoundationElevationPlanner.planForCore(
+                    List.of(new LandUseAreaPlan.ScanlineSpan(0,0,0)),terrain,new BlockBounds(0,0,10,10)));
+        }
+    }
+
+    private static LandUseTerrainField coarseTerrain(List<LandUseTerrainField.Cell> cells) {
+        return new LandUseTerrainField(LandUseTerrainField.SCHEMA,"city",new BlockBounds(0,0,95,31),16,cells);
+    }
+    private static LandUseTerrainField.Cell coarseCell(int x,int z,boolean water,boolean sampled,double y) {
+        return new LandUseTerrainField.Cell(x,z,x*16,z*16,16,y,0,0,0,water,0,0,
+                "minecraft:plains",water?"water":"plain","patch",sampled);
+    }
+
     @Test void coreDatumDoesNotInventFourBlockTerracesOnLevelTerrain() {
         for(int natural:List.of(65,66,67,69)){
             var cells=new ArrayList<LandUseTerrainField.Cell>();
