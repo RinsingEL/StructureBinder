@@ -1,0 +1,374 @@
+{
+  "astraContextId": "sha256:baf5f9fb0f6e88971804af68d624b7a2490aa85d2d8a96c286c78b19f0436367",
+  "deepseekContextId": "sha256:977e01fa520d4de4d9d921d04a8f847c8136086ae895735bf736a497bd3cfa11",
+  "countNewAcademySemantic": 45,
+  "sameNewAcademySemantics": false,
+  "sameNewAcademyFacilityMetadata": true,
+  "astraTemplateHashes": {
+    "studio:mg-01-v02/sha256:fe9c16d4d44d7b4ec23af0a309b9868bfec55cd14828fd58b6e9fdc84e3a778d": "sha256:fe9c16d4d44d7b4ec23af0a309b9868bfec55cd14828fd58b6e9fdc84e3a778d",
+    "studio:mg-02-v02/sha256:26a699d814c8d0367855932575e3c615af21aa7c069e87a46dc65cccba7dcfcd": "sha256:26a699d814c8d0367855932575e3c615af21aa7c069e87a46dc65cccba7dcfcd",
+    "studio:mg-03-v02/sha256:a2a85530cfbf234b3a2b752653a58dcf612127d406874c7134bf09896ad18c52": "sha256:a2a85530cfbf234b3a2b752653a58dcf612127d406874c7134bf09896ad18c52",
+    "studio:mg-04-v02/sha256:50b5d79be04a9066640ddb98f02c8e19a50b71fe1d8b1cbbcd783a59df768ba3": "sha256:50b5d79be04a9066640ddb98f02c8e19a50b71fe1d8b1cbbcd783a59df768ba3",
+    "studio:mg-05-v02/sha256:5165d4d412f9d0d6199a16ef77cf99b0888e67cc044b255fc159fb28bd00ae18": "sha256:5165d4d412f9d0d6199a16ef77cf99b0888e67cc044b255fc159fb28bd00ae18",
+    "studio:mg-06-v02/sha256:3c8add21c9a6630d405460f5df89a2cb512ad6628431fedee4cf7849317a0808": "sha256:3c8add21c9a6630d405460f5df89a2cb512ad6628431fedee4cf7849317a0808",
+    "studio:mg-07-v02/sha256:df835c418f97e1b2a7c47af821a8660f6aa11ba2172cc245b739c7babce4dad1": "sha256:df835c418f97e1b2a7c47af821a8660f6aa11ba2172cc245b739c7babce4dad1",
+    "studio:mg-08-v02/sha256:9e35b6870898a1b7d33f9889eff2230e66b26567997baf3bd47e32319bac631c": "sha256:9e35b6870898a1b7d33f9889eff2230e66b26567997baf3bd47e32319bac631c",
+    "studio:mg-09-v01/sha256:32b2180a4bdadd1620a0504b612037f1d2c0578f61eb91f52d66c1d789886697": "sha256:32b2180a4bdadd1620a0504b612037f1d2c0578f61eb91f52d66c1d789886697",
+    "studio:mg-10-v01/sha256:8c45729e520a81f65400c3a083155c625d5e53702b0ea65a7fa3455f309fef61": "sha256:8c45729e520a81f65400c3a083155c625d5e53702b0ea65a7fa3455f309fef61",
+    "studio:mg-11-v01/sha256:88f1511d4c325d60c0c9beedfc122fc799131fcd3e5e667bcccbe50a59fbdced": "sha256:88f1511d4c325d60c0c9beedfc122fc799131fcd3e5e667bcccbe50a59fbdced",
+    "studio:mg-12-v02/sha256:1336c7a48998d1c1854867f24db86663a8cb016a09e756ee3c6fc1866b819d94": "sha256:1336c7a48998d1c1854867f24db86663a8cb016a09e756ee3c6fc1866b819d94",
+    "studio:mg-13-v02/sha256:44843964b59ff484ca4e060cd37df97f93e6240f5946b09595a06bb4ed753267": "sha256:44843964b59ff484ca4e060cd37df97f93e6240f5946b09595a06bb4ed753267",
+    "studio:mg-14-v02/sha256:925c20b3ff2b78d4153229ba0da8714d3f40c4d7605a97176b4ee86aa62c8884": "sha256:925c20b3ff2b78d4153229ba0da8714d3f40c4d7605a97176b4ee86aa62c8884",
+    "studio:mg-15-v02/sha256:ef290b6a810fa3cd47ddcb0b612c3e2dc1e90e964f18101183e5aeaf82af3601": "sha256:ef290b6a810fa3cd47ddcb0b612c3e2dc1e90e964f18101183e5aeaf82af3601",
+    "studio:mg-16-v02/sha256:98ae6e4a5ef7b2c3e4fc006028aa03e432cfe0d479024dede7328a43d66aa6c3": "sha256:98ae6e4a5ef7b2c3e4fc006028aa03e432cfe0d479024dede7328a43d66aa6c3",
+    "studio:mg-17-v02/sha256:e64975b36508191a50474b5992bf0f77e7e0de0d8cd5f46429e66771b79d455a": "sha256:e64975b36508191a50474b5992bf0f77e7e0de0d8cd5f46429e66771b79d455a",
+    "studio:mg-18-v02/sha256:cec4c0d1ad215cf545b24bde8bab74be2effbbb9018a59fe812e05d8a9833984": "sha256:cec4c0d1ad215cf545b24bde8bab74be2effbbb9018a59fe812e05d8a9833984",
+    "studio:mg-19-v02/sha256:18d66be1ecab27d59ca799444653bb9b3613056f04f02a086025f927cc85033f": "sha256:18d66be1ecab27d59ca799444653bb9b3613056f04f02a086025f927cc85033f",
+    "studio:mg-20-v02/sha256:5cbdb50c5de94d1cbbd67dfaa19cc7d1cda3b96c7d7e682fdbdfd09900e4c8b7": "sha256:5cbdb50c5de94d1cbbd67dfaa19cc7d1cda3b96c7d7e682fdbdfd09900e4c8b7",
+    "studio:mg-21-v02/sha256:f678afb1bf7fb8f1dc20a4de6d03e97898810d641bae567b14d48e9e631a929e": "sha256:f678afb1bf7fb8f1dc20a4de6d03e97898810d641bae567b14d48e9e631a929e",
+    "studio:mg-22-v02/sha256:55046259e9c86b9246bb986b267324af09d3f9a3baf4e2fe72ee636f419f7330": "sha256:55046259e9c86b9246bb986b267324af09d3f9a3baf4e2fe72ee636f419f7330",
+    "studio:mg-23-v02/sha256:062bceaedf7f103f8970110df859d4bb7144442b1c89c34b24136c587856c51c": "sha256:062bceaedf7f103f8970110df859d4bb7144442b1c89c34b24136c587856c51c",
+    "studio:mg-24-v01/sha256:22bca1b8827877da5da7c03edd1695ee6a46ed9a77fa9119050822d4d1249512": "sha256:22bca1b8827877da5da7c03edd1695ee6a46ed9a77fa9119050822d4d1249512",
+    "studio:mg-25-v02/sha256:07202cbacadf4d41a17e23f341e2191c57b779f5744239ef1c6fe475da8f34b7": "sha256:07202cbacadf4d41a17e23f341e2191c57b779f5744239ef1c6fe475da8f34b7",
+    "studio:mg-26-v02/sha256:fffe489616cc00665354a87949ff741c4de867786dbb21e147ed94f973b2a2ce": "sha256:fffe489616cc00665354a87949ff741c4de867786dbb21e147ed94f973b2a2ce",
+    "studio:mg-27-v02/sha256:6e5661cd4926ecbd2c1c50e31ec9b7db7a288439d84a27019a4f424fe7fe5fbd": "sha256:6e5661cd4926ecbd2c1c50e31ec9b7db7a288439d84a27019a4f424fe7fe5fbd",
+    "studio:mg-28-v02/sha256:974e033ce84d1d5a4643e6df8b790654ccc49b759f848e67e935992b5988e3cd": "sha256:974e033ce84d1d5a4643e6df8b790654ccc49b759f848e67e935992b5988e3cd",
+    "studio:mg-29-v01/sha256:fdd838a36b606aebd6fec1ce6896e792337d7e5a5f7ed2a794b82411e8af2eb7": "sha256:fdd838a36b606aebd6fec1ce6896e792337d7e5a5f7ed2a794b82411e8af2eb7",
+    "studio:mg-30-v01/sha256:bf4df263a2d636b1a8eaeb5060c2a8955f374bca261fd00749432dab58a7470b": "sha256:bf4df263a2d636b1a8eaeb5060c2a8955f374bca261fd00749432dab58a7470b",
+    "studio:mg-31-v02/sha256:0eca6bad09459de623b327f52f8f359ef7fa96d6aae59b728ece2525cc7f9104": "sha256:0eca6bad09459de623b327f52f8f359ef7fa96d6aae59b728ece2525cc7f9104",
+    "studio:mg-32-v02/sha256:da285140b903d3c464d133cf086cad2f1c8ef2314440782e7b38ca2c0b06ce36": "sha256:da285140b903d3c464d133cf086cad2f1c8ef2314440782e7b38ca2c0b06ce36",
+    "studio:mg-33-v01/sha256:53b31b56d74386afa1e0fc7a5a373487fe73750f0fe2cddc76bc210dcffe1189": "sha256:53b31b56d74386afa1e0fc7a5a373487fe73750f0fe2cddc76bc210dcffe1189",
+    "studio:mg-34-v03/sha256:17294ac0ad305a42ae87885e75a4fe4000d683a54f5656c0e49cabc4e5ee242f": "sha256:17294ac0ad305a42ae87885e75a4fe4000d683a54f5656c0e49cabc4e5ee242f",
+    "studio:mg-35-v02/sha256:5050314b64035814fc0d21bba583bb11df96743de4ec411b9147aa7675b4d510": "sha256:5050314b64035814fc0d21bba583bb11df96743de4ec411b9147aa7675b4d510",
+    "studio:mg-36-v02/sha256:5c9f14910c0d7e6095f3cc1c63206a899c6a76db41598def6214871450787223": "sha256:5c9f14910c0d7e6095f3cc1c63206a899c6a76db41598def6214871450787223",
+    "studio:mg-37-v03/sha256:5b477f50adeb656da6c30b3195cb8c37ee2ca3b5ef1c73a2703ef0842684e888": "sha256:5b477f50adeb656da6c30b3195cb8c37ee2ca3b5ef1c73a2703ef0842684e888",
+    "studio:mg-38-v02/sha256:5fa1a4826af5e9e2dda5180afccb30571e141b527eed4cc38ed9409e9dd067fb": "sha256:5fa1a4826af5e9e2dda5180afccb30571e141b527eed4cc38ed9409e9dd067fb",
+    "studio:mg-39-v02/sha256:12a20875571528ce9fcd765b73b355cd072f394dbb67e43fa0e690a8fcc8a4cd": "sha256:12a20875571528ce9fcd765b73b355cd072f394dbb67e43fa0e690a8fcc8a4cd",
+    "studio:mg-40-v02/sha256:cee3a5d63df47164eb0ac279b0b88217524949c2330c599df7df0e61781c312a": "sha256:cee3a5d63df47164eb0ac279b0b88217524949c2330c599df7df0e61781c312a",
+    "studio:mg-41-v01/sha256:0ebc9071236b830de56bfc29327620364644bc2e42266853577d34aa883c00d6": "sha256:0ebc9071236b830de56bfc29327620364644bc2e42266853577d34aa883c00d6",
+    "studio:mg-42-v01/sha256:c662646d72553a31a4c8fdd058696821e153911c54ab3378c954ac3808675305": "sha256:c662646d72553a31a4c8fdd058696821e153911c54ab3378c954ac3808675305",
+    "studio:mg-43-v02/sha256:317f67f58312b31f6545f9eae3e68f8fed3ad3f0da06559976b71c46bf68bc18": "sha256:317f67f58312b31f6545f9eae3e68f8fed3ad3f0da06559976b71c46bf68bc18",
+    "studio:mg-44-v02/sha256:ea49e429b57a149f2a61a7303b074e0ea7018cbf460387e90e0cfa132fce3b2b": "sha256:ea49e429b57a149f2a61a7303b074e0ea7018cbf460387e90e0cfa132fce3b2b",
+    "studio:mg-45-v02/sha256:90293a8467a74d98f0f922691cb8b7a2840c9270849630fd6ce3b3fcf8d64fb4": "sha256:90293a8467a74d98f0f922691cb8b7a2840c9270849630fd6ce3b3fcf8d64fb4"
+  },
+  "deepseekTemplateHashes": {
+    "studio:mg-01-v02/sha256:fe9c16d4d44d7b4ec23af0a309b9868bfec55cd14828fd58b6e9fdc84e3a778d": "sha256:fe9c16d4d44d7b4ec23af0a309b9868bfec55cd14828fd58b6e9fdc84e3a778d",
+    "studio:mg-02-v02/sha256:26a699d814c8d0367855932575e3c615af21aa7c069e87a46dc65cccba7dcfcd": "sha256:26a699d814c8d0367855932575e3c615af21aa7c069e87a46dc65cccba7dcfcd",
+    "studio:mg-03-v02/sha256:a2a85530cfbf234b3a2b752653a58dcf612127d406874c7134bf09896ad18c52": "sha256:a2a85530cfbf234b3a2b752653a58dcf612127d406874c7134bf09896ad18c52",
+    "studio:mg-04-v02/sha256:50b5d79be04a9066640ddb98f02c8e19a50b71fe1d8b1cbbcd783a59df768ba3": "sha256:50b5d79be04a9066640ddb98f02c8e19a50b71fe1d8b1cbbcd783a59df768ba3",
+    "studio:mg-05-v02/sha256:5165d4d412f9d0d6199a16ef77cf99b0888e67cc044b255fc159fb28bd00ae18": "sha256:5165d4d412f9d0d6199a16ef77cf99b0888e67cc044b255fc159fb28bd00ae18",
+    "studio:mg-06-v02/sha256:3c8add21c9a6630d405460f5df89a2cb512ad6628431fedee4cf7849317a0808": "sha256:3c8add21c9a6630d405460f5df89a2cb512ad6628431fedee4cf7849317a0808",
+    "studio:mg-07-v02/sha256:df835c418f97e1b2a7c47af821a8660f6aa11ba2172cc245b739c7babce4dad1": "sha256:df835c418f97e1b2a7c47af821a8660f6aa11ba2172cc245b739c7babce4dad1",
+    "studio:mg-08-v02/sha256:9e35b6870898a1b7d33f9889eff2230e66b26567997baf3bd47e32319bac631c": "sha256:9e35b6870898a1b7d33f9889eff2230e66b26567997baf3bd47e32319bac631c",
+    "studio:mg-09-v01/sha256:32b2180a4bdadd1620a0504b612037f1d2c0578f61eb91f52d66c1d789886697": "sha256:32b2180a4bdadd1620a0504b612037f1d2c0578f61eb91f52d66c1d789886697",
+    "studio:mg-10-v01/sha256:8c45729e520a81f65400c3a083155c625d5e53702b0ea65a7fa3455f309fef61": "sha256:8c45729e520a81f65400c3a083155c625d5e53702b0ea65a7fa3455f309fef61",
+    "studio:mg-11-v01/sha256:88f1511d4c325d60c0c9beedfc122fc799131fcd3e5e667bcccbe50a59fbdced": "sha256:88f1511d4c325d60c0c9beedfc122fc799131fcd3e5e667bcccbe50a59fbdced",
+    "studio:mg-12-v02/sha256:1336c7a48998d1c1854867f24db86663a8cb016a09e756ee3c6fc1866b819d94": "sha256:1336c7a48998d1c1854867f24db86663a8cb016a09e756ee3c6fc1866b819d94",
+    "studio:mg-13-v02/sha256:44843964b59ff484ca4e060cd37df97f93e6240f5946b09595a06bb4ed753267": "sha256:44843964b59ff484ca4e060cd37df97f93e6240f5946b09595a06bb4ed753267",
+    "studio:mg-14-v02/sha256:925c20b3ff2b78d4153229ba0da8714d3f40c4d7605a97176b4ee86aa62c8884": "sha256:925c20b3ff2b78d4153229ba0da8714d3f40c4d7605a97176b4ee86aa62c8884",
+    "studio:mg-15-v02/sha256:ef290b6a810fa3cd47ddcb0b612c3e2dc1e90e964f18101183e5aeaf82af3601": "sha256:ef290b6a810fa3cd47ddcb0b612c3e2dc1e90e964f18101183e5aeaf82af3601",
+    "studio:mg-16-v02/sha256:98ae6e4a5ef7b2c3e4fc006028aa03e432cfe0d479024dede7328a43d66aa6c3": "sha256:98ae6e4a5ef7b2c3e4fc006028aa03e432cfe0d479024dede7328a43d66aa6c3",
+    "studio:mg-17-v02/sha256:e64975b36508191a50474b5992bf0f77e7e0de0d8cd5f46429e66771b79d455a": "sha256:e64975b36508191a50474b5992bf0f77e7e0de0d8cd5f46429e66771b79d455a",
+    "studio:mg-18-v02/sha256:cec4c0d1ad215cf545b24bde8bab74be2effbbb9018a59fe812e05d8a9833984": "sha256:cec4c0d1ad215cf545b24bde8bab74be2effbbb9018a59fe812e05d8a9833984",
+    "studio:mg-19-v02/sha256:18d66be1ecab27d59ca799444653bb9b3613056f04f02a086025f927cc85033f": "sha256:18d66be1ecab27d59ca799444653bb9b3613056f04f02a086025f927cc85033f",
+    "studio:mg-20-v02/sha256:5cbdb50c5de94d1cbbd67dfaa19cc7d1cda3b96c7d7e682fdbdfd09900e4c8b7": "sha256:5cbdb50c5de94d1cbbd67dfaa19cc7d1cda3b96c7d7e682fdbdfd09900e4c8b7",
+    "studio:mg-21-v02/sha256:f678afb1bf7fb8f1dc20a4de6d03e97898810d641bae567b14d48e9e631a929e": "sha256:f678afb1bf7fb8f1dc20a4de6d03e97898810d641bae567b14d48e9e631a929e",
+    "studio:mg-22-v02/sha256:55046259e9c86b9246bb986b267324af09d3f9a3baf4e2fe72ee636f419f7330": "sha256:55046259e9c86b9246bb986b267324af09d3f9a3baf4e2fe72ee636f419f7330",
+    "studio:mg-23-v02/sha256:062bceaedf7f103f8970110df859d4bb7144442b1c89c34b24136c587856c51c": "sha256:062bceaedf7f103f8970110df859d4bb7144442b1c89c34b24136c587856c51c",
+    "studio:mg-24-v01/sha256:22bca1b8827877da5da7c03edd1695ee6a46ed9a77fa9119050822d4d1249512": "sha256:22bca1b8827877da5da7c03edd1695ee6a46ed9a77fa9119050822d4d1249512",
+    "studio:mg-25-v02/sha256:07202cbacadf4d41a17e23f341e2191c57b779f5744239ef1c6fe475da8f34b7": "sha256:07202cbacadf4d41a17e23f341e2191c57b779f5744239ef1c6fe475da8f34b7",
+    "studio:mg-26-v02/sha256:fffe489616cc00665354a87949ff741c4de867786dbb21e147ed94f973b2a2ce": "sha256:fffe489616cc00665354a87949ff741c4de867786dbb21e147ed94f973b2a2ce",
+    "studio:mg-27-v02/sha256:6e5661cd4926ecbd2c1c50e31ec9b7db7a288439d84a27019a4f424fe7fe5fbd": "sha256:6e5661cd4926ecbd2c1c50e31ec9b7db7a288439d84a27019a4f424fe7fe5fbd",
+    "studio:mg-28-v02/sha256:974e033ce84d1d5a4643e6df8b790654ccc49b759f848e67e935992b5988e3cd": "sha256:974e033ce84d1d5a4643e6df8b790654ccc49b759f848e67e935992b5988e3cd",
+    "studio:mg-29-v01/sha256:fdd838a36b606aebd6fec1ce6896e792337d7e5a5f7ed2a794b82411e8af2eb7": "sha256:fdd838a36b606aebd6fec1ce6896e792337d7e5a5f7ed2a794b82411e8af2eb7",
+    "studio:mg-30-v01/sha256:bf4df263a2d636b1a8eaeb5060c2a8955f374bca261fd00749432dab58a7470b": "sha256:bf4df263a2d636b1a8eaeb5060c2a8955f374bca261fd00749432dab58a7470b",
+    "studio:mg-31-v02/sha256:0eca6bad09459de623b327f52f8f359ef7fa96d6aae59b728ece2525cc7f9104": "sha256:0eca6bad09459de623b327f52f8f359ef7fa96d6aae59b728ece2525cc7f9104",
+    "studio:mg-32-v02/sha256:da285140b903d3c464d133cf086cad2f1c8ef2314440782e7b38ca2c0b06ce36": "sha256:da285140b903d3c464d133cf086cad2f1c8ef2314440782e7b38ca2c0b06ce36",
+    "studio:mg-33-v01/sha256:53b31b56d74386afa1e0fc7a5a373487fe73750f0fe2cddc76bc210dcffe1189": "sha256:53b31b56d74386afa1e0fc7a5a373487fe73750f0fe2cddc76bc210dcffe1189",
+    "studio:mg-34-v03/sha256:17294ac0ad305a42ae87885e75a4fe4000d683a54f5656c0e49cabc4e5ee242f": "sha256:17294ac0ad305a42ae87885e75a4fe4000d683a54f5656c0e49cabc4e5ee242f",
+    "studio:mg-35-v02/sha256:5050314b64035814fc0d21bba583bb11df96743de4ec411b9147aa7675b4d510": "sha256:5050314b64035814fc0d21bba583bb11df96743de4ec411b9147aa7675b4d510",
+    "studio:mg-36-v02/sha256:5c9f14910c0d7e6095f3cc1c63206a899c6a76db41598def6214871450787223": "sha256:5c9f14910c0d7e6095f3cc1c63206a899c6a76db41598def6214871450787223",
+    "studio:mg-37-v03/sha256:5b477f50adeb656da6c30b3195cb8c37ee2ca3b5ef1c73a2703ef0842684e888": "sha256:5b477f50adeb656da6c30b3195cb8c37ee2ca3b5ef1c73a2703ef0842684e888",
+    "studio:mg-38-v02/sha256:5fa1a4826af5e9e2dda5180afccb30571e141b527eed4cc38ed9409e9dd067fb": "sha256:5fa1a4826af5e9e2dda5180afccb30571e141b527eed4cc38ed9409e9dd067fb",
+    "studio:mg-39-v02/sha256:12a20875571528ce9fcd765b73b355cd072f394dbb67e43fa0e690a8fcc8a4cd": "sha256:12a20875571528ce9fcd765b73b355cd072f394dbb67e43fa0e690a8fcc8a4cd",
+    "studio:mg-40-v02/sha256:cee3a5d63df47164eb0ac279b0b88217524949c2330c599df7df0e61781c312a": "sha256:cee3a5d63df47164eb0ac279b0b88217524949c2330c599df7df0e61781c312a",
+    "studio:mg-41-v01/sha256:0ebc9071236b830de56bfc29327620364644bc2e42266853577d34aa883c00d6": "sha256:0ebc9071236b830de56bfc29327620364644bc2e42266853577d34aa883c00d6",
+    "studio:mg-42-v01/sha256:c662646d72553a31a4c8fdd058696821e153911c54ab3378c954ac3808675305": "sha256:c662646d72553a31a4c8fdd058696821e153911c54ab3378c954ac3808675305",
+    "studio:mg-43-v02/sha256:317f67f58312b31f6545f9eae3e68f8fed3ad3f0da06559976b71c46bf68bc18": "sha256:317f67f58312b31f6545f9eae3e68f8fed3ad3f0da06559976b71c46bf68bc18",
+    "studio:mg-44-v02/sha256:ea49e429b57a149f2a61a7303b074e0ea7018cbf460387e90e0cfa132fce3b2b": "sha256:ea49e429b57a149f2a61a7303b074e0ea7018cbf460387e90e0cfa132fce3b2b",
+    "studio:mg-45-v02/sha256:90293a8467a74d98f0f922691cb8b7a2840c9270849630fd6ce3b3fcf8d64fb4": "sha256:90293a8467a74d98f0f922691cb8b7a2840c9270849630fd6ce3b3fcf8d64fb4"
+  },
+  "semanticDiffs": [
+    {
+      "ref": "studio:mg-01-v02",
+      "field": "sourceProfileRef",
+      "astra": "structure-studio://MG-01-v02",
+      "deepseek": null
+    },
+    {
+      "ref": "studio:mg-02-v02",
+      "field": "sourceProfileRef",
+      "astra": "structure-studio://MG-02-v02",
+      "deepseek": null
+    },
+    {
+      "ref": "studio:mg-03-v02",
+      "field": "sourceProfileRef",
+      "astra": "structure-studio://MG-03-v02",
+      "deepseek": null
+    },
+    {
+      "ref": "studio:mg-04-v02",
+      "field": "sourceProfileRef",
+      "astra": "structure-studio://MG-04-v02",
+      "deepseek": null
+    },
+    {
+      "ref": "studio:mg-05-v02",
+      "field": "sourceProfileRef",
+      "astra": "structure-studio://MG-05-v02",
+      "deepseek": null
+    },
+    {
+      "ref": "studio:mg-06-v02",
+      "field": "sourceProfileRef",
+      "astra": "structure-studio://MG-06-v02",
+      "deepseek": null
+    },
+    {
+      "ref": "studio:mg-07-v02",
+      "field": "sourceProfileRef",
+      "astra": "structure-studio://MG-07-v02",
+      "deepseek": null
+    },
+    {
+      "ref": "studio:mg-08-v02",
+      "field": "sourceProfileRef",
+      "astra": "structure-studio://MG-08-v02",
+      "deepseek": null
+    },
+    {
+      "ref": "studio:mg-09-v01",
+      "field": "sourceProfileRef",
+      "astra": "structure-studio://MG-09-v01",
+      "deepseek": null
+    },
+    {
+      "ref": "studio:mg-10-v01",
+      "field": "sourceProfileRef",
+      "astra": "structure-studio://MG-10-v01",
+      "deepseek": null
+    },
+    {
+      "ref": "studio:mg-11-v01",
+      "field": "sourceProfileRef",
+      "astra": "structure-studio://MG-11-v01",
+      "deepseek": null
+    },
+    {
+      "ref": "studio:mg-12-v02",
+      "field": "sourceProfileRef",
+      "astra": "structure-studio://MG-12-v02",
+      "deepseek": null
+    },
+    {
+      "ref": "studio:mg-13-v02",
+      "field": "sourceProfileRef",
+      "astra": "structure-studio://MG-13-v02",
+      "deepseek": null
+    },
+    {
+      "ref": "studio:mg-14-v02",
+      "field": "sourceProfileRef",
+      "astra": "structure-studio://MG-14-v02",
+      "deepseek": null
+    },
+    {
+      "ref": "studio:mg-15-v02",
+      "field": "sourceProfileRef",
+      "astra": "structure-studio://MG-15-v02",
+      "deepseek": null
+    },
+    {
+      "ref": "studio:mg-16-v02",
+      "field": "sourceProfileRef",
+      "astra": "structure-studio://MG-16-v02",
+      "deepseek": null
+    },
+    {
+      "ref": "studio:mg-17-v02",
+      "field": "sourceProfileRef",
+      "astra": "structure-studio://MG-17-v02",
+      "deepseek": null
+    },
+    {
+      "ref": "studio:mg-18-v02",
+      "field": "sourceProfileRef",
+      "astra": "structure-studio://MG-18-v02",
+      "deepseek": null
+    },
+    {
+      "ref": "studio:mg-19-v02",
+      "field": "sourceProfileRef",
+      "astra": "structure-studio://MG-19-v02",
+      "deepseek": null
+    },
+    {
+      "ref": "studio:mg-20-v02",
+      "field": "sourceProfileRef",
+      "astra": "structure-studio://MG-20-v02",
+      "deepseek": null
+    },
+    {
+      "ref": "studio:mg-21-v02",
+      "field": "sourceProfileRef",
+      "astra": "structure-studio://MG-21-v02",
+      "deepseek": null
+    },
+    {
+      "ref": "studio:mg-22-v02",
+      "field": "sourceProfileRef",
+      "astra": "structure-studio://MG-22-v02",
+      "deepseek": null
+    },
+    {
+      "ref": "studio:mg-23-v02",
+      "field": "sourceProfileRef",
+      "astra": "structure-studio://MG-23-v02",
+      "deepseek": null
+    },
+    {
+      "ref": "studio:mg-24-v01",
+      "field": "sourceProfileRef",
+      "astra": "structure-studio://MG-24-v01",
+      "deepseek": null
+    },
+    {
+      "ref": "studio:mg-25-v02",
+      "field": "sourceProfileRef",
+      "astra": "structure-studio://MG-25-v02",
+      "deepseek": null
+    },
+    {
+      "ref": "studio:mg-26-v02",
+      "field": "sourceProfileRef",
+      "astra": "structure-studio://MG-26-v02",
+      "deepseek": null
+    },
+    {
+      "ref": "studio:mg-27-v02",
+      "field": "sourceProfileRef",
+      "astra": "structure-studio://MG-27-v02",
+      "deepseek": null
+    },
+    {
+      "ref": "studio:mg-28-v02",
+      "field": "sourceProfileRef",
+      "astra": "structure-studio://MG-28-v02",
+      "deepseek": null
+    },
+    {
+      "ref": "studio:mg-29-v01",
+      "field": "sourceProfileRef",
+      "astra": "structure-studio://MG-29-v01",
+      "deepseek": null
+    },
+    {
+      "ref": "studio:mg-30-v01",
+      "field": "sourceProfileRef",
+      "astra": "structure-studio://MG-30-v01",
+      "deepseek": null
+    },
+    {
+      "ref": "studio:mg-31-v02",
+      "field": "sourceProfileRef",
+      "astra": "structure-studio://MG-31-v02",
+      "deepseek": null
+    },
+    {
+      "ref": "studio:mg-32-v02",
+      "field": "sourceProfileRef",
+      "astra": "structure-studio://MG-32-v02",
+      "deepseek": null
+    },
+    {
+      "ref": "studio:mg-33-v01",
+      "field": "sourceProfileRef",
+      "astra": "structure-studio://MG-33-v01",
+      "deepseek": null
+    },
+    {
+      "ref": "studio:mg-34-v03",
+      "field": "sourceProfileRef",
+      "astra": "structure-studio://MG-34-v03",
+      "deepseek": null
+    },
+    {
+      "ref": "studio:mg-35-v02",
+      "field": "sourceProfileRef",
+      "astra": "structure-studio://MG-35-v02",
+      "deepseek": null
+    },
+    {
+      "ref": "studio:mg-36-v02",
+      "field": "sourceProfileRef",
+      "astra": "structure-studio://MG-36-v02",
+      "deepseek": null
+    },
+    {
+      "ref": "studio:mg-37-v03",
+      "field": "sourceProfileRef",
+      "astra": "structure-studio://MG-37-v03",
+      "deepseek": null
+    },
+    {
+      "ref": "studio:mg-38-v02",
+      "field": "sourceProfileRef",
+      "astra": "structure-studio://MG-38-v02",
+      "deepseek": null
+    },
+    {
+      "ref": "studio:mg-39-v02",
+      "field": "sourceProfileRef",
+      "astra": "structure-studio://MG-39-v02",
+      "deepseek": null
+    },
+    {
+      "ref": "studio:mg-40-v02",
+      "field": "sourceProfileRef",
+      "astra": "structure-studio://MG-40-v02",
+      "deepseek": null
+    },
+    {
+      "ref": "studio:mg-41-v01",
+      "field": "sourceProfileRef",
+      "astra": "structure-studio://MG-41-v01",
+      "deepseek": null
+    },
+    {
+      "ref": "studio:mg-42-v01",
+      "field": "sourceProfileRef",
+      "astra": "structure-studio://MG-42-v01",
+      "deepseek": null
+    },
+    {
+      "ref": "studio:mg-43-v02",
+      "field": "sourceProfileRef",
+      "astra": "structure-studio://MG-43-v02",
+      "deepseek": null
+    },
+    {
+      "ref": "studio:mg-44-v02",
+      "field": "sourceProfileRef",
+      "astra": "structure-studio://MG-44-v02",
+      "deepseek": null
+    },
+    {
+      "ref": "studio:mg-45-v02",
+      "field": "sourceProfileRef",
+      "astra": "structure-studio://MG-45-v02",
+      "deepseek": null
+    }
+  ],
+  "sameFunctionStyleTerrain": true
+}
