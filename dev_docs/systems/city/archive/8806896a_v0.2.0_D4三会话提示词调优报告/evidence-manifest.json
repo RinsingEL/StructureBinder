@@ -1,0 +1,32 @@
+[
+  {
+    "file": "evidence/astra-d4.png",
+    "bytes": 146221,
+    "sha256": "4b582ca71ff718d3b6032dd9f8eb5a4143e1078a4ef8bc1fa2b703b7ebcf52f5"
+  },
+  {
+    "file": "evidence/astra-handbook-lf.md",
+    "bytes": 13328,
+    "sha256": "9695edf14cb6ba0c070a6a22d77e6f2aa0fefbe96f684004c8765cba3739cf40"
+  },
+  {
+    "file": "evidence/astra-mg-comparison.json",
+    "bytes": 22617,
+    "sha256": "2fc13b55d85d8585f384a4c8cb4806d443aa83f9b0663deee9a07107c6f344b7"
+  },
+  {
+    "file": "evidence/deployment-summary.json",
+    "bytes": 3173,
+    "sha256": "949c16f7ef99d09c9999fcd8f32545510c7f860eb80f75388aa179da727826af"
+  },
+  {
+    "file": "evidence/sol-d4.png",
+    "bytes": 148071,
+    "sha256": "7abbc0409a23bb84e5fc37e41b9ce9311a2e5dd556130e79b912efe8d5f7ab4a"
+  },
+  {
+    "file": "evidence/sol-deepseek-handbook-lf.md",
+    "bytes": 15569,
+    "sha256": "1b69153018dec070e389f123ca00d9b3b7aa7fcfbc1f44fe06003fc65dbc0fe8"
+  }
+]

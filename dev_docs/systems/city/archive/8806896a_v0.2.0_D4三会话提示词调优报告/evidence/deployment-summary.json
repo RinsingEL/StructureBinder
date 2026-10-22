@@ -1,0 +1,87 @@
+{
+  "scope": "Historical deployment receipts; not per-run JVM proof",
+  "gameDir": "D:\\PCL2-2.8.12\\.minecraft\\versions\\1.20.1-Forge_47.4.23",
+  "deployment20": {
+    "sourceCommit": "eaf91397d676643b16e6000d748cdc9c469be7cf",
+    "status": "verified",
+    "files": [
+      {
+        "relative": "mods/geomantia-0.2.0.jar",
+        "new_sha256": "c7f3bdfe404e69d1b0c239c7fbd1ffc66f4ef536ab066f88ea7ee75812146f4a",
+        "changed": true
+      },
+      {
+        "relative": "mods/geomantia-0.2.0-harness.jar",
+        "new_sha256": "6e2d8c5c3943d44cd0857074d785acd7e50a6a945defdd86d39fbce362d71614",
+        "changed": true
+      },
+      {
+        "relative": "mods/geomantia-0.2.0-map.jar",
+        "new_sha256": "503d63136eecf24c5ff358aa026e0f98ce312e984e0e64940673eace361d6a55",
+        "changed": true
+      },
+      {
+        "relative": "config/geomantia/prompts/city/d4_v2/overview.md",
+        "new_sha256": "63e82111a13aa6ab5ae205232adfebcd31676633acb8454b6c8f5461460abb56",
+        "changed": true
+      },
+      {
+        "relative": "config/geomantia/prompts/city/d4_v2/district.md",
+        "new_sha256": "1edd86d91691bc65369ef5109976b00accfd647a778263ea923abeb696423f07",
+        "changed": true
+      },
+      {
+        "relative": "config/geomantia/prompts/city/d4_v2/integration.md",
+        "new_sha256": "708e9ba965923cf77dd4ca8e0a4781d4180d5dc42eefe34005ba3af0de506ed7",
+        "changed": true
+      },
+      {
+        "relative": "config/geomantia/prompts/city/d4_v2/finalize.md",
+        "new_sha256": "8e87d137e9a976ef5e2e5b606d3ece13c38c4475ddfd7fc33cb1b6028f9c0653",
+        "changed": true
+      },
+      {
+        "relative": "config/geomantia/prompts/city/d4_v2/complete.md",
+        "new_sha256": "d03af85643e35fae5203eb020ed1e3d29a6ca01849c0496914ff57d37f504816",
+        "changed": false
+      },
+      {
+        "relative": "config/geomantia/prompts/city/d4_v2/handbook.md",
+        "new_sha256": "395ab25697febfe62a5cfe39f94a6e17808f1477b366e339e7cb2f5c7f3c09d4",
+        "changed": true
+      }
+    ]
+  },
+  "deployment21": {
+    "sourceCommit": "10497c42",
+    "files": [
+      {
+        "path": "mods\\geomantia-0.2.0.jar",
+        "sha256": "0fdc8e98127eb0c9f5d1d61b51770cad342b0c96388189a2b6b8ac96b06237db"
+      },
+      {
+        "path": "mods\\geomantia-0.2.0-harness.jar",
+        "sha256": "2e0e941504a174c2192466675a02e4de9ee45b8eb0cc6166b30ed2f498fb75c6"
+      },
+      {
+        "path": "mods\\geomantia-0.2.0-map.jar",
+        "sha256": "11a07323dde9056016abba75d9d99c94d9cacbc7df01de7d7a0a7cfe345b953c"
+      },
+      {
+        "path": "config\\geomantia\\prompts\\realm\\t1.md",
+        "sha256": "f12ca6ad0a6e0d86750ee785492bff5c5a5c831bd003366e212f305b94977a97"
+      },
+      {
+        "path": "config\\geomantia\\prompts\\city\\d4_v2\\overview.md",
+        "sha256": "ff543c5855d2895bbf02e946e1df538c37048e78d0fb64a572239bad2c664925"
+      },
+      {
+        "path": "config\\geomantia\\prompts\\city\\d4_v2\\handbook.md",
+        "sha256": "a265619d5d444b6e81886851d0b4c13f01a9eadf1e3a769cbadfa2f5f1615477"
+      }
+    ],
+    "templateCount": 602,
+    "oldTemplateCount": 527,
+    "gameplayVerified": false
+  }
+}
