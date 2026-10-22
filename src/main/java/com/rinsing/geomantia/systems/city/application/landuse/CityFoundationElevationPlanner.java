@@ -52,13 +52,34 @@ public final class CityFoundationElevationPlanner {
             while (!queue.isEmpty()) {
                 BlockPoint point = queue.removeFirst(); component.add(point);
                 var sample = samples.get(new BlockPoint(Math.floorDiv(point.x(),step),Math.floorDiv(point.z(),step)));
-                if (sample != null && sample.sampled() && !sample.water()) {
+                if (sample != null && sample.sampled() && !sample.water() && Double.isFinite(sample.elevation())) {
                     int y = (int)Math.round(sample.elevation());
                     counts.merge(y,1,Integer::sum);
                 }
                 for (BlockPoint next : List.of(new BlockPoint(point.x()-1,point.z()),
                         new BlockPoint(point.x()+1,point.z()),new BlockPoint(point.x(),point.z()-1),
                         new BlockPoint(point.x(),point.z()+1))) if (remaining.remove(next)) queue.addLast(next);
+            }
+            // A shore building can occupy only wet coarse cells even though its existing
+            // local datum window contains dry land. Resolve that window before rejecting it.
+            // Only footprints touching this component may supply evidence; unrelated buildings
+            // must not turn an unsupported island into a platform.
+            if (counts.isEmpty()) {
+                Set<BlockPoint> visited = new HashSet<>();
+                int radius = Math.max(1, 24 / step);
+                for (var building : buildings) {
+                    if (component.stream().noneMatch(p -> building.contains(p.x(), p.z()))) continue;
+                    int cx = Math.floorDiv(Math.floorDiv(building.minX() + building.maxX(), 2), step);
+                    int cz = Math.floorDiv(Math.floorDiv(building.minZ() + building.maxZ(), 2), step);
+                    for (int dz = -radius; dz <= radius; dz++) for (int dx = -radius; dx <= radius; dx++) {
+                        BlockPoint key = new BlockPoint(cx + dx, cz + dz);
+                        if (!visited.add(key)) continue;
+                        var sample = samples.get(key);
+                        if (sample != null && sample.sampled() && !sample.water()
+                                && Double.isFinite(sample.elevation()))
+                            counts.merge((int) Math.round(sample.elevation()), 1, Integer::sum);
+                    }
+                }
             }
             if (counts.isEmpty()) throw new IllegalArgumentException("CITY_FOUNDATION_ELEVATION_UNAVAILABLE"
                     + ":componentBlocks=" + component.size() + ":seed=" + seed + ":step=" + step);
@@ -85,7 +106,7 @@ public final class CityFoundationElevationPlanner {
                         BlockPoint cellKey = new BlockPoint(key.x()+dx,key.z()+dz);
                         if (nearest == null && !sampledCells.contains(cellKey)) continue;
                         var sample = samples.get(cellKey);
-                        if(sample != null && sample.sampled() && !sample.water()) {
+                        if(sample != null && sample.sampled() && !sample.water() && Double.isFinite(sample.elevation())) {
                             int y = (int)Math.round(sample.elevation());
                             localCounts.merge(y,1,Integer::sum);
                         }
