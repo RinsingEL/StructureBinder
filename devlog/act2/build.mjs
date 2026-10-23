@@ -1,0 +1,14 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+const dir=path.dirname(fileURLToPath(import.meta.url));
+const data=JSON.parse(fs.readFileSync(path.join(dir,'content.json'),'utf8'));
+const pictures=Object.fromEntries(['academy','workbench'].map(name=>[name,'data:image/webp;base64,'+fs.readFileSync(path.join(dir,'assets',name+'.webp')).toString('base64')]));
+const safe=value=>JSON.stringify(value).replaceAll('<','\\u003c');
+const html=fs.readFileSync(path.join(dir,'template.html'),'utf8').replace('__DECK_DATA__',safe(data)).replace('__PICTURE_DATA__',safe(pictures));
+fs.writeFileSync(path.join(dir,'index.html'),html);
+const intro=`# ${data.title}\n\n第二幕动态演示与候选串词，2026-10-24。\n\n这份初稿按七段画面组织，不限制成固定 PPT 页数。每段有四个演示状态，可按现场聊天节奏逐步展开。三位的台词均为候选草稿，不是已发生的对话；Rinsing 可保留提问方向，用自己的话主持。Claude 可直接调整标题、叙事顺序、镜头停留和自己的表达。\n\n视觉初稿采用纸色、深绿与田野色；地形、组团、剖面、乡野和岸线均为可编辑的机制示意。工作台截图保留已有来源，实机关键帧可通过网页的换图按钮替换，并保存成包含图片的独立 HTML。\n\n`;
+const body=data.scenes.map(s=>`## ${s.title}\n\n画面建议：${s.visual}\n\n核心看点：${s.focus}\n\n动效节奏：${s.beats.join(' → ')}。\n\n${s.lines.map(l=>`【${l.name}｜${l.action}】\n「${l.text}」`).join('\n\n')}\n\n接话位置：${s.transition}\n\n画面口径：${s.sourceLabel}。\n`).join('\n');
+const sources=`\n## 给 Claude 的技术与素材依据\n\nD4 城市生活、功能区、坐标与预览修订依据当前 [D4 手册](../../src/main/resources/geomantia/prompts/city/d4_v2/handbook.md)。根组坐标化描述限于城内 D4；不把 T2/T4 城市选址的待开发方案一起说成完成。\n\n共享台地和道路参照 CitySharedTerracePlanner、CityFoundationElevationPlanner、CityTerraceRoadGradePlanner 与 CityInternalStreetPlanner。第三、四段是解释其职责的示意，不是由这些规划器计算出来的结果。连接不足的开关仅用于讲解。\n\n乡野与地形线参照 CityRuralMosaic、CityTerrainLines 及 D4 手册对应章节。保留现有实机视觉待验收口径；地形线不跨未知地形补齐，沿线小路的独立开关尚未实现。\n\n第二段原图来自 [2026-10-12 星穹学院构图示范](../../tools/city_experiments/results/20261012_starvault_academy/README.md)，是手工构图对照、离线预览，不能作为自动 D4 或 Minecraft 验收截图。第七段原图来自 [D4 工程预览实验](../../tools/city_experiments/results/20261012_d4_engineered/README.md)，原始文件为 teaching.png；该实验记录了布局仍较分散的观察，本稿只用它说明工作台界面与审查方式。两张图分别压缩为 assets/academy.webp 与 assets/workbench.webp，不修改图内内容。\n\n工作台与游戏的边界见 [工作台说明](../../tools/city_experiments/WORKBENCH.md)。这次只制作前端演示和串词，没有启动模组或执行游戏内验收。\n`;
+fs.writeFileSync(path.join(dir,'第二幕_分页与串词.md'),intro+body+sources);
+console.log(`Built ${data.scenes.length} scenes and ${data.scenes.reduce((n,s)=>n+s.lines.length,0)} speaking turns.`);
