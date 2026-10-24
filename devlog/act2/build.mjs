@@ -8,7 +8,7 @@ const pictures=Object.fromEntries([...keys].map(name=>[name,'data:image/webp;bas
 const safe=value=>JSON.stringify(value).replaceAll('<','\\u003c');
 const html=fs.readFileSync(path.join(dir,'template.html'),'utf8').replace('__DECK_DATA__',safe(data)).replace('__PICTURE_DATA__',safe(pictures)).replace('__EXTRA_VISUALS__',fs.readFileSync(path.join(dir,'visuals.js'),'utf8'));
 fs.writeFileSync(path.join(dir,'index.html'),html);
-const intro=`# ${data.title}\n\n第二幕动态演示与候选串词，2026-10-24。\n\n按 W 世界、T 国度、D 城市组成十一段，普通段落四步，D4 调用回放九步。截图展示产物，动效解释变化，实机呈现体验。前五段介绍总体主线与 W/T，后六段走进 D。预计约 10～12 分钟，按现场聊天伸缩。\n\n前三段 Claude 与 Astra 的台词按 10 月 24 日茶话会现场记录，其余为各自写下的候选台词；Rinsing 的部分是参考，由本人现场发挥。Rinsing 讲动机、玩家体验和转场，Claude 串联设计意图，Astra 补充技术事实。历史失败、手册修订与旧方案对比留到第三幕，未来玩法留到第四幕。\n\n`;
+const intro=`# ${data.title}\n\n第二幕动态演示与台词，2026-10-24。\n\n按 W 世界、T 国度、D 城市组成十一段，普通段落四步，D4 调用回放九步。截图展示产物，动效解释变化，实机呈现体验。前五段介绍总体主线与 W/T，后六段走进 D。预计约 10～12 分钟，按现场聊天伸缩。\n\n前三段是 10 月 24 日茶话会的现场记录；之后各段只有 Claude 预先写好的台词，Rinsing 和 Astra 现场发挥，讲完再补录。Rinsing 讲动机、玩家体验和转场，Claude 串联设计意图，Astra 补充技术事实。历史失败、手册修订与旧方案对比留到第三幕，未来玩法留到第四幕。\n\n`;
 const body=data.scenes.map(s=>`## ${s.title}\n\n阶段：${s.tag}\n\n画面建议：${s.visual}\n\n核心看点：${s.focus}\n\n动效节奏：${s.beats.join(' → ')}。\n\n${s.frames.map((f,i)=>`第 ${i+1} 步画面：${f.note}`).join('\n\n')}\n\n${s.lines.map(l=>`【${l.name}｜${l.action}】\n「${l.text}」`).join('\n\n')}\n\n接话位置：${s.transition}\n\n画面口径：${s.sourceLabel}。\n`).join('\n');
 fs.writeFileSync(path.join(dir,'第二幕_分页与串词.md'),intro+body+'\n## 素材与流程依据\n\n见 [素材来源](素材来源.md)。Claude 的上一版单城主讲建议保留在 [Claude 主讲方案](Claude主讲方案.md)，本版按用户最新确认的全流程框架调整。\n');
 console.log(`Built ${data.scenes.length} scenes and ${data.scenes.reduce((n,s)=>n+s.lines.length,0)} speaking turns.`);
