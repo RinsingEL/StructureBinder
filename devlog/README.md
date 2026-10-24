@@ -2,6 +2,6 @@
 
 这里保存开发日志使用的可执行演示、配套讲稿和本地素材。活动企划仍由策划仓维护。
 
-[Devlog #0 第二幕：一座城怎样长出来](act2/README.md)包含七段动态管线演示，以及 Rinsing、Claude、Astra 的候选串词。直接用浏览器打开 [演示](act2/index.html)，或阅读 [分页与串词](act2/第二幕_分页与串词.md)。
+[Devlog #0 第二幕：山水间的异世界](act2/README.md)包含十一段 W/T/D 动态管线演示（含 D4 调用摘要回放），以及 Rinsing、Claude、Astra 的候选串词。直接用浏览器打开 [演示](act2/index.html)，或阅读 [分页与串词](act2/第二幕_分页与串词.md)。
 
 独立 HTML、内容 JSON、构建脚本和所需图片一同纳入版本控制；根目录 ZIP 是本地转交副本，不单独维护。

@@ -1,0 +1,38 @@
+[
+  {
+    "asset": "world.webp",
+    "source": "run/saves/geometia_beta3_02/realm_debug/provider_3d25631f_r19200/world_patch_preview.png",
+    "sourceSha256": "d90ed89b09c5bf69806f0b9a5b98408e658cdfd70a6e456cfe020c6c4b070001",
+    "assetSha256": "10343e4b1c0b8527bb14c9a2bb8e1e448d477379d2a13a4ed12b110c030d57b9"
+  },
+  {
+    "asset": "territory.webp",
+    "source": "run/saves/geometia_beta3_02/realm_debug/provider_3d25631f_r19200/territory_preview.png",
+    "sourceSha256": "5ce3953a7dd393c0d98174d72d4b7d84cd0e8b495b07ab033968b5403d2ce976",
+    "assetSha256": "c485715339e7ddf8d9ff5d44077651399f1a969e21aa23f6981cd00015e53b95"
+  },
+  {
+    "asset": "cities.webp",
+    "source": "run/saves/geometia_beta3_02/realm_debug/provider_3d25631f_r19200/realm_t4_patch_planning_t4ps_eea941db4bf64e23adb16949d18eac8c/city_distribution_ac8b0f30edec68a901c89f2b0371293cfb0a06228eceec2bf3db8a4ed51c509f.png",
+    "sourceSha256": "6fbb618b0cfb0d10f998af48de162f1ba82fcd9e38e22e83a12549f172aef744",
+    "assetSha256": "a02015c14acb18d2db98bdab2f3d04b21252a292d25bad254739794b034b567b"
+  },
+  {
+    "asset": "design.webp",
+    "source": "dev_docs/systems/city/archive/8806896a_v0.2.0_D4三会话提示词调优报告/evidence/astra-d4.png",
+    "sourceSha256": "4b582ca71ff718d3b6032dd9f8eb5a4143e1078a4ef8bc1fa2b703b7ebcf52f5",
+    "assetSha256": "e238fe87c4d1e4d92844792168360012a0008194358f34b024f0d64146eb010d"
+  },
+  {
+    "asset": "arrival.webp",
+    "source": "dev_docs/systems/city/archive/2375a427_v0.2.0_学院第二轮高度关系修复/evidence/教学区共台复查.jpg",
+    "sourceSha256": "3052a16ec006c973797b02825c9a659ba53a318e951631f7d55246862fd0f9c4",
+    "assetSha256": "07109fdff6ddec0ec2bcd7da19c130b9d2b2dd372aaae0c1fde6c2e6b33df566"
+  },
+  {
+    "asset": "residence.webp",
+    "source": "dev_docs/systems/city/archive/2375a427_v0.2.0_学院第二轮高度关系修复/evidence/宿舍区修复后.jpg",
+    "sourceSha256": "04bc58578c48d8ae14ab20816fac2e1a955fe31735ab1aedb43c4a73f854cf8c",
+    "assetSha256": "27a7e032f7394a39dedac55b67ee6381df2fd71652c688af2e74eb57ae991a9a"
+  }
+]
