@@ -1,0 +1,663 @@
+{
+  "sourceFile": "rollout-2026-10-20T15-52-44-01a1584c-6591-7b70.jsonl",
+  "sourceSha256": "b95449259e736755cd832d6696f40924ac066b313e191fc812732f8d00544ee8",
+  "images": [
+    {
+      "file": "line-0043-2.png",
+      "sourceLine": 43,
+      "callId": "call_42ff1da4ad5a4c1aa74e43d8993c7d33",
+      "sha256": "aee3d63c3dd2a264f538e5c4a130882c07761822fb35dc27ceb52fe6146a4665",
+      "bytes": 217862,
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "file": "line-0043-4.png",
+      "sourceLine": 43,
+      "callId": "call_42ff1da4ad5a4c1aa74e43d8993c7d33",
+      "sha256": "a87308f4940c7937d405ea5173b67c2312d73db5e55b99fdaab4158592530986",
+      "bytes": 34270,
+      "size": [
+        1201,
+        891
+      ]
+    },
+    {
+      "file": "line-0118-4.png",
+      "sourceLine": 118,
+      "callId": "call_6b2bc6c569694aa0a16bc1ea93a238f5",
+      "sha256": "90f1796a669a0d8ae1970e00f0c116e50db9ea6e9950f60619a0475cafaa52e4",
+      "bytes": 97378,
+      "size": [
+        1280,
+        900
+      ]
+    },
+    {
+      "file": "line-0126-2.png",
+      "sourceLine": 126,
+      "callId": "call_4d215d4365f34b95a2b44f75d4996078",
+      "sha256": "90f1796a669a0d8ae1970e00f0c116e50db9ea6e9950f60619a0475cafaa52e4",
+      "bytes": 97378,
+      "size": [
+        1280,
+        900
+      ]
+    },
+    {
+      "file": "line-0126-4.png",
+      "sourceLine": 126,
+      "callId": "call_4d215d4365f34b95a2b44f75d4996078",
+      "sha256": "4b5e7c57875a68dd9b098a634b560bf930f3f76602be8ce8fc3a8bf6f724c67e",
+      "bytes": 63406,
+      "size": [
+        1280,
+        900
+      ]
+    },
+    {
+      "file": "line-0145-3.png",
+      "sourceLine": 145,
+      "callId": "call_6995520a00ff444fbbe8f931ca17daf8",
+      "sha256": "3a2632806b1696c507580d20ed4ca118ec9a26998b6e2a1fabbf3067ef4caff6",
+      "bytes": 101227,
+      "size": [
+        1280,
+        900
+      ]
+    },
+    {
+      "file": "line-0153-2.png",
+      "sourceLine": 153,
+      "callId": "call_ab44110f2c9145d6b82b2eb659c8a9d5",
+      "sha256": "2616b07f8023fe1eb896028284ae7dde6e2b0da2c0487f3ab23480ee7ff4e7a2",
+      "bytes": 57096,
+      "size": [
+        1280,
+        900
+      ]
+    },
+    {
+      "file": "line-0169-3.png",
+      "sourceLine": 169,
+      "callId": "call_6ea7340ad9ef4807beacb10073bf2d45",
+      "sha256": "70cd5691b8bdc3a50de6b2ac121b5e56058c09867f2592e0969ab34fe9042f1b",
+      "bytes": 104085,
+      "size": [
+        1280,
+        900
+      ]
+    },
+    {
+      "file": "line-0177-1.png",
+      "sourceLine": 177,
+      "callId": "call_0a5ad99b4b534e088f0d118033b78b4a",
+      "sha256": "a39ece738e6d262d2d0f0bafe6ab4970d74bab816382561103b476088880b9d1",
+      "bytes": 72817,
+      "size": [
+        1280,
+        900
+      ]
+    },
+    {
+      "file": "line-0189-3.png",
+      "sourceLine": 189,
+      "callId": "call_a097a11195df4dff8632d084865670fd",
+      "sha256": "3f28cc9d8f4365388f7ecb973e02e6b80ce7f609be120f367b97817e396de0f0",
+      "bytes": 106277,
+      "size": [
+        1280,
+        900
+      ]
+    },
+    {
+      "file": "line-0197-1.png",
+      "sourceLine": 197,
+      "callId": "call_6db6d4fcb71e4aa8b3ef4e2d5cd3a4d8",
+      "sha256": "5d4ca8f7f6c106cd14fff0e2fa87ef3486274e4742d40c9fa8754ce1bd3ccce4",
+      "bytes": 67150,
+      "size": [
+        1280,
+        900
+      ]
+    },
+    {
+      "file": "line-0211-3.png",
+      "sourceLine": 211,
+      "callId": "call_71189057daf04090ad3f52c2c2766a77",
+      "sha256": "21ecb6b3bd9f9442076ee62daf665ac23e3d32eba9b49077cffd3a5c95d65d99",
+      "bytes": 110557,
+      "size": [
+        1280,
+        900
+      ]
+    },
+    {
+      "file": "line-0219-1.png",
+      "sourceLine": 219,
+      "callId": "call_31ce95aada764ad8a84fedddea846874",
+      "sha256": "3d35c5d28f9bf279f035971e660b4d9652a86de44602d23245fea6ed5f7c3a84",
+      "bytes": 82958,
+      "size": [
+        1280,
+        900
+      ]
+    },
+    {
+      "file": "line-0231-3.png",
+      "sourceLine": 231,
+      "callId": "call_e03c9f37afff41dc959b043e1acc7890",
+      "sha256": "560a61eb1801731da9966ef4377fb8a33f0167510d014bd3ff42e501108346bb",
+      "bytes": 112790,
+      "size": [
+        1280,
+        900
+      ]
+    },
+    {
+      "file": "line-0241-1.png",
+      "sourceLine": 241,
+      "callId": "call_4d8d15f30b3545f0a43bab630f03fd93",
+      "sha256": "af11a0d2d9ddc98078e390f13af3073a0674185351c18e73d2569ed646436a27",
+      "bytes": 64444,
+      "size": [
+        1280,
+        900
+      ]
+    },
+    {
+      "file": "line-0253-3.png",
+      "sourceLine": 253,
+      "callId": "call_a4a47fdc558a4a1891831405519baad0",
+      "sha256": "9a4abb0e2662dbea55998bd29c126b3588b1c5d48bacf47aa43e23c12c01a461",
+      "bytes": 115832,
+      "size": [
+        1280,
+        900
+      ]
+    },
+    {
+      "file": "line-0261-1.png",
+      "sourceLine": 261,
+      "callId": "call_b7c7dea529a84c19937cd9392a6f74f7",
+      "sha256": "4a7f7549f530f4c04518fa40a64181e7313f9227f34a40d138839b57ab1b9d63",
+      "bytes": 61892,
+      "size": [
+        1280,
+        900
+      ]
+    },
+    {
+      "file": "line-0273-3.png",
+      "sourceLine": 273,
+      "callId": "call_23a1b19120fc474b9d354298d13a2919",
+      "sha256": "82ebe2430504e305b3025fc2d7378a1532b7f09c9a37886c342fbc6c32f2963d",
+      "bytes": 119291,
+      "size": [
+        1280,
+        900
+      ]
+    },
+    {
+      "file": "line-0281-1.png",
+      "sourceLine": 281,
+      "callId": "call_69bb3dce21f64feb85202b211fedb700",
+      "sha256": "d7c4560a001fc1950374d73c66f465e4eeb39d71f6f42d3f36c9cc85a975ad2d",
+      "bytes": 77219,
+      "size": [
+        1280,
+        900
+      ]
+    },
+    {
+      "file": "line-0293-3.png",
+      "sourceLine": 293,
+      "callId": "call_c7b669146cb7407eb0b31ebcfeedcd59",
+      "sha256": "5fa46b78685712247a43b51effff426b43600c4f20a5a2c8d4fb93b9d08230d8",
+      "bytes": 121601,
+      "size": [
+        1280,
+        900
+      ]
+    },
+    {
+      "file": "line-0301-1.png",
+      "sourceLine": 301,
+      "callId": "call_d000a5438e5e4a8abee3764317f00d9b",
+      "sha256": "4abd1e83a5a5002e01edd88ab5835f4f880878c93722760e63d2bf3d30d1d887",
+      "bytes": 69402,
+      "size": [
+        1280,
+        900
+      ]
+    },
+    {
+      "file": "line-0329-3.png",
+      "sourceLine": 329,
+      "callId": "call_7fdcc6009102465baf3b79a21871403b",
+      "sha256": "fc7bd799916c27adc98c25c55975a41020108fe979f7ca36fc1fa2ff75f67259",
+      "bytes": 124437,
+      "size": [
+        1280,
+        900
+      ]
+    },
+    {
+      "file": "line-0337-1.png",
+      "sourceLine": 337,
+      "callId": "call_beb5c077995d4b508d2681bb49b57612",
+      "sha256": "247e07a2b4a10acd60dbde6343e7803c99766cb4707e3ca3fb3572c1aba95ef7",
+      "bytes": 69833,
+      "size": [
+        1280,
+        900
+      ]
+    },
+    {
+      "file": "line-0347-3.png",
+      "sourceLine": 347,
+      "callId": "call_ec06b8cd3cd140058f732cafa0884367",
+      "sha256": "0ec923786bef59bdd982a2ad7ad537340b8491baf839967815779068c298c929",
+      "bytes": 125393,
+      "size": [
+        1280,
+        900
+      ]
+    },
+    {
+      "file": "line-0354-5.png",
+      "sourceLine": 354,
+      "callId": "call_85abcaa020534f0cbcac4060a9a3f18d",
+      "sha256": "13d13f59c8191c79e5f41beef8d1946c318ef929b5a13e76b218b7b45af5cd98",
+      "bytes": 55983,
+      "size": [
+        1280,
+        900
+      ]
+    },
+    {
+      "file": "line-0362-4.png",
+      "sourceLine": 362,
+      "callId": "call_30442132c3a64d5cb76311606781afa4",
+      "sha256": "0ec923786bef59bdd982a2ad7ad537340b8491baf839967815779068c298c929",
+      "bytes": 125393,
+      "size": [
+        1280,
+        900
+      ]
+    },
+    {
+      "file": "line-0384-3.png",
+      "sourceLine": 384,
+      "callId": "call_dbe54d9510e343e4874c28ca60a155be",
+      "sha256": "09f7bc6d51b28c3d13013b97a9f76c21f30d528bb9b9fff4e873c5f27a96a634",
+      "bytes": 126187,
+      "size": [
+        1280,
+        900
+      ]
+    },
+    {
+      "file": "line-0392-1.png",
+      "sourceLine": 392,
+      "callId": "call_cfc8fcb838404edea1dad601f52d5e34",
+      "sha256": "65af6a78b35ade8181d63cbec7f031b4e3156549df0f3eafbb2220e8b59bdcff",
+      "bytes": 75606,
+      "size": [
+        1280,
+        900
+      ]
+    },
+    {
+      "file": "line-0404-3.png",
+      "sourceLine": 404,
+      "callId": "call_a8ea04e3483243ab9091e5386d629814",
+      "sha256": "719143cfdf9a4fd3bc452904af2ef3a6b204d261b4a0f8311569eba0b1720ad8",
+      "bytes": 128068,
+      "size": [
+        1280,
+        900
+      ]
+    },
+    {
+      "file": "line-0413-1.png",
+      "sourceLine": 413,
+      "callId": "call_0e9ee3d804404139a361b709fb46f4e5",
+      "sha256": "054d39108271e8ea2b81f7a146740a86b1ab877aa8d150448c486a66083ad431",
+      "bytes": 59091,
+      "size": [
+        1280,
+        900
+      ]
+    },
+    {
+      "file": "line-0413-5.png",
+      "sourceLine": 413,
+      "callId": "call_0e9ee3d804404139a361b709fb46f4e5",
+      "sha256": "684a7b37503a5b130f314bc1cc11b001f9ca107d1a54f19364b7442bb1d1c0b0",
+      "bytes": 129818,
+      "size": [
+        1280,
+        900
+      ]
+    },
+    {
+      "file": "line-0422-1.png",
+      "sourceLine": 422,
+      "callId": "call_91e344c098584aea8930a4c6fcc0d034",
+      "sha256": "777a8b08d19cc80657e13f4885b00e33718cd038b6fcf80757656162106b31aa",
+      "bytes": 58016,
+      "size": [
+        1280,
+        900
+      ]
+    },
+    {
+      "file": "line-0429-3.png",
+      "sourceLine": 429,
+      "callId": "call_f4ac24b2400946829364a284d9ac9dce",
+      "sha256": "03a392dd3e4691831045bbaf1c8352ac73439574e0f334403996255bdc68cd68",
+      "bytes": 132145,
+      "size": [
+        1280,
+        900
+      ]
+    },
+    {
+      "file": "line-0440-1.png",
+      "sourceLine": 440,
+      "callId": "call_20b2e2c9c9874d7abee79021133580ff",
+      "sha256": "c504020047cf561707da16ad5c8aa4854dcd4e40bb2fe8d4101862987a7e357b",
+      "bytes": 69077,
+      "size": [
+        1280,
+        900
+      ]
+    },
+    {
+      "file": "line-0447-3.png",
+      "sourceLine": 447,
+      "callId": "call_c020ee8c19fa4453898ca0faa86aca72",
+      "sha256": "7a0a74f13757a15c1d72a92125d0406e8b366ed448a5fa70f06c0d9a6e16165a",
+      "bytes": 134537,
+      "size": [
+        1280,
+        900
+      ]
+    },
+    {
+      "file": "line-0455-1.png",
+      "sourceLine": 455,
+      "callId": "call_6f939bff810b4e2ba7526004bba03f91",
+      "sha256": "bd35d3b266b61cc866ad96ca7a3242ead37efb0b1f5293ce608d0223f79036d9",
+      "bytes": 69464,
+      "size": [
+        1280,
+        900
+      ]
+    },
+    {
+      "file": "line-0465-3.png",
+      "sourceLine": 465,
+      "callId": "call_787f3512a695411fb0748ee768a295a1",
+      "sha256": "5db13830918e2c8b9680990ec0d54f0bed433982cec942fd06811c2979fb9d54",
+      "bytes": 142396,
+      "size": [
+        1280,
+        900
+      ]
+    },
+    {
+      "file": "line-0473-1.png",
+      "sourceLine": 473,
+      "callId": "call_ef34eaf8d8924d0b892773b04594e034",
+      "sha256": "bf1eaa366e6180ebebaacbca68e0d85f15c90b4669719f2b0b5d65589daf38f2",
+      "bytes": 81130,
+      "size": [
+        1280,
+        900
+      ]
+    },
+    {
+      "file": "line-0485-3.png",
+      "sourceLine": 485,
+      "callId": "call_39d97fe16f744beaaa43ad7ec397e862",
+      "sha256": "ebcd4da729a8742b138b16ef9f4aabd7dcfcdd1547336d9245be117148aeb2e1",
+      "bytes": 144071,
+      "size": [
+        1280,
+        900
+      ]
+    },
+    {
+      "file": "line-0493-1.png",
+      "sourceLine": 493,
+      "callId": "call_5e554dcb6c0748159b283e3d71db28b2",
+      "sha256": "15b41eb2a68edf560d3981c340dd29d47ac3fadfb1dd8e98c1a5f774e5694ddb",
+      "bytes": 69633,
+      "size": [
+        1280,
+        900
+      ]
+    },
+    {
+      "file": "line-0502-3.png",
+      "sourceLine": 502,
+      "callId": "call_f8ba1b7f4ff94059b5dee8e060e97682",
+      "sha256": "8af81fbd90767d54eaec3a0720ff1190038f994bfbaf40cc949878abed68aead",
+      "bytes": 144143,
+      "size": [
+        1280,
+        900
+      ]
+    },
+    {
+      "file": "line-0510-3.png",
+      "sourceLine": 510,
+      "callId": "call_50c9725111464e86bb4707bf5b9e73c4",
+      "sha256": "1c36f5d950f00632337e4935bb076f071db093a412fcc20a2100c5f87b5c496b",
+      "bytes": 144235,
+      "size": [
+        1280,
+        900
+      ]
+    },
+    {
+      "file": "line-0519-1.png",
+      "sourceLine": 519,
+      "callId": "call_b8bb36cca9a24339adc6a9e322ebe5d4",
+      "sha256": "6588bf74e9752b1748dacc8d8cabab55c7f93e367efdacd038456270d2146d01",
+      "bytes": 68747,
+      "size": [
+        1280,
+        900
+      ]
+    },
+    {
+      "file": "line-0533-3.png",
+      "sourceLine": 533,
+      "callId": "call_3cda822aaa8a41199384a6119203d03b",
+      "sha256": "98f5d7376ffd9cd0b76e341e18575519819a9f000941d262cde80f74c0f2eacf",
+      "bytes": 144235,
+      "size": [
+        1280,
+        900
+      ]
+    },
+    {
+      "file": "line-0547-4.png",
+      "sourceLine": 547,
+      "callId": "call_6886938329904a4db77699a345a95971",
+      "sha256": "f134adc26ec5c10bf61b98f239206506bcad85bf878a0ec04032d9f452ad83c3",
+      "bytes": 66991,
+      "size": [
+        1280,
+        900
+      ]
+    },
+    {
+      "file": "line-0565-3.png",
+      "sourceLine": 565,
+      "callId": "call_d4b8e7a7f9b84e6e9720a11e75cb7f70",
+      "sha256": "4b582ca71ff718d3b6032dd9f8eb5a4143e1078a4ef8bc1fa2b703b7ebcf52f5",
+      "bytes": 146221,
+      "size": [
+        1280,
+        900
+      ]
+    },
+    {
+      "file": "line-0576-1.png",
+      "sourceLine": 576,
+      "callId": "call_50099ae309ca490db2c70be934b369da",
+      "sha256": "9f80801b9c73b0d8c168962258b1b487c91930d98e9f801c94e452c24bc59d2f",
+      "bytes": 69015,
+      "size": [
+        1280,
+        900
+      ]
+    },
+    {
+      "file": "line-0583-3.png",
+      "sourceLine": 583,
+      "callId": "call_6aa8c2d0a0964c93b69813cf6733ed37",
+      "sha256": "4b582ca71ff718d3b6032dd9f8eb5a4143e1078a4ef8bc1fa2b703b7ebcf52f5",
+      "bytes": 146221,
+      "size": [
+        1280,
+        900
+      ]
+    },
+    {
+      "file": "line-0712-2.png",
+      "sourceLine": 712,
+      "callId": "call_c39effcfb0824845bb44ee5b9556772a",
+      "sha256": "fa0125ced96556bfd36222ac0e166fcd4865aa3cfe96c7b00a82e23a41b7dbfb",
+      "bytes": 255201,
+      "size": [
+        1280,
+        900
+      ]
+    }
+  ],
+  "completeLedgerRecordsRecovered": 2,
+  "truncatedEventImages": [
+    {
+      "sourceLine": 124,
+      "artifactPath": "city_test_runs/city_jingchao_capital/steps/blueprint/working_preview/group_previews/structure_anchor_group_001_starhall.png",
+      "reason": "ValueError"
+    },
+    {
+      "sourceLine": 151,
+      "artifactPath": "city_test_runs/city_jingchao_capital/steps/blueprint/working_preview/group_previews/structure_anchor_group_003_seminars.png",
+      "reason": "ValueError"
+    },
+    {
+      "sourceLine": 174,
+      "artifactPath": "city_test_runs/city_jingchao_capital/steps/blueprint/working_preview/group_previews/structure_anchor_group_005_library.png",
+      "reason": "ValueError"
+    },
+    {
+      "sourceLine": 194,
+      "artifactPath": "city_test_runs/city_jingchao_capital/steps/blueprint/working_preview/group_previews/structure_anchor_group_006_observatory.png",
+      "reason": "ValueError"
+    },
+    {
+      "sourceLine": 216,
+      "artifactPath": "city_test_runs/city_jingchao_capital/steps/blueprint/working_preview/group_previews/structure_anchor_group_007_laboratory.png",
+      "reason": "ValueError"
+    },
+    {
+      "sourceLine": 238,
+      "artifactPath": "city_test_runs/city_jingchao_capital/steps/blueprint/working_preview/group_previews/structure_anchor_group_008_council.png",
+      "reason": "ValueError"
+    },
+    {
+      "sourceLine": 258,
+      "artifactPath": "city_test_runs/city_jingchao_capital/steps/blueprint/working_preview/group_previews/structure_anchor_group_009_arrival.png",
+      "reason": "ValueError"
+    },
+    {
+      "sourceLine": 278,
+      "artifactPath": "city_test_runs/city_jingchao_capital/steps/blueprint/working_preview/group_previews/structure_anchor_group_010_market.png",
+      "reason": "ValueError"
+    },
+    {
+      "sourceLine": 298,
+      "artifactPath": "city_test_runs/city_jingchao_capital/steps/blueprint/working_preview/group_previews/structure_anchor_group_011_dining.png",
+      "reason": "ValueError"
+    },
+    {
+      "sourceLine": 334,
+      "artifactPath": "city_test_runs/city_jingchao_capital/steps/blueprint/working_preview/group_previews/structure_anchor_group_013_student_west_houses.png",
+      "reason": "ValueError"
+    },
+    {
+      "sourceLine": 352,
+      "artifactPath": "city_test_runs/city_jingchao_capital/steps/blueprint/working_preview/group_previews/structure_anchor_group_014_student_south.png",
+      "reason": "ValueError"
+    },
+    {
+      "sourceLine": 389,
+      "artifactPath": "city_test_runs/city_jingchao_capital/steps/blueprint/working_preview/group_previews/structure_anchor_group_014_student_south.png",
+      "reason": "ValueError"
+    },
+    {
+      "sourceLine": 409,
+      "artifactPath": "city_test_runs/city_jingchao_capital/steps/blueprint/working_preview/group_previews/structure_anchor_group_015_faculty.png",
+      "reason": "ValueError"
+    },
+    {
+      "sourceLine": 418,
+      "artifactPath": "city_test_runs/city_jingchao_capital/steps/blueprint/working_preview/group_previews/structure_anchor_group_017_faculty_home3.png",
+      "reason": "ValueError"
+    },
+    {
+      "sourceLine": 436,
+      "artifactPath": "city_test_runs/city_jingchao_capital/steps/blueprint/working_preview/group_previews/structure_anchor_group_019_care.png",
+      "reason": "ValueError"
+    },
+    {
+      "sourceLine": 452,
+      "artifactPath": "city_test_runs/city_jingchao_capital/steps/blueprint/working_preview/group_previews/structure_anchor_group_020_scriptorium.png",
+      "reason": "ValueError"
+    },
+    {
+      "sourceLine": 470,
+      "artifactPath": "city_test_runs/city_jingchao_capital/steps/blueprint/working_preview/group_previews/structure_anchor_group_023_botanical_nursery.png",
+      "reason": "ValueError"
+    },
+    {
+      "sourceLine": 490,
+      "artifactPath": "city_test_runs/city_jingchao_capital/steps/blueprint/working_preview/group_previews/structure_anchor_group_024_logistics.png",
+      "reason": "ValueError"
+    },
+    {
+      "sourceLine": 515,
+      "artifactPath": "city_test_runs/city_jingchao_capital/steps/blueprint/working_preview/group_previews/structure_anchor_group_015_student_south_houses.png",
+      "reason": "ValueError"
+    },
+    {
+      "sourceLine": 545,
+      "artifactPath": "city_test_runs/city_jingchao_capital/steps/blueprint/working_preview/group_previews/structure_anchor_group_002_starhall_wings.png",
+      "reason": "ValueError"
+    },
+    {
+      "sourceLine": 572,
+      "artifactPath": "city_test_runs/city_jingchao_capital/steps/blueprint/working_preview/group_previews/structure_anchor_group_014_student_west_dining.png",
+      "reason": "ValueError"
+    },
+    {
+      "sourceLine": 581,
+      "artifactPath": "",
+      "reason": "ValueError"
+    },
+    {
+      "sourceLine": 708,
+      "artifactPath": "city_test_runs/city_jingchao_capital/steps/d7/placed_structure_preview.png",
+      "reason": "ValueError"
+    }
+  ]
+}
