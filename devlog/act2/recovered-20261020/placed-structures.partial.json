@@ -1,0 +1,618 @@
+{
+  "sourceLine": 666,
+  "artifactPath": "city_test_runs\\city_jingchao_capital\\steps\\d7\\placed_structure_ledger.json",
+  "partial": true,
+  "textPageCharacters": 24000,
+  "nextOffset": 24000,
+  "hasMore": true,
+  "placedStructures": [
+    {
+      "anchorId": "seminars_required_001",
+      "arrayId": "seminars_required_001",
+      "arrayPattern": "patch_axis_band",
+      "templateId": "studio:mg-36-v02",
+      "templateRef": "studio:mg-36-v02",
+      "variantId": "studio_test_20260924",
+      "rotation": "NONE",
+      "mirror": "NONE",
+      "sourcePatchIds": [
+        "minecraft:overworld:step.16:city.city_jingchao_capital:p.3",
+        "平原27"
+      ],
+      "anchorBlock": {
+        "x": -3136,
+        "z": 5067
+      },
+      "variantSelectionMode": "round_robin",
+      "intentTerms": [
+        "array.seminars_required_001",
+        "array_pattern.patch_axis_band",
+        "基础教学内院"
+      ],
+      "priority": 1002,
+      "roadAccessIntent": "array_connect_deferred_to_d7",
+      "smallClearanceBlocks": 4,
+      "selectionReason": "Programmatic CityBlueprint compiler selection",
+      "placementGroupId": "seminars",
+      "placementProvenance": {
+        "slotId": "",
+        "arrayId": "seminars_required_001",
+        "parentArrayId": "",
+        "subZoneId": ""
+      },
+      "templateHash": "sha256:5c9f14910c0d7e6095f3cc1c63206a899c6a76db41598def6214871450787223",
+      "rawSize": {
+        "width": 57,
+        "height": 51,
+        "depth": 49
+      },
+      "terrainPosePolicy": "structure_start_beard_thin",
+      "groundPlaneY": 2,
+      "supportPolicy": "full_footprint_support",
+      "clearanceBlocks": 0,
+      "materializationSource": "structure_template_nbt",
+      "templatePlacementPlan": {
+        "templateId": "studio:mg-36-v02",
+        "templateRef": "studio:mg-36-v02",
+        "templateHash": "sha256:5c9f14910c0d7e6095f3cc1c63206a899c6a76db41598def6214871450787223",
+        "variantId": "studio_test_20260924",
+        "rotation": "NONE",
+        "mirror": "NONE",
+        "terrainPosePolicy": "structure_start_beard_thin",
+        "groundPlaneY": 2,
+        "anchorBlock": {
+          "x": -3136,
+          "z": 5067
+        },
+        "templateSize": {
+          "width": 57,
+          "height": 51,
+          "depth": 49
+        },
+        "transformed": {
+          "size": {
+            "width": 57,
+            "height": 51,
+            "depth": 49
+          },
+          "roadEntrances": [
+            {
+              "entranceId": "front",
+              "direction": "NORTH",
+              "relativePosition": {
+                "x": 28,
+                "z": 0
+              },
+              "worldPosition": {
+                "x": -3108,
+                "z": 5067
+              }
+            }
+          ]
+        }
+      },
+      "plannedFootprint": {
+        "minX": -3136,
+        "minZ": 5067,
+        "maxX": -3080,
+        "maxZ": 5115
+      },
+      "collisionEnvelope": {
+        "minX": -3136,
+        "minZ": 5067,
+        "maxX": -3080,
+        "maxZ": 5115
+      },
+      "maskEnvelope": {
+        "minX": -3144,
+        "minZ": 5059,
+        "maxX": -3072,
+        "maxZ": 5123
+      },
+      "blueprintStructureRef": "studio:mg-36-v02",
+      "blueprintRequired": true,
+      "blueprintPlacementPhase": "required",
+      "resolvedTerrainMode": "SURFACE",
+      "blueprintLayout": {
+        "algorithm": "LINEAR",
+        "placementMode": "AXIS_ANCHORED",
+        "slotIndex": 0,
+        "spacingBlocks": 8,
+        "outwardGuided": false,
+        "densityParameters": {
+          "placementMode": "AXIS_ANCHORED",
+          "targetEdgeGapBlocks": 9,
+          "maximumEdgeGapBlocks": 22,
+          "landUseHandoffGapBlocks": 24,
+          "jitterBlocks": 3,
+          "streetBandWidthBlocks": 5,
+          "claimAreaMultiplier": 1.0
+        },
+        "theoreticalAnchor": {
+          "x": -3136,
+          "z": 5067
+        },
+        "streetBandReserved": true,
+        "streetBandWidthBlocks": 5,
+        "primaryAxisEndpoint": true,
+        "layoutMode": "ACTUAL_RECTANGLE_ENVELOPES",
+        "purpose": "两栋共享教学楼",
+        "preferredPatchZone": "CENTER",
+        "patchSelectionScope": "array_composition_slot",
+        "arrayCompositionSlot": {
+          "compositionId": "seminars_court",
+          "parentAlgorithm": "COURTYARD",
+          "centerGroupId": "seminars",
+          "slotIndex": 0,
+          "plannedSpanBlocks": 119,
+          "spanSource": "TEMPLATE_ARRAY_DEMAND",
+          "origin": {
+            "x": -3080,
+            "z": 5091
+          },
+          "placementOrigin": {
+            "x": -3136,
+            "z": 5067
+          },
+          "slotBounds": {
+            "minX": -3136,
+            "minZ": 5067,
+            "maxX": -3025,
+            "maxZ": 5115
+          }
+        },
+        "coreSeedCell": {
+          "cellX": -196,
+          "cellZ": 317,
+          "blockMinX": -3136,
+          "blockMinZ": 5072
+        },
+        "primaryEntranceDirection": "NORTH",
+        "streetAxisDerivedFromPrimaryEntrance": true,
+        "acceptedAnchor": {
+          "x": -3136,
+          "z": 5067
+        }
+      },
+      "buildingParcelPlan": {
+        "schema": "city_building_parcel_plan",
+        "planningStage": "D4_BEFORE_ARRAY_COMMIT",
+        "collisionPolicy": "RAW_NBT_FOOTPRINT",
+        "marginBlocks": 0,
+        "preferredBounds": {
+          "minX": -3136,
+          "minZ": 5067,
+          "maxX": -3080,
+          "maxZ": 5115
+        },
+        "resolvedBounds": {
+          "minX": -3136,
+          "minZ": 5067,
+          "maxX": -3080,
+          "maxZ": 5115
+        },
+        "hardCollisionEnvelope": {
+          "minX": -3136,
+          "minZ": 5067,
+          "maxX": -3080,
+          "maxZ": 5115
+        },
+        "parcelStatus": "FULL",
+        "greenerySelected": false,
+        "greeneryStatus": "BUILDING_DECORATION_OWNED_BY_TEMPLATE"
+      },
+      "sourcePatches": [
+        {
+          "landformPatchId": "minecraft:overworld:step.16:city.city_jingchao_capital:p.3",
+          "mapLabel": "平原27",
+          "landformType": "plain",
+          "blockBounds": {
+            "minX": -3360,
+            "minZ": 4608,
+            "maxX": -2625,
+            "maxZ": 5151
+          }
+        }
+      ],
+      "actualFootprint": {
+        "minX": -3136,
+        "minZ": 5067,
+        "maxX": -3080,
+        "maxZ": 5115
+      },
+      "reservedEnvelope": {
+        "minX": -3136,
+        "minZ": 5067,
+        "maxX": -3080,
+        "maxZ": 5115
+      },
+      "maskMarginBlocks": 8,
+      "reservedEnvelopePolicy": "exactFootprint+clearance",
+      "lockedActualFootprint": {
+        "minX": -3136,
+        "minZ": 5067,
+        "maxX": -3080,
+        "maxZ": 5115
+      },
+      "lockedCollisionEnvelope": {
+        "minX": -3136,
+        "minZ": 5067,
+        "maxX": -3080,
+        "maxZ": 5115
+      },
+      "ownerChunks": [
+        {
+          "x": -196,
+          "z": 316
+        },
+        {
+          "x": -196,
+          "z": 317
+        },
+        {
+          "x": -196,
+          "z": 318
+        },
+        {
+          "x": -196,
+          "z": 319
+        },
+        {
+          "x": -195,
+          "z": 316
+        },
+        {
+          "x": -195,
+          "z": 317
+        },
+        {
+          "x": -195,
+          "z": 318
+        },
+        {
+          "x": -195,
+          "z": 319
+        },
+        {
+          "x": -194,
+          "z": 316
+        },
+        {
+          "x": -194,
+          "z": 317
+        },
+        {
+          "x": -194,
+          "z": 318
+        },
+        {
+          "x": -194,
+          "z": 319
+        },
+        {
+          "x": -193,
+          "z": 316
+        },
+        {
+          "x": -193,
+          "z": 317
+        },
+        {
+          "x": -193,
+          "z": 318
+        },
+        {
+          "x": -193,
+          "z": 319
+        }
+      ],
+      "locked": true,
+      "templateDatumPolicy": "generator_base_height_motion_blocking_no_leaves",
+      "structureTemplate": {
+        "templateId": "studio:mg-36-v02",
+        "templateRef": "studio:mg-36-v02",
+        "templateHash": "sha256:5c9f14910c0d7e6095f3cc1c63206a899c6a76db41598def6214871450787223",
+        "variantId": "studio_test_20260924",
+        "rotation": "NONE",
+        "mirror": "NONE",
+        "rawSize": {
+          "width": 57,
+          "height": 51,
+          "depth": 49
+        },
+        "terrainPosePolicy": "structure_start_beard_thin",
+        "groundPlaneY": 2,
+        "templateDatumPolicy": "generator_base_height_motion_blocking_no_leaves",
+        "materializationSource": "structure_template_nbt"
+      },
+      "templateDatumY": 66
+    },
+    {
+      "anchorId": "seminars_required_002",
+      "arrayId": "seminars_required_002",
+      "arrayPattern": "patch_axis_band",
+      "templateId": "studio:mg-34-v03",
+      "templateRef": "studio:mg-34-v03",
+      "variantId": "studio_test_20260924",
+      "rotation": "NONE",
+      "mirror": "NONE",
+      "sourcePatchIds": [
+        "minecraft:overworld:step.16:city.city_jingchao_capital:p.23",
+        "坡地67"
+      ],
+      "anchorBlock": {
+        "x": -3071,
+        "z": 5077
+      },
+      "variantSelectionMode": "round_robin",
+      "intentTerms": [
+        "array.seminars_required_002",
+        "array_pattern.patch_axis_band",
+        "基础教学内院"
+      ],
+      "priority": 1003,
+      "roadAccessIntent": "array_connect_deferred_to_d7",
+      "smallClearanceBlocks": 4,
+      "selectionReason": "Programmatic CityBlueprint compiler selection",
+      "placementGroupId": "seminars",
+      "placementProvenance": {
+        "slotId": "",
+        "arrayId": "seminars_required_002",
+        "parentArrayId": "",
+        "subZoneId": ""
+      },
+      "templateHash": "sha256:17294ac0ad305a42ae87885e75a4fe4000d683a54f5656c0e49cabc4e5ee242f",
+      "rawSize": {
+        "width": 47,
+        "height": 49,
+        "depth": 29
+      },
+      "terrainPosePolicy": "structure_start_beard_thin",
+      "groundPlaneY": 2,
+      "supportPolicy": "full_footprint_support",
+      "clearanceBlocks": 0,
+      "materializationSource": "structure_template_nbt",
+      "templatePlacementPlan": {
+        "templateId": "studio:mg-34-v03",
+        "templateRef": "studio:mg-34-v03",
+        "templateHash": "sha256:17294ac0ad305a42ae87885e75a4fe4000d683a54f5656c0e49cabc4e5ee242f",
+        "variantId": "studio_test_20260924",
+        "rotation": "NONE",
+        "mirror": "NONE",
+        "terrainPosePolicy": "structure_start_beard_thin",
+        "groundPlaneY": 2,
+        "anchorBlock": {
+          "x": -3071,
+          "z": 5077
+        },
+        "templateSize": {
+          "width": 47,
+          "height": 49,
+          "depth": 29
+        },
+        "transformed": {
+          "size": {
+            "width": 47,
+            "height": 49,
+            "depth": 29
+          },
+          "roadEntrances": [
+            {
+              "entranceId": "front",
+              "direction": "NORTH",
+              "relativePosition": {
+                "x": 23,
+                "z": 0
+              },
+              "worldPosition": {
+                "x": -3048,
+                "z": 5077
+              }
+            }
+          ]
+        }
+      },
+      "plannedFootprint": {
+        "minX": -3071,
+        "minZ": 5077,
+        "maxX": -3025,
+        "maxZ": 5105
+      },
+      "collisionEnvelope": {
+        "minX": -3071,
+        "minZ": 5077,
+        "maxX": -3025,
+        "maxZ": 5105
+      },
+      "maskEnvelope": {
+        "minX": -3079,
+        "minZ": 5069,
+        "maxX": -3017,
+        "maxZ": 5113
+      },
+      "blueprintStructureRef": "studio:mg-34-v03",
+      "blueprintRequired": true,
+      "blueprintPlacementPhase": "required",
+      "resolvedTerrainMode": "SURFACE",
+      "blueprintLayout": {
+        "algorithm": "LINEAR",
+        "placementMode": "AXIS_ANCHORED",
+        "slotIndex": 1,
+        "spacingBlocks": 8,
+        "outwardGuided": false,
+        "densityParameters": {
+          "placementMode": "AXIS_ANCHORED",
+          "targetEdgeGapBlocks": 9,
+          "maximumEdgeGapBlocks": 22,
+          "landUseHandoffGapBlocks": 24,
+          "jitterBlocks": 3,
+          "streetBandWidthBlocks": 5,
+          "claimAreaMultiplier": 1.0
+        },
+        "theoreticalAnchor": {
+          "x": -3071,
+          "z": 5077
+        },
+        "streetBandReserved": true,
+        "streetBandWidthBlocks": 5,
+        "primaryAxisEndpoint": false,
+        "streetBandRank": 1,
+        "streetBandSide": "LEFT",
+        "layoutMode": "ACTUAL_RECTANGLE_ENVELOPES",
+        "purpose": "两栋共享教学楼",
+        "preferredPatchZone": "CENTER",
+        "patchSelectionScope": "continuous_growth_from_selected_patch",
+        "arrayCompositionSlot": {
+          "compositionId": "seminars_court",
+          "parentAlgorithm": "COURTYARD",
+          "centerGroupId": "seminars",
+          "slotIndex": 0,
+          "plannedSpanBlocks": 119,
+          "spanSource": "TEMPLATE_ARRAY_DEMAND",
+          "origin": {
+            "x": -3080,
+            "z": 5091
+          },
+          "placementOrigin": {
+            "x": -3136,
+            "z": 5067
+          },
+          "slotBounds": {
+            "minX": -3136,
+            "minZ": 5067,
+            "maxX": -3025,
+            "maxZ": 5115
+          }
+        },
+        "acceptedAnchor": {
+          "x": -3071,
+          "z": 5077
+        }
+      },
+      "buildingParcelPlan": {
+        "schema": "city_building_parcel_plan",
+        "planningStage": "D4_BEFORE_ARRAY_COMMIT",
+        "collisionPolicy": "RAW_NBT_FOOTPRINT",
+        "marginBlocks": 0,
+        "preferredBounds": {
+          "minX": -3071,
+          "minZ": 5077,
+          "maxX": -3025,
+          "maxZ": 5105
+        },
+        "resolvedBounds": {
+          "minX": -3071,
+          "minZ": 5077,
+          "maxX": -3025,
+          "maxZ": 5105
+        },
+        "hardCollisionEnvelope": {
+          "minX": -3071,
+          "minZ": 5077,
+          "maxX": -3025,
+          "maxZ": 5105
+        },
+        "parcelStatus": "FULL",
+        "greenerySelected": false,
+        "greeneryStatus": "BUILDING_DECORATION_OWNED_BY_TEMPLATE"
+      },
+      "sourcePatches": [
+        {
+          "landformPatchId": "minecraft:overworld:step.16:city.city_jingchao_capital:p.23",
+          "mapLabel": "坡地67",
+          "landformType": "slope",
+          "blockBounds": {
+            "minX": -3088,
+            "minZ": 5056,
+            "maxX": -2977,
+            "maxZ": 5135
+          }
+        }
+      ],
+      "actualFootprint": {
+        "minX": -3071,
+        "minZ": 5077,
+        "maxX": -3025,
+        "maxZ": 5105
+      },
+      "reservedEnvelope": {
+        "minX": -3071,
+        "minZ": 5077,
+        "maxX": -3025,
+        "maxZ": 5105
+      },
+      "maskMarginBlocks": 8,
+      "reservedEnvelopePolicy": "exactFootprint+clearance",
+      "lockedActualFootprint": {
+        "minX": -3071,
+        "minZ": 5077,
+        "maxX": -3025,
+        "maxZ": 5105
+      },
+      "lockedCollisionEnvelope": {
+        "minX": -3071,
+        "minZ": 5077,
+        "maxX": -3025,
+        "maxZ": 5105
+      },
+      "ownerChunks": [
+        {
+          "x": -192,
+          "z": 317
+        },
+        {
+          "x": -192,
+          "z": 318
+        },
+        {
+          "x": -192,
+          "z": 319
+        },
+        {
+          "x": -191,
+          "z": 317
+        },
+        {
+          "x": -191,
+          "z": 318
+        },
+        {
+          "x": -191,
+          "z": 319
+        },
+        {
+          "x": -190,
+          "z": 317
+        },
+        {
+          "x": -190,
+          "z": 318
+        },
+        {
+          "x": -190,
+          "z": 319
+        }
+      ],
+      "locked": true,
+      "templateDatumPolicy": "generator_base_height_motion_blocking_no_leaves",
+      "structureTemplate": {
+        "templateId": "studio:mg-34-v03",
+        "templateRef": "studio:mg-34-v03",
+        "templateHash": "sha256:17294ac0ad305a42ae87885e75a4fe4000d683a54f5656c0e49cabc4e5ee242f",
+        "variantId": "studio_test_20260924",
+        "rotation": "NONE",
+        "mirror": "NONE",
+        "rawSize": {
+          "width": 47,
+          "height": 49,
+          "depth": 29
+        },
+        "terrainPosePolicy": "structure_start_beard_thin",
+        "groundPlaneY": 2,
+        "templateDatumPolicy": "generator_base_height_motion_blocking_no_leaves",
+        "materializationSource": "structure_template_nbt"
+      },
+      "templateDatumY": 66
+    }
+  ]
+}
