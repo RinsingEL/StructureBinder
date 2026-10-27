@@ -15,10 +15,15 @@ canvas{position:absolute;inset:0;width:1600px;height:702px}#safe{position:absolu
 #log{position:absolute;left:44px;top:83px;width:330px;list-style:none;margin:0;padding:0}#log li{padding:0 0 10px;margin:0 0 10px;border-bottom:1px solid #2b2a2618;font:14px var(--mono)}#log .tool{font-size:12px;color:#2b2a2699;margin-bottom:7px}#log .ok{float:right;color:#5F8A6A;font-size:11px}#log .line{display:inline-block;width:35px;color:#2b2a2655}#districts{position:absolute;left:420px;top:110px;line-height:2.3;font-size:14px;columns:2;column-gap:24px;width:420px}#districts div{break-inside:avoid}
 #case{position:absolute;left:410px;top:34px;font:11px var(--mono);color:#2b2a2666}
 #preview{position:absolute;left:260px;top:65px;width:1080px;height:570px;object-fit:contain;opacity:0;pointer-events:none}#photo{position:absolute;inset:0;width:1600px;height:900px;object-fit:cover;display:none}#error{position:absolute;left:44px;top:120px;font:14px var(--mono)}[hidden]{display:none!important}
+#roster{position:absolute;right:44px;top:120px;width:365px;padding:22px;background:var(--paper);border-block:1px solid #2b2a2644}#roster header{font-size:13px;line-height:1.8;margin-bottom:16px}#roster .realm{display:grid;grid-template-columns:12px 85px 1fr;gap:9px;align-items:center;padding:12px 0;opacity:.45;border-bottom:1px solid #2b2a2615;font-size:14px}#roster i{width:10px;height:10px}#roster small{font-size:11px;color:#2b2a2688}#roster.compact{width:310px;top:100px;padding:16px}#roster.compact header{display:none}#roster.compact .realm{grid-template-columns:10px 76px 1fr;font-size:12px;padding:10px 0}
+#explain{position:absolute;left:44px;top:105px;width:360px;padding:20px;background:var(--paper);border-block:1px solid #2b2a2644;font-size:16px;line-height:1.65}#explain h2,#params h2{font-size:18px;font-weight:normal;margin:0 0 16px}#explain p{margin:8px 0}#explain small{font-size:12px;color:#2b2a2688}#explain .district-row{font-size:13px;line-height:1.35;padding:1px 0;opacity:.25}#explain .intent{margin-top:12px;padding-top:12px;border-top:1px solid #2b2a2633;font-size:14px;min-height:70px}#params{position:absolute;left:1140px;top:112px;width:390px;padding:22px;background:var(--paper);border-block:1px solid #2b2a2644}#params .param{padding:12px 0;border-bottom:1px solid #2b2a2622;font-size:15px;line-height:1.6}#params small{display:block;font:10px var(--mono);color:#2b2a2677}#params b{font-weight:normal;display:block;font:14px var(--mono);margin-top:5px}#params .purpose{font-size:14px;line-height:1.6;margin:12px 0}#stack{position:absolute;right:44px;top:90px;width:290px}#stack .slip{background:var(--paper);border-top:1px solid #2b2a2644;padding:5px 10px;font-size:12px;height:29px;opacity:.28}#stack .slip.active{height:96px;opacity:1}#stack small{font:10px var(--mono);display:block;margin-top:8px;line-height:1.6}#stack b{font-weight:normal}#stack .slip.done{opacity:.85}
+#explain .tag-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px}#explain .tag-grid p{font-size:14px}
+#params.fast{left:44px;top:110px;width:350px;padding:16px}#params.fast .param{padding:6px 0;font-size:13px}#params.fast b{font-size:12px;overflow-wrap:anywhere}#params.fast .purpose{font-size:12px;max-height:54px;overflow:hidden}#explain .current-duty{font-size:14px;color:#B07A4F;margin:0 0 8px}
+#explain.declarations{width:610px}#explain.declarations h2{line-height:24px;margin:0 0 12px}#explain.declarations .district-row{height:24px;line-height:24px;padding:0;white-space:nowrap}#explain.declarations .direction{display:inline-block;margin-left:10px;padding:0 7px;background:#e0d4b9;color:#684823;font-size:13px;font-weight:700;line-height:20px}#explain.declarations .intent{min-height:48px;font-size:13px;margin-top:10px;padding-top:8px}
 </style></head>
 <body><main id="sheet" tabindex="0" aria-label="W T D 地图演示；右箭头下一拍，左箭头上一拍，F 全屏">
 <canvas id="map" width="1600" height="702" aria-label="存档地图"></canvas>
-<div id="stage"></div><p id="caption" aria-live="polite"></p><div id="source"></div><div id="legend"></div><div id="scan-count"></div><div id="stats"></div><aside id="paper"></aside><ol id="log"></ol><div id="districts"></div><div id="case"></div><img id="preview" alt="学院设计预览"><div id="safe" aria-hidden="true"></div><img id="photo" alt="学院教学区实机截图"><p id="error" hidden></p>
+<div id="stage"></div><p id="caption" aria-live="polite"></p><div id="source"></div><div id="legend"></div><div id="scan-count"></div><div id="stats"></div><aside id="paper"></aside><aside id="roster" hidden></aside><aside id="explain" hidden></aside><aside id="params" hidden></aside><aside id="stack" hidden></aside><ol id="log"></ol><div id="districts"></div><div id="case"></div><img id="preview" alt="学院设计预览"><div id="safe" aria-hidden="true"></div><img id="photo" alt="学院教学区实机截图"><p id="error" hidden></p>
 </main>
 <script id="atlas-data" type="application/json">__ATLAS_DATA__</script>
 <script>
@@ -57,17 +62,20 @@ const beats=[
  ['T3','T · 国度','按地形代价向外认领','近似',state(nations),16000],
  ['T3-end','T · 国度','','真实数据',state(nations),1000],
  ['T4','T · 国度','镜潮 · (−2928,5392)','真实数据',state(island),3800],
- ['D1','D · 城市','局部地形 · 16 个功能区','真实数据',state(town),3000],
+ ['D1','D · 城市','局部地形','真实数据',state(town),3000],
+ ['D1b','D · 城市','镜潮 · 城市职责','真实数据',state({...town,screenX:900}),2200],
+ ['D1c','D · 城市','可用素材 · 按用途','真实数据',state({...town,screenX:900}),3200],
+ ['D1d','D · 城市','职责与地形 → 功能区','近似',state({...town,screenX:1060,range:1150}),22000],
  ['D2','D · 城市','南宿院 · 查看住宿素材','真实数据',state({...southClose,screenX:600}),4200],
- ['D3','D · 城市','南宿院 · 申请四栋','近似',state(southClose),2600],
- ['D4','D · 城市','只保留一栋','真实数据',state(southClose),3000],
- ['D5','D · 城市','东移 12 · 南移 6','真实数据',state(southClose),4000],
- ['D6','D · 城市','改为生活巷','真实数据',state(southClose),5200],
- ['D7','D · 城市','16 区 · 86 个计划单元','真实数据',state(town),7000],
+ ['D3','D · 城市','南宿院 · 申请四栋','近似',state({...southClose,screenX:620}),6500],
+ ['D4','D · 城市','LLM 计划四栋 → Java 落位一栋','真实数据',state({...southClose,screenX:620}),4500],
+ ['D5','D · 城市','东移 12 · 南移 6','真实数据',state({...southClose,screenX:620}),5000],
+ ['D6','D · 城市','改为生活巷','真实数据',state({...southClose,screenX:620}),6500],
+ ['D7','D · 城市','16 区 · 86 个计划单元','真实数据',state({...town,screenX:740}),24000],
  ['D8-preview','D · 城市','','真实数据',state({...town,preview:1}),2000],
  ['D8-photo','','','',state({...town,preview:1}),0]
 ];
-let index=0,frame=0,current={...base},from={...base},start=0;
+let scene=0,index=0,frame=0,current={...base},from={...base},start=0;
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 function xy(x,z,s){const k=580/s.range;return [s.screenX+(x-s.cx)*k,354+(z-s.cz)*k]}
 function text(t,x,y,size=13,alpha=1,font=serif){ctx.globalAlpha=alpha;ctx.fillStyle=INK;ctx.font=`${size}px ${font}`;ctx.fillText(t,x,y);ctx.globalAlpha=1}
@@ -89,7 +97,7 @@ function draw(s,p=1){
  if(s.scan>0&&s.scan<1){const [l,t]=xy(-19456,-19456+s.scan*38912,s),[r]=xy(19456,0,s);line(l,t,r,t,INK,.8)}
  updateClaims(s.claims);mapImage(claimLayer,-19456,-19456,38912,38912,s,.36*(1-s.local*.6));
  // Borders draw only after the cost reveal has completed; never expose future ownership.
- const borderProgress=index===7?clamp((p-.88)/.12):s.borders;
+ const borderProgress=scene===7?clamp((p-.88)/.12):s.borders;
  ctx.globalAlpha=(s.local>.01?.15:1)*borderProgress;ctx.strokeStyle=INK;ctx.lineWidth=1.15;ctx.beginPath();
  for(let i=0;i<Math.floor(edges.length*borderProgress);i++){const e=edges[i],[x,y]=xy(e[0],e[1],s),[xx,yy]=xy(e[2],e[3],s);ctx.moveTo(x,y);ctx.lineTo(xx,yy)}ctx.stroke();ctx.globalAlpha=1;
  mapImage(local,-3584,4608,1536,1536,s,s.local*.94);
@@ -99,13 +107,13 @@ function draw(s,p=1){
  }
  for(let i=0;i<data.realms.length;i++){const r=data.realms[i],a=clamp(s.seeds*7-i);if(a<=0)continue;const [x,y]=xy(r.x,r.z,s);if(x<50||x>1510||y<80||y>605)continue;ctx.globalAlpha=a*(1-Math.max(s.local,s.focus));dot(x,y,3,COLORS[i]);ctx.strokeStyle=INK;ctx.lineWidth=.7;ctx.beginPath();ctx.arc(x,y,6+(a<1?a*9:9),0,Math.PI*2);ctx.stroke();ctx.globalAlpha=1;text(r.name,x+21,y+5,17,a*(1-Math.max(s.local,s.focus)))}
  if(s.city>0){const [x,y]=xy(data.city.x,data.city.z,s);ctx.globalAlpha=s.city;line(x-8,y,x+8,y,INK,1);line(x,y-8,x,y+8,INK,1);ctx.globalAlpha=1;text('镜潮',x+15,y-9,18,s.city)}
- if(index>=10)drawAcademy(s,p);
+ if(scene>=10)drawAcademy(s,p);
  ctx.restore();
 
- $('paper').style.opacity=s.notes;$('paper').hidden=s.notes<.001;Array.from($('paper').children).forEach((el,i)=>el.style.clipPath=`inset(0 ${(1-clamp(s.notes*4-i))*100}% 0 0)`);
+ $('paper').style.opacity=0;$('paper').hidden=true;Array.from($('paper').children).forEach((el,i)=>el.style.clipPath=`inset(0 ${(1-clamp(s.notes*4-i))*100}% 0 0)`);
  $('preview').style.opacity=s.preview;$('preview').hidden=s.preview<.001;
- $('scan-count').textContent=index===1?`${Math.floor(92416*s.scan).toLocaleString('en-US')} / 92,416`:'';
- $('sheet').dataset.settled=String(p>=1);
+ $('scan-count').textContent=scene===1?`${Math.floor(92416*s.scan).toLocaleString('en-US')} / 92,416`:'';
+ revisionPanels(s,p);$('sheet').dataset.settled=String(p>=1);
 }
 
 const academy=data.academy, snap=rev=>academy.snapshots[rev];
@@ -124,7 +132,7 @@ function roads(rev,s,p=1,onlySouth=true){
  ctx.restore();
  for(const b of r.courts){if(!onlySouth||b.ownerGroupId?.startsWith('student_south'))box(b,s,'#D6CCAF',clamp(p)*.5);}
 }
-function planning(s,p=1,ghost=.65){
+function planning(s,p=1,ghost=.65,spacing=1){
  // Only one member position survived. Three unmet demand slots are schematic,
  // arranged around the recorded 28 x 24 court; never called compiled positions.
  const actual=snap(61).anchors.find(south).plannedFootprint;
@@ -132,11 +140,13 @@ function planning(s,p=1,ghost=.65){
  const slots=[actual,{minX:court.minX-25,maxX:court.minX-7,minZ:court.minZ,maxZ:court.minZ+22},
  {minX:court.maxX+7,maxX:court.maxX+25,minZ:court.minZ,maxZ:court.minZ+22},
  {minX:actual.minX,maxX:actual.maxX,minZ:court.maxZ+6,maxZ:court.maxZ+28}];
+ const delta=6*(spacing-1);
+ slots[1].minX-=delta;slots[1].maxX-=delta;slots[2].minX+=delta;slots[2].maxX+=delta;slots[3].minZ+=delta;slots[3].maxZ+=delta;
  slots.forEach((b,i)=>box(b,s,null,clamp(p*4-i)*(i?ghost:.8),true));
  const outer={minX:Math.min(...slots.map(b=>b.minX))-6,maxX:Math.max(...slots.map(b=>b.maxX))+6,minZ:Math.min(...slots.map(b=>b.minZ))-6,maxZ:Math.max(...slots.map(b=>b.maxZ))+6};
  box(outer,s,null,.25*p,true);
  const a=snap(61).groups.find(g=>g.groupId==='student_south').anchorBlock,[x,y]=xy(a.x,a.z,s);
- ctx.save();ctx.globalAlpha=p;line(x-8,y,x+8,y);line(x,y-8,x,y+8);ctx.restore();
+ ctx.save();ctx.globalAlpha=p;line(x-8,y,x+8,y);line(x,y-8,x,y+8);ctx.restore();return slots;
 }
 function cards(p){
  academy.cards.forEach((card,i)=>{
@@ -156,45 +166,39 @@ function districtLabels(s,p){
  line(x,y,x,yy,'#2b2a2655',.7);ctx.fillStyle=PAPER;ctx.fillRect(x-4,yy-15,width,20);ctx.fillStyle=INK;ctx.font=`13px ${serif}`;ctx.fillText(d.name,x,yy);ctx.restore();});
 }
 function drawAcademy(s,p){
- if(index===10){districtLabels(s,p);return}
- if(index===11){const a=snap(61).groups.find(g=>g.groupId==='student_south').anchorBlock,[x,y]=xy(a.x,a.z,s);line(x-8,y,x+8,y);line(x,y-8,x,y+8);cards(p);return}
- if(index===12){planning(s,p);return}
- if(index===13){planning(s,1,.22);building(snap(61).anchors.find(south),s,ease(clamp(p*2)));roads(61,s,clamp((p-.6)/.4));return}
- if(index===14){
+ if(scene===10){introMap(s,p);return}
+ if(scene===11){cards(p);return}
+ if(scene===12){parameterMap(s,p);return}
+ if(scene===13){const result=ease(clamp((p-.35)/.4));planning(s,1,mix(.65,.18,result));building(snap(61).anchors.find(south),s,result);roads(61,s,clamp((p-.8)/.2));text('虚线：计划空位示意',450,105,14,.8);if(result>0)text('实线：Java 实际计算出的落位',450,129,14,result);return}
+ if(scene===14){
  const reveal=clamp(p/.27),move=ease(clamp((p-.3)/.55));
  snap(69).anchors.filter(south).forEach(a=>{const b={...a,plannedFootprint:{...a.plannedFootprint}};for(const key in b.plannedFootprint)b.plannedFootprint[key]+=(key.endsWith('X')?12:6)*move;building(b,s,reveal)});
  roads(70,s,clamp((p-.82)/.18));
  if(p>.8){for(const gap of snap(70).gaps.filter(g=>g.fromGroupId==='student_south')){const a=gap.fromInterface,b=gap.toInterface,[x,y]=xy(a.x,a.z,s),[xx,yy]=xy(b.x,b.z,s),len=Math.hypot(xx-x,yy-y);ctx.save();ctx.globalAlpha=clamp((p-.8)/.2);line(x,y,x+(xx-x)/len*22,y+(yy-y)/len*22,'#A65E66',2);ctx.restore();}}return;
  }
- if(index===15){
+ if(scene===15){
+ compositionMap(s,p);
  if(p<.22)snap(70).anchors.filter(south).forEach(a=>building(a,s,1-p/.22));
  const q=clamp((p-.22)/.58);snap(71).anchors.filter(south).forEach((a,i)=>{building(a,s,.35,true);building(a,s,clamp(q*4-i));});roads(71,s,clamp((p-.8)/.2));
  if(p>.8){for(const id of ['market','dining']){const d=academy.districts.find(d=>d.id===id),[x,y]=xy(d.x,d.z,s);text(id==='market'?'市场':'食堂',x,y,13,clamp((p-.8)/.2));}}return;
  }
- if(index>=16){
- const q=index===16?clamp((p-.22)/.68):1;
- const groups=[...new Set(snap(74).anchors.map(a=>a.placementGroupId))];let shown=0;
- roads(74,s,clamp((q-.65)/.35),false);
- for(const a of snap(74).anchors){const members=snap(74).anchors.filter(b=>b.placementGroupId===a.placementGroupId),i=members.indexOf(a);const north=a.placementGroupId==='student_west_dining';
- const alpha=south(a)?1:clamp((north?clamp((q-.8)/.2):q)*members.length*1.5-i*.6);
- if(alpha>0){building(a,s,alpha);shown++;}else if(q>0)building(a,s,.18,true);}
- $('stats').textContent=index===16?`${shown} / 86`:'';
- }
+ if(scene>=16){finalCity(s,p);}
+
 }
 function legends(items){$('legend').replaceChildren(...items.map(([color,label])=>{const e=document.createElement('span'),i=document.createElement('i');i.style.background=color;e.append(i,document.createTextNode(label));return e}))}
 function layout(){const scale=Math.min(innerWidth/1600,innerHeight/900),sheet=$('sheet');sheet.style.transform=`scale(${scale})`;sheet.style.left=(innerWidth-1600*scale)/2+'px';sheet.style.top=(innerHeight-900*scale)/2+'px'}
-function displayMeta(){const [id,label,caption,type,,duration,logs=0]=beats[index];$('sheet').dataset.beat=id;$('stage').textContent=label;$('caption').textContent=caption;$('source').textContent=type?'来源 · '+type:'';$('stats').textContent=index===8?`有主 ${data.statuses.owned.toLocaleString('en-US')} 格 · 无主 ${data.statuses.wild} · 争议 ${data.statuses.contested} · 受阻 ${data.statuses.blocked}`:'';
+function displayMeta(){const [id,label,caption,type,,duration,logs=0]=beats[index];$('sheet').dataset.beat=id;$('stage').textContent=label;$('caption').textContent=caption;$('source').textContent=type?'来源 · '+type:'';$('stats').textContent=scene===8?`有主 ${data.statuses.owned.toLocaleString('en-US')} 格 · 无主 ${data.statuses.wild} · 争议 ${data.statuses.contested} · 受阻 ${data.statuses.blocked}`:'';
  $('case').textContent='';
- $('photo').style.display=index===18?'block':'none';
+ $('photo').style.display=scene===18?'block':'none';
  $('log').hidden=true;$('districts').hidden=true;
 
- if(index===2)legends(LAND.map((c,i)=>[c,['< 72','72–94','95–124','≥ 125'][i]]));else if(index===3)legends([['#92AAAA','深水'],['#A9BCBC','水面']]);else if(index===4)legends([['#9CAA90','林地'],['#D6CCAF','平原'],['#C4B594','干旱群系'],['#DDDCD0','冰雪']]);else if(index===10)legends(localColors.map((c,i)=>[c,['水域','海岸','平原','坡地','台地'][i]]));else legends([]);
+ if(scene===2)legends(LAND.map((c,i)=>[c,['< 72','72–94','95–124','≥ 125'][i]]));else if(scene===3)legends([['#92AAAA','深水'],['#A9BCBC','水面']]);else if(scene===4)legends([['#9CAA90','林地'],['#D6CCAF','平原'],['#C4B594','干旱群系'],['#DDDCD0','冰雪']]);else if(scene===10)legends(localColors.map((c,i)=>[c,['水域','海岸','平原','坡地','台地'][i]]));else legends([]);
  // Hide every overlay in the full-screen photograph, including from assistive reading.
- for(const id of ['stage','caption','source','legend','case','safe','stats'])$(id).hidden=index===18;
+ for(const id of ['stage','caption','source','legend','case','safe','stats'])$(id).hidden=scene===18;
 }
-function go(next){next=clamp(next,0,beats.length-1);if(next===index&&frame)return;cancelAnimationFrame(frame);from={...current};index=next;displayMeta();start=performance.now();const target=beats[index][4],duration=reduced?0:beats[index][5];function tick(now){const p=duration?clamp((now-start)/duration):1,t=ease(p);current={};for(const key in target)current[key]=mix(from[key],target[key],t);
+function go(next){next=clamp(next,0,beats.length-1);if(next===index&&frame)return;cancelAnimationFrame(frame);from={...current};index=next;scene=legacyScene(beats[index][0]);displayMeta();start=performance.now();const target=beats[index][4],duration=reduced?0:beats[index][5];function tick(now){const p=duration?clamp((now-start)/duration):1,t=ease(p);current={};for(const key in target)current[key]=mix(from[key],target[key],t);
  // Cost is a linear clock in cumulative-cost units; camera and fades use ease-in-out.
- if(index===7)current.claims=mix(Math.max(-.001,from.claims),1,clamp(p/.88));
+ if(scene===7)current.claims=mix(Math.max(-.001,from.claims),1,clamp(p/.88));
  draw(current,p);if(p<1)frame=requestAnimationFrame(tick);else frame=0}frame=requestAnimationFrame(tick)}
 $('paper').replaceChildren(...data.notes.map(([name,body])=>{const p=document.createElement('p'),s=document.createElement('small');s.textContent=name;p.append(s,document.createTextNode(body));return p}));
 $('districts').replaceChildren(...data.districts.map(t=>{const d=document.createElement('div');d.textContent=t;return d}));
@@ -202,5 +206,6 @@ $('preview').src=data.images.design;$('photo').src=data.images.arrival;
 async function toggleFullscreen(){const root=document.documentElement,active=document.fullscreenElement||document.webkitFullscreenElement;try{const fn=active?(document.exitFullscreen||document.webkitExitFullscreen):(root.requestFullscreen||root.webkitRequestFullscreen);if(!fn){$('sheet').dataset.fullscreen='unsupported';return}await fn.call(active?document:root);$('sheet').dataset.fullscreen=String(!!(document.fullscreenElement||document.webkitFullscreenElement));}catch(error){$('sheet').dataset.fullscreen=error.name}}
 window.addEventListener('keydown',e=>{if(e.altKey||e.metaKey||e.ctrlKey||e.repeat)return;if(e.key==='ArrowRight'){e.preventDefault();go(index+1)}else if(e.key==='ArrowLeft'){e.preventDefault();go(index-1)}else if(e.key.toLowerCase()==='f'){e.preventDefault();toggleFullscreen();}});
 window.addEventListener('resize',layout);document.addEventListener('fullscreenchange',layout);document.addEventListener('webkitfullscreenchange',layout);
+__REVISION_JS__
 layout();displayMeta();draw(current);$('sheet').focus({preventScroll:true});
 </script></body></html>
