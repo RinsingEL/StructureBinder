@@ -20,6 +20,8 @@ canvas{position:absolute;inset:0;width:1600px;height:702px}#safe{position:absolu
 #explain .tag-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 12px}#explain .tag-grid p{font-size:14px}
 #params.fast{left:44px;top:110px;width:350px;padding:16px}#params.fast .param{padding:6px 0;font-size:13px}#params.fast b{font-size:12px;overflow-wrap:anywhere}#params.fast .purpose{font-size:12px;max-height:54px;overflow:hidden}#explain .current-duty{font-size:14px;color:#B07A4F;margin:0 0 8px}
 #explain.declarations{width:610px}#explain.declarations h2{line-height:24px;margin:0 0 12px}#explain.declarations .district-row{height:24px;line-height:24px;padding:0;white-space:nowrap}#explain.declarations .direction{display:inline-block;margin-left:10px;padding:0 7px;background:#e0d4b9;color:#684823;font-size:13px;font-weight:700;line-height:20px}#explain.declarations .intent{min-height:48px;font-size:13px;margin-top:10px;padding-top:8px}
+#roster .realm.reason-active{background:#e6e1cc}#roster .reason{grid-column:2/4;font-size:14px;line-height:1.6;color:#684823}#explain.style-note{width:380px}#params .mini-layout{height:100px;position:relative;margin:12px 0;background:#e6e1cc}#params .mini-layout i{position:absolute;width:35px;height:22px;background:#c4b594;border:1px solid #2b2a26}#params .mini-layout span{position:absolute;left:130px;top:42px;font-size:12px}#params .mini-layout .mini-arrow{position:absolute;font-size:20px;color:#684823}#explain .strong{color:#684823;font-weight:700}#params b{overflow-wrap:anywhere}#params .param{padding:9px 0}
+#params.demo .param{padding:5px 0;font-size:13px;line-height:1.3}#params.demo b{font-size:13px;line-height:1.3;margin-top:2px}#params.demo .purpose{margin:8px 0;line-height:1.4}#params.demo .mini-layout{margin:10px 0}
 </style></head>
 <body><main id="sheet" tabindex="0" aria-label="W T D 地图演示；右箭头下一拍，左箭头上一拍，F 全屏">
 <canvas id="map" width="1600" height="702" aria-label="存档地图"></canvas>
@@ -58,18 +60,20 @@ const beats=[
  ['W3b','W · 扫描','水面','真实数据',state(world),1500],
  ['W3c','W · 扫描','群系','真实数据',state({...world,biome:1}),1500],
  ['T1','T · 国度','','真实数据',state({...world,biome:.35,dim:.4,notes:1}),3000],
- ['T2','T · 国度','七个国度的起点','真实数据',state({...world,seeds:1}),4200],
+ ['T2','T · 国度','七个国度的起点','真实数据',state({...world,seeds:1}),16000],
  ['T3','T · 国度','按地形代价向外认领','近似',state(nations),16000],
  ['T3-end','T · 国度','','真实数据',state(nations),1000],
  ['T4','T · 国度','镜潮 · (−2928,5392)','真实数据',state(island),3800],
  ['D1','D · 城市','局部地形','真实数据',state(town),3000],
  ['D1b','D · 城市','镜潮 · 城市职责','真实数据',state({...town,screenX:900}),2200],
- ['D1c','D · 城市','可用素材 · 按用途','真实数据',state({...town,screenX:900}),3200],
- ['D1d','D · 城市','职责与地形 → 功能区','近似',state({...town,screenX:1060,range:1150}),22000],
+ ['D1c','D · 城市','按城市职责选择学院素材','真实数据',state({...town,screenX:900}),5500],
+ ['D1d','D · 城市','学院素材 · 按用途','真实数据',state({...town,screenX:900}),4500],
+ ['D1e','D · 城市','职责与地形 → 功能区','近似',state({...town,screenX:1060,range:1150}),22000],
  ['D2','D · 城市','南宿院 · 查看住宿素材','真实数据',state({...southClose,screenX:600}),4200],
  ['D3','D · 城市','南宿院 · 申请四栋','近似',state({...southClose,screenX:620}),6500],
- ['D4','D · 城市','LLM 计划四栋 → Java 落位一栋','真实数据',state({...southClose,screenX:620}),4500],
- ['D5','D · 城市','东移 12 · 南移 6','真实数据',state({...southClose,screenX:620}),5000],
+ ['D4','D · 城市','AI 计划四栋 → 程序落位一栋','真实数据',state({...southClose,screenX:620}),4500],
+ ['D5a','D · 城市','宿院与市场之间净空 8 格','真实数据',state({...town,cx:-3000,cz:5400,range:500,screenX:730}),4500],
+ ['D5b','D · 城市','通道变宽，院落仍未接通','真实数据',state({...town,cx:-3000,cz:5400,range:500,screenX:730}),6500],
  ['D6','D · 城市','改为生活巷','真实数据',state({...southClose,screenX:620}),6500],
  ['D7','D · 城市','16 区 · 86 个计划单元','真实数据',state({...town,screenX:740}),24000],
  ['D8-preview','D · 城市','','真实数据',state({...town,preview:1}),2000],
@@ -105,7 +109,8 @@ function draw(s,p=1){
  // The faint realm edge is retained over the local field.
  ctx.globalAlpha=.15*s.local;ctx.beginPath();for(const e of edges){const [x,y]=xy(e[0],e[1],s),[xx,yy]=xy(e[2],e[3],s);ctx.moveTo(x,y);ctx.lineTo(xx,yy)}ctx.strokeStyle=INK;ctx.lineWidth=1;ctx.stroke();ctx.globalAlpha=1;
  }
- for(let i=0;i<data.realms.length;i++){const r=data.realms[i],a=clamp(s.seeds*7-i);if(a<=0)continue;const [x,y]=xy(r.x,r.z,s);if(x<50||x>1510||y<80||y>605)continue;ctx.globalAlpha=a*(1-Math.max(s.local,s.focus));dot(x,y,3,COLORS[i]);ctx.strokeStyle=INK;ctx.lineWidth=.7;ctx.beginPath();ctx.arc(x,y,6+(a<1?a*9:9),0,Math.PI*2);ctx.stroke();ctx.globalAlpha=1;text(r.name,x+21,y+5,17,a*(1-Math.max(s.local,s.focus)))}
+ if(beat()==='T2')reasonMap(s,p);
+ for(let i=0;i<data.realms.length;i++){const r=data.realms[i],a=seedReveal(i,s,p);if(a<=0)continue;const [x,y]=xy(r.x,r.z,s);if(x<50||x>1510||y<80||y>605)continue;ctx.globalAlpha=a*(1-Math.max(s.local,s.focus));dot(x,y,3,COLORS[i]);ctx.strokeStyle=INK;ctx.lineWidth=.7;ctx.beginPath();ctx.arc(x,y,6+(a<1?a*9:9),0,Math.PI*2);ctx.stroke();ctx.globalAlpha=1;text(r.name,x+21,y+5,17,a*(1-Math.max(s.local,s.focus)))}
  if(s.city>0){const [x,y]=xy(data.city.x,data.city.z,s);ctx.globalAlpha=s.city;line(x-8,y,x+8,y,INK,1);line(x,y-8,x,y+8,INK,1);ctx.globalAlpha=1;text('镜潮',x+15,y-9,18,s.city)}
  if(scene>=10)drawAcademy(s,p);
  ctx.restore();
@@ -148,34 +153,12 @@ function planning(s,p=1,ghost=.65,spacing=1){
  const a=snap(61).groups.find(g=>g.groupId==='student_south').anchorBlock,[x,y]=xy(a.x,a.z,s);
  ctx.save();ctx.globalAlpha=p;line(x-8,y,x+8,y);line(x,y-8,x,y+8);ctx.restore();return slots;
 }
-function cards(p){
- academy.cards.forEach((card,i)=>{
- const enter=ease(clamp(p*3-i*.16)),selected=i===0,fade=selected?1:1-clamp((p-.66)/.28);
- ctx.save();ctx.globalAlpha=enter*fade;const x=1140+(1-enter)*360,y=90+i*130;
- ctx.fillStyle=PAPER;ctx.fillRect(x,y,380,116);ctx.strokeStyle='#2b2a2633';ctx.strokeRect(x,y,380,116);
- const k=Math.min(96/card.width,96/card.depth),ox=x+16+(96-card.width*k)/2,oy=y+10+(96-card.depth*k)/2;
- for(const [a,b,w,band] of card.rows){ctx.fillStyle=['#D6CCAF','#C4B594','#A8987A','#6C685B'][band];ctx.fillRect(ox+a*k,oy+b*k,w*k,k+.1)}
- ctx.fillStyle=INK;ctx.font=`15px ${serif}`;ctx.fillText(card.name,x+130,y+45);ctx.font=`12px ${mono}`;ctx.fillText(`${card.beds} 床`,x+130,y+72);ctx.fillStyle='#2b2a2677';ctx.fillText(card.id,x+130,y+94);ctx.restore();
- });
-}
-function districtLabels(s,p){
- const occupied=[];
- academy.districts.forEach(d=>{const [x,y]=xy(d.x,d.z,s);let yy=y;const width=d.name.length*13+12;
- for(let n=0;n<20&&occupied.some(r=>Math.abs(yy-r.y)<21&&x<r.x+r.w&&x+width>r.x);n++)yy+=21;
- yy=clamp(yy,92,610);occupied.push({x,y:yy,w:width});ctx.save();ctx.globalAlpha=p*.85;
- line(x,y,x,yy,'#2b2a2655',.7);ctx.fillStyle=PAPER;ctx.fillRect(x-4,yy-15,width,20);ctx.fillStyle=INK;ctx.font=`13px ${serif}`;ctx.fillText(d.name,x,yy);ctx.restore();});
-}
 function drawAcademy(s,p){
- if(scene===10){introMap(s,p);return}
- if(scene===11){cards(p);return}
- if(scene===12){parameterMap(s,p);return}
- if(scene===13){const result=ease(clamp((p-.35)/.4));planning(s,1,mix(.65,.18,result));building(snap(61).anchors.find(south),s,result);roads(61,s,clamp((p-.8)/.2));text('虚线：计划空位示意',450,105,14,.8);if(result>0)text('实线：Java 实际计算出的落位',450,129,14,result);return}
- if(scene===14){
- const reveal=clamp(p/.27),move=ease(clamp((p-.3)/.55));
- snap(69).anchors.filter(south).forEach(a=>{const b={...a,plannedFootprint:{...a.plannedFootprint}};for(const key in b.plannedFootprint)b.plannedFootprint[key]+=(key.endsWith('X')?12:6)*move;building(b,s,reveal)});
- roads(70,s,clamp((p-.82)/.18));
- if(p>.8){for(const gap of snap(70).gaps.filter(g=>g.fromGroupId==='student_south')){const a=gap.fromInterface,b=gap.toInterface,[x,y]=xy(a.x,a.z,s),[xx,yy]=xy(b.x,b.z,s),len=Math.hypot(xx-x,yy-y);ctx.save();ctx.globalAlpha=clamp((p-.8)/.2);line(x,y,x+(xx-x)/len*22,y+(yy-y)/len*22,'#A65E66',2);ctx.restore();}}return;
- }
+ if(scene===10){if(beat()==='D1c')stylePiles(p);else if(beat()==='D1d')usagePiles(p);else introMap(s,p);return}
+ if(scene===11){selectionCards(p);return}
+ if(scene===12){layoutDemo(s,p);return}
+ if(scene===13){const result=ease(clamp((p-.35)/.4));planning(s,1,mix(.65,.18,result));building(snap(61).anchors.find(south),s,result);roads(61,s,clamp((p-.8)/.2));text('虚线：计划空位示意',450,105,14,.8);if(result>0)text('实线：程序实际计算出的落位',450,129,14,result);return}
+ if(scene===14){accessStory(s,p);return}
  if(scene===15){
  compositionMap(s,p);
  if(p<.22)snap(70).anchors.filter(south).forEach(a=>building(a,s,1-p/.22));
