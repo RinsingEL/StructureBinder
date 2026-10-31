@@ -13,3 +13,9 @@ Geomantia 社团开放日第二幕的动态网页 PPT。打开 `index.html` 即�
 D4 调用回放已核对 2026-10-20 原始 JSONL，展示九步节选；选点和平移使用真实 anchorBlock，组团轮廓仍为原理示意。公开请求与返回见 replay-evidence.json，未附原始会话。它不会连接 MCP 或重新执行游戏操作。
 
 [Astra 单人连讲稿](Astra_第二幕连讲稿.md)仅收录 Astra 台词；后八段新增 19 段，可配合画面连续讲述，其余伙伴原句保持不变。
+
+## W–T–D 地图演示
+
+打开 `wtd-atlas.html` 离线播放，左右方向键切换，F 全屏。D7 后逐张展示六张功能区实景，宿舍生活区挂到南侧学生宿院，最终停在地图与照片卡上。底部保留 22% 安全区。
+
+修改地图演示后运行 `python devlog/act2/build-atlas.py`，再运行 `node devlog/act2/check-atlas.cjs`。照片来自学院功能区实景报告，构建时嵌入页面，无需随附图片文件。

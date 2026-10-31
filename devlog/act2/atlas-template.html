@@ -76,8 +76,7 @@ const beats=[
  ['D5b','D · 城市','通道变宽，院落仍未接通','真实数据',state({...town,cx:-3000,cz:5400,range:500,screenX:730}),6500],
  ['D6','D · 城市','改为生活巷','真实数据',state({...southClose,screenX:620}),6500],
  ['D7','D · 城市','16 区 · 86 个计划单元','真实数据',state({...town,screenX:740}),24000],
- ['D8-preview','D · 城市','','真实数据',state({...town,preview:1}),2000],
- ['D8-photo','','','',state({...town,preview:1}),0]
+ ['D-photos','D · 城市','学院岛上的生活','游戏实景 · 2026-10-31',state({...town}),12000]
 ];
 let scene=0,index=0,frame=0,current={...base},from={...base},start=0;
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -118,7 +117,7 @@ function draw(s,p=1){
  $('paper').style.opacity=0;$('paper').hidden=true;Array.from($('paper').children).forEach((el,i)=>el.style.clipPath=`inset(0 ${(1-clamp(s.notes*4-i))*100}% 0 0)`);
  $('preview').style.opacity=s.preview;$('preview').hidden=s.preview<.001;
  $('scan-count').textContent=scene===1?`${Math.floor(92416*s.scan).toLocaleString('en-US')} / 92,416`:'';
- revisionPanels(s,p);$('sheet').dataset.settled=String(p>=1);
+ revisionPanels(s,p);if(beat()==='D-photos'){for(const id of ['roster','params','explain','stack'])$(id).hidden=true;$('source').textContent='游戏实景 · 2026-10-31 · 功能区占地重心';}$('sheet').dataset.settled=String(p>=1);
 }
 
 const academy=data.academy, snap=rev=>academy.snapshots[rev];
@@ -165,7 +164,7 @@ function drawAcademy(s,p){
  const q=clamp((p-.22)/.58);snap(71).anchors.filter(south).forEach((a,i)=>{building(a,s,.35,true);building(a,s,clamp(q*4-i));});roads(71,s,clamp((p-.8)/.2));
  if(p>.8){for(const id of ['market','dining']){const d=academy.districts.find(d=>d.id===id),[x,y]=xy(d.x,d.z,s);text(id==='market'?'市场':'食堂',x,y,13,clamp((p-.8)/.2));}}return;
  }
- if(scene>=16){finalCity(s,p);}
+ if(scene>=16){finalCity(s,p);if(beat()==='D-photos')drawPhotoCards(s,p);}
 
 }
 function legends(items){$('legend').replaceChildren(...items.map(([color,label])=>{const e=document.createElement('span'),i=document.createElement('i');i.style.background=color;e.append(i,document.createTextNode(label));return e}))}

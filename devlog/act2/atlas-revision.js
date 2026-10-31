@@ -1,6 +1,6 @@
 // Public request fields drive the explanation; animation timing is editorial.
 const revision=data.revision;
-const originalBeats=['W1','W2','W3a','W3b','W3c','T1','T2','T3','T3-end','T4','D1','D2','D3','D4','D5','D6','D7','D8-preview','D8-photo'];
+const originalBeats=['W1','W2','W3a','W3b','W3c','T1','T2','T3','T3-end','T4','D1','D2','D3','D4','D5','D6','D7','D-photos'];
 function legacyScene(id){return id.startsWith('D1')?10:id.startsWith('D5')?14:originalBeats.indexOf(id)}
 const beat=()=>beats[index][0];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -132,7 +132,7 @@ function finalCity(s,p){
   const part=fastPart(design,q);
   for(const [j,a] of members.entries()){
    const groupIndex=design.groups.findIndex(g=>g.groupId===a.placementGroupId);
-   if(q>=.7){const alpha=clamp((q-.7)/.3*members.length-j);if(alpha>0){building(a,s,alpha);shown++}else building(a,s,.25,true)}
+   if(q>=.7){const alpha=clamp((q-.7)/.3*members.length-j);if(alpha>0){building(a,s,final?.28:alpha);shown++}else building(a,s,.25,true)}
    else if(q>.2&&(groupIndex<part.index||(groupIndex===part.index&&part.fill>.4)))building(a,s,.45,true);
   }
   if(q<1&&members.length){
@@ -148,7 +148,7 @@ function finalCity(s,p){
   if((final||p>.9)&&members.length){
    const bs=members.map(a=>a.plannedFootprint),bounds={minX:Math.min(...bs.map(b=>b.minX))-4,maxX:Math.max(...bs.map(b=>b.maxX))+4,minZ:Math.min(...bs.map(b=>b.minZ))-4,maxZ:Math.max(...bs.map(b=>b.maxZ))+4};
    box(bounds,s,null,final?.35:clamp((p-.9)/.1)*.35,true);
-   const [x,y]=xy(bounds.minX,bounds.minZ,s);text(districtName(d),x,y-4,10,.75);
+   const [x,y]=xy(bounds.minX,bounds.minZ,s);if(!final)text(districtName(d),x,y-4,10,.75);
   }
  });
  roads(74,s,final?1:clamp((p-.85)/.15),false);
