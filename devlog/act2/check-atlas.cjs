@@ -16,7 +16,7 @@ document.getElementById('atlas-data').textContent=payload;
 const sandbox={Image:class {complete=false;naturalWidth=0;},document,console,Uint8Array,Map,Set,Math,JSON,atob:s=>Buffer.from(s,'base64').toString('binary'),innerWidth:1600,innerHeight:900,matchMedia:()=>({matches:false}),performance:{now:()=>0},requestAnimationFrame:fn=>{frames.set(++serial,fn);return serial},cancelAnimationFrame:id=>frames.delete(id),window:{addEventListener:(name,fn)=>handlers[name]=fn}};
 vm.createContext(sandbox);scripts.forEach(s=>vm.runInContext(s,sandbox));
 function run(s){return vm.runInContext(s,sandbox)}
-const count=run('beats.length');assert.equal(count,24);
+const count=run('beats.length');assert.equal(count,23);
 assert(run("beats.findIndex(b=>b[0]==='D1c') < beats.findIndex(b=>b[0]==='D1d')"));
 assert.equal(run('Object.keys(revision.overviewMaterials).length'),45);
 assert.equal(run('revision.provenance.materialsBeforeOverview'),true);
@@ -81,7 +81,10 @@ for(let i=1;i<16;i++){
  }
 }
 const unique=run(`new Set(districtOrder.flatMap(d=>{const ids=new Set(revision.designs[d.groupId].design.groups.map(g=>g.groupId));return snap(74).anchors.filter(a=>ids.has(a.placementGroupId)).map(a=>a.anchorId)})).size`);assert.equal(unique,86);
-settled('D8-photo');for(const id of ['roster','params','explain','stack','safe','caption'])assert(elements.get(id).hidden,id+' visible over photo');
-handlers.keydown({key:'ArrowLeft',preventDefault(){}});assert.equal(run('beat()'),'D8-preview');
-handlers.keydown({key:'ArrowRight',preventDefault(){}});assert.equal(run('beat()'),'D8-photo');
+settled('D-photos');for(const id of ['roster','params','explain','stack'])assert(elements.get(id).hidden);
+assert(!elements.get('safe').hidden);assert.equal(run('photoCards.length'),6);
+assert.equal(run('Object.keys(data.photos).length'),6);
+assert(run("beats.every(b=>!b[0].startsWith('D8'))"));
+handlers.keydown({key:'ArrowLeft',preventDefault(){}});assert.equal(run('beat()'),'D7');
+handlers.keydown({key:'ArrowRight',preventDefault(){}});assert.equal(run('beat()'),'D-photos');
 console.log(`PASS: ${count} beats forward/backward at six checkpoints; 7 realms, 16 districts, 86 unique units; keyboard and overlay cleanup; ${drawCalls} finite drawing calls. Browser layout not tested.`);

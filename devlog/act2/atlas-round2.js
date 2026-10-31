@@ -129,3 +129,29 @@ function round2Panels(s,p){
   const q=clamp((p-.2)/.6);params.innerHTML='<h2>打开生活巷</h2><div class="param">住房保持不变<b>四栋 · 56 人</b></div><div class="param" style="opacity:'+q+'">一栋自带庭院的宿舍<br>＋ 三栋小宿舍成排</div><p class="purpose" style="opacity:'+q+'">北侧接市场<br>东侧接食堂</p><small>开口与连路以真实编译结果为依据。</small>';
  }
 }
+
+// Photo pins identify functional-area footprint centroids, not camera positions.
+const photoCards=[
+ ['arrival','迎宾',-2833,5419,1160,456],
+ ['housing','宿舍生活区',-3012,5490,100,456],
+ ['starhall','星厅与庭院',-2988,5262,100,266],
+ ['library','图书馆',-2913,5024,100,76],
+ ['observatory','天象台',-2689,5027,1160,76],
+ ['botanical','绿植教学区',-2547,5174,1160,266]
+];
+const photoImages=new Map();
+for(const [id] of photoCards){const img=new Image();img.onload=()=>{if(!frame&&beat()==='D-photos')draw(current,latestProgress)};img.src=data.photos[id];photoImages.set(id,img)}
+function drawPhotoCards(s,p){
+ photoCards.forEach(([id,label,x,z,left,top],i)=>{
+  const q=ease(clamp(p*6-i));if(q<=0)return;
+  const [px,py]=xy(x,z,s),edge=left<800?left+340:left;
+  ctx.save();ctx.globalAlpha=q;
+  line(px,py,edge,top+88,INK,.8);dot(px,py,3,INK);
+  // Briefly emphasize the region as its photograph arrives.
+  if(q<1){ctx.beginPath();ctx.arc(px,py,10+12*q,0,Math.PI*2);ctx.strokeStyle=INK;ctx.stroke();}
+  ctx.fillStyle='#fffdf7';ctx.fillRect(left,top,340,178);
+  const img=photoImages.get(id);
+  if(img?.complete&&img.naturalWidth){const ratio=324/140,actual=img.naturalWidth/img.naturalHeight;let sw=img.naturalWidth,sh=img.naturalHeight;if(actual>ratio)sw=sh*ratio;else sh=sw/ratio;ctx.drawImage(img,(img.naturalWidth-sw)/2,(img.naturalHeight-sh)/2,sw,sh,left+8,top+8,324,140)}
+  text(label,left+12,top+168,17,q);ctx.restore();
+ });
+}

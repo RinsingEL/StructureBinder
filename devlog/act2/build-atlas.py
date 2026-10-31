@@ -10,6 +10,8 @@ payload['round2'] = read('data/atlas-round2.json')
 for material in payload['round2']['materials'].values():
     if material['image']: material['imageData']='data:image/webp;base64,'+base64.b64encode((HERE/material['image']).read_bytes()).decode()
 payload['images'] = {n:'data:image/webp;base64,' + base64.b64encode((HERE/'assets'/f'atlas-{n}.webp').read_bytes()).decode() for n in ['design','arrival']}
+photos = HERE.parents[1]/'dev_docs/systems/city/reports/20261031_学院功能区实景报告/evidence'
+payload['photos'] = {n:'data:image/jpeg;base64,'+base64.b64encode((photos/f'{n}.jpg').read_bytes()).decode() for n in ['arrival','housing','starhall','library','observatory','botanical']}
 assert len(payload['realms']) == 7
 assert len(payload['revision']['districts']) == 16
 assert len(payload['academy']['snapshots']['74']['anchors']) == 86
