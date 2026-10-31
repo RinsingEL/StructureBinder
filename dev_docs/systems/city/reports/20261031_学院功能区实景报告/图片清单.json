@@ -1,0 +1,50 @@
+[
+  {
+    "source": "迎宾.png",
+    "original_bytes": 8683684,
+    "original_sha256": "8cf6d0d9dd2d56adaa390244261c2a1560a3f40b25b6c124b0143bc2d5ef390b",
+    "preview": "evidence/arrival.jpg",
+    "preview_bytes": 413893,
+    "preview_sha256": "1cef6aa95e3d88563bba16c46a344ae15244f1a0754104476136a0d644cf8d30"
+  },
+  {
+    "source": "星厅+庭院.png",
+    "original_bytes": 7535109,
+    "original_sha256": "98b980c887756526752bbceeda1d26cb7f4c19f607b5384a78fe024832d28e02",
+    "preview": "evidence/starhall.jpg",
+    "preview_bytes": 368554,
+    "preview_sha256": "4873cd5094afe0cec724e725265f2a32016b45c35ff0f53a9229bbe343a8383c"
+  },
+  {
+    "source": "图书馆.png",
+    "original_bytes": 8541383,
+    "original_sha256": "ea7d822a5b3a47ae493250a3477dd00ffadd6562f1ad711bfa9df8f629189f17",
+    "preview": "evidence/library.jpg",
+    "preview_bytes": 401366,
+    "preview_sha256": "49e2195c10bd87f98800e2eb19f34cc7c32ba114e18b485c40fcd72a27e3695b"
+  },
+  {
+    "source": "天象台.png",
+    "original_bytes": 7404853,
+    "original_sha256": "a03ba385fb9899358eddbf0b56cf4854dc2cd8baf962cbead9fd3824651c1619",
+    "preview": "evidence/observatory.jpg",
+    "preview_bytes": 345140,
+    "preview_sha256": "87a53ec65e1b03d938e228fbb74b32c903ce8dcf10aecc7a28b8e24c12c914df"
+  },
+  {
+    "source": "宿舍生活区.png",
+    "original_bytes": 8021289,
+    "original_sha256": "da3871c44bb60e8105775f56030a98c9e210adee53f57f02fffa2486272116c1",
+    "preview": "evidence/housing.jpg",
+    "preview_bytes": 372151,
+    "preview_sha256": "d56c46ff66667f509b6351c7e7f40440ffde8dcca4c56ce7d53ac5d4e2c3f640"
+  },
+  {
+    "source": "绿植教学区.png",
+    "original_bytes": 8554894,
+    "original_sha256": "1f7f720875ba28708c8bb9cc2e337c3560dc91c8f3122ae037a41a0ffcc0b680",
+    "preview": "evidence/botanical.jpg",
+    "preview_bytes": 427719,
+    "preview_sha256": "8738ae2c48136fca3634cef13731bf8e7d54a39935cdc000385e83abeacc4008"
+  }
+]
