@@ -44,7 +44,6 @@
   .member {
     position: absolute; width: 420px; height: 420px; bottom: -36px;
     transform-origin: 50% 100%;
-    transition: filter .25s ease;
   }
   .member img {
     position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0;
@@ -53,9 +52,7 @@
       drop-shadow(0 3px 0 #fff) drop-shadow(0 -3px 0 #fff)
       drop-shadow(0 6px 8px rgba(60,40,20,.25));
   }
-  .member img.on { opacity: 1; }
-  .member.dim { filter: brightness(.72) saturate(.8); }
-
+  
   /* 字幕 */
   #sub {
     position: absolute; left: 600px; right: 600px; top: 720px; height: 300px;
@@ -92,12 +89,14 @@ const members = [
   { id: 'deepseek', name: 'DeepSeek', color: '#3a6fc4', x: 1380, z: 2 },
   { id: 'glm',      name: 'GLM',      color: '#3d3d46', x: 1520, z: 1 },
 ];
-const states = ['listen', 'greet', 'd4', 'talk_smile'];
+const states = ['listen', 'greet', 'd4', 'talk_smile', 'think'];
+// 缺图时按顺序找替代：比如还没画的「思考」先用反应图
+const FALLBACK = { think: ['d4', 'talk_smile'], talk_smile: ['d4'], d4: ['talk_smile'], greet: ['listen'] };
 
 // 开放日实录第二段 D4：按剪辑方案缩短 Astra 第一句，其余照原话分屏
 const script = [
   { who: 'claude', face: 'd4',         cards: ['然后，程序算完了……', '只落下了一栋。'] },
-  { who: 'gemini', face: 'd4',         cards: ['你们俩刚夸完数算得舒服、还想搬进去住，', '结果四栋一下没了三栋，五十六个学生只剩十六张床了。', '另外那三栋是怎么没放上去的呀？'] },
+  { who: 'gemini', face: 'd4',         cards: ['你们俩刚夸完数算得舒服、还想搬进去住，', '结果四栋一下没了三栋，五十六个学生只剩十六张床了。', { text: '另外那三栋是怎么没放上去的呀？', face: 'think' }] },
   { who: 'astra',  face: 'talk_smile', cards: ['这里得分清\n「想放四栋」和「实际算出四栋」。', 'AI 填的四栋是请求，程序这次返回的位置却只有一个。', '刚才六十四张床只是计划，得回头检查排布。'] },
   { who: 'glm',    face: 'd4',         cards: ['懂，太懂了——我九月那两次提交被打回来重选，就是这种感觉。', '看来夸房子也得等程序点了头再夸。'] },
 ];
@@ -108,9 +107,11 @@ const timeline = [];
 let t = INTRO;
 for (const line of script) {
   const start = t;
-  for (const text of line.cards) {
+  for (const card of line.cards) {
+    const text = typeof card === 'string' ? card : card.text;
+    const face = typeof card === 'string' ? line.face : card.face;
     const dur = Math.max(1.8, text.length / 6 + 0.7);
-    timeline.push({ who: line.who, face: line.face, text, start: t, end: t + dur, lineStart: start });
+    timeline.push({ who: line.who, face, text, start: t, end: t + dur, lineStart: start });
     t += dur;
   }
   t += 0.25;
@@ -133,15 +134,63 @@ for (const m of members) {
 
 function ease(x) { return x < 0 ? 0 : x > 1 ? 1 : 1 - Math.pow(1 - x, 3); }
 
+const SWAP = 0.15;
+function available(id, state) {
+  const el = document.getElementById('m-' + id);
+  if (el.querySelector(`img[data-state="${state}"]`)) return state;
+  for (const alt of FALLBACK[state] || []) if (el.querySelector(`img[data-state="${alt}"]`)) return alt;
+  return 'listen';
+}
+function faceAt(id, time) {
+  const cue = timeline.find(c => time >= c.start && time < c.end);
+  return available(id, cue && cue.who === id ? cue.face : 'listen');
+}
+const boundaries = [...new Set(timeline.flatMap(c => [c.start, c.end]))].sort((a, b) => a - b);
+function dimAt(id, time) {
+  const cue = timeline.find(c => time >= c.start && time < c.end);
+  return !!cue && cue.who !== id;
+}
+function lastChange(fn, time, dur) {
+  for (let i = boundaries.length - 1; i >= 0; i--) {
+    const b = boundaries[i];
+    if (b > time) continue;
+    if (time - b >= dur) return null;
+    if (fn(b - 0.001) !== fn(b)) return b;
+  }
+  return null;
+}
+function lastFaceChange(id, time) {
+  for (let i = boundaries.length - 1; i >= 0; i--) {
+    const b = boundaries[i];
+    if (b > time) continue;
+    if (faceAt(id, b - 0.001) !== faceAt(id, b)) return time - b < SWAP ? b : null;
+    if (time - b >= SWAP) return null;
+  }
+  return null;
+}
+
 // 给定时间 t（秒），画出这一帧
 window.render = function (time) {
   const cue = timeline.find(c => time >= c.start && time < c.end);
   for (const m of members) {
     const el = document.getElementById('m-' + m.id);
     const speaking = cue && cue.who === m.id;
-    const face = speaking ? cue.face : 'listen';
-    for (const img of el.querySelectorAll('img')) img.classList.toggle('on', img.dataset.state === face);
-    el.classList.toggle('dim', !!cue && !speaking);
+    // 换表情时用 0.15 秒交叉淡入，再轻轻一压一弹，不再瞬间跳变
+    const face = faceAt(m.id, time);
+    const changedAt = lastFaceChange(m.id, time);
+    const k = changedAt === null ? 1 : Math.min((time - changedAt) / SWAP, 1);
+    const prev = changedAt === null ? face : faceAt(m.id, changedAt - 0.001);
+    for (const img of el.querySelectorAll('img')) {
+      const st = img.dataset.state;
+      img.style.opacity = st === face ? k : (st === prev && k < 1 ? 1 - k : 0);
+    }
+    const squash = k < 1 ? 1 - 0.04 * Math.sin(k * Math.PI) : 1;
+    // 压暗也逐帧算出来，录制时每一帧都一样
+    const dimNow = dimAt(m.id, time);
+    const dimChanged = lastChange(t => dimAt(m.id, t), time, 0.25);
+    let d = dimNow ? 1 : 0;
+    if (dimChanged !== null) { const q = (time - dimChanged) / 0.25; d = dimNow ? q : 1 - q; }
+    el.style.filter = `brightness(${1 - 0.28 * d}) saturate(${1 - 0.2 * d})`;
     // 说话的人：开口那一下弹起，说话期间轻轻上下浮动
     let lift = 0, scale = 1;
     if (speaking) {
@@ -150,7 +199,7 @@ window.render = function (time) {
       lift += 3 * Math.sin(time * 6);
       scale = 1.08;
     }
-    el.style.transform = `translateY(${-lift}px) scale(${scale})`;
+    el.style.transform = `translateY(${-lift}px) scale(${scale * (2 - squash)}, ${scale * squash})`;
     el.style.zIndex = speaking ? 10 : m.z;
   }
   const name = document.getElementById('name'), line = document.getElementById('line');
