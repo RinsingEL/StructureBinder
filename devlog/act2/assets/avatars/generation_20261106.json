@@ -1,0 +1,197 @@
+{
+  "tool": "built-in image_gen",
+  "assets": [
+    {
+      "version": "compact",
+      "character": "rin",
+      "state": "listen",
+      "file": "sprites/compact/rin/listen.png",
+      "prompt": "Single character ONLY, full body isolated production sprite on genuinely transparent background. Square 1024x1024 canvas. Clean anime chibi style matching the lineup, crisp dark contour, flat colors plus one cel shadow. NO white border, glow, drop shadow, backdrop, labels, colored edge speckles or other characters. Feet at y=970, body axis x=512. All ears horns tail wings fully visible with 30px safety margin. Calm closed mouth listening, eyes open, grounded pose. Preserve character identity, outfit, colors and asymmetric details exactly; do not mirror. Girls navy gold trim school blazer cream vest red bow plaid skirt white socks brown loafers; Rin tie trousers. Do not invent props. Reference lineup is identity and style source. Isolate and redraw Rin, first from left, human boy, brown short hair tiny low ponytail, warm brown eyes, tie and trousers, empty hands lightly clasped in front. Strict 2 heads tall EXCLUDING ears/horns. Head crown y=110, chin y=540, short compact body to soles y=970. Face slightly toward viewer right 15 degrees, both eyes visible. Match large head short body reference.",
+      "source": "exec-36b89e4f-5905-4598-b0e0-45e934a96a3d.png"
+    },
+    {
+      "version": "compact",
+      "character": "rin",
+      "state": "d4",
+      "file": "sprites/compact/rin/d4.png",
+      "prompt": "Make ONLY a localized facial expression edit of this exact sprite. Keep canvas resolution, framing, transparent alpha, character position, face outline, eye colors, all hair strands, body, hands, costume, legs, feet, tail, accessories and props EXACTLY unchanged. Do not redraw or resize or shift the character. Only eyebrows, eyelids, mouth and optional tiny specified sweatdrop may change. Full body transparent PNG, no text or backdrop. Target D4 expression: Rin is quietly LISTENING with mild surprised wide eyes, slightly raised eyebrows. Mouth MUST be completely closed, drawn as one thin short horizontal curved brown line like a dash. NO oval mouth, no opening, no colored mouth interior. Everything outside eyes eyebrows mouth must stay unchanged.",
+      "source": "exec-51292c19-d986-4350-9c4f-452430bf9398.png"
+    },
+    {
+      "version": "compact",
+      "character": "gemini",
+      "state": "listen",
+      "file": "sprites/compact/gemini/listen.png",
+      "prompt": "Single character ONLY, full body isolated production sprite on genuinely transparent background. Square 1024x1024 canvas. Clean anime chibi style matching the lineup, crisp dark contour, flat colors plus one cel shadow. NO white border, glow, drop shadow, backdrop, labels, colored edge speckles or other characters. Feet at y=970, body axis x=512. All ears horns tail wings fully visible with 30px safety margin. Calm closed mouth listening, eyes open, grounded pose. Preserve character identity, outfit, colors and asymmetric details exactly; do not mirror. Girls navy gold trim school blazer cream vest red bow plaid skirt white socks brown loafers; Rin tie trousers. Do not invent props. Reference lineup is identity and style source. Isolate and redraw Gemini, second from left, purple blue pink gradient long curls, cat ears tail, star clip on viewer right, viewer-left eye pink viewer-right gold. Empty hands, NO cup. Strict 2 heads tall EXCLUDING ears/horns. Head crown y=110, chin y=540, short compact body to soles y=970. Face slightly toward viewer right 15 degrees, both eyes visible. Match large head short body reference.",
+      "source": "exec-a2daaa0f-4204-401b-abf7-5a597ebcdfcc.png"
+    },
+    {
+      "version": "compact",
+      "character": "gemini",
+      "state": "d4",
+      "file": "sprites/compact/gemini/d4.png",
+      "prompt": "Make ONLY a localized facial expression edit of this exact sprite. Keep canvas resolution, framing, transparent alpha, character position, face outline, eye colors, all hair strands, body, hands, costume, legs, feet, tail, accessories and props EXACTLY unchanged. Do not redraw or resize or shift the character. Only eyebrows, eyelids, mouth and optional tiny specified sweatdrop may change. Full body transparent PNG, no text or backdrop. Target D4 expression: Open mouth amused incredulous teasing surprise at four planned buildings becoming one. Slightly raised brows, lively eyes. Keep EMPTY hands in same position. No cup.",
+      "source": "exec-e2101f2f-c51a-4e81-ac94-705b7a8d71e5.png"
+    },
+    {
+      "version": "compact",
+      "character": "claude",
+      "state": "listen",
+      "file": "sprites/compact/claude/listen.png",
+      "prompt": "Single character ONLY, full body isolated production sprite on genuinely transparent background. Square 1024x1024 canvas. Clean anime chibi style matching the lineup, crisp dark contour, flat colors plus one cel shadow. NO white border, glow, drop shadow, backdrop, labels, colored edge speckles or other characters. Feet at y=970, body axis x=512. All ears horns tail wings fully visible with 30px safety margin. Calm closed mouth listening, eyes open, grounded pose. Preserve character identity, outfit, colors and asymmetric details exactly; do not mirror. Girls navy gold trim school blazer cream vest red bow plaid skirt white socks brown loafers; Rin tie trousers. Do not invent props. Reference lineup is identity and style source. Isolate and redraw Claude, third from left, orange long curls, gold ring eyes, sunflower on viewer left, sunflower notebook held at chest. Strict 2 heads tall EXCLUDING ears/horns. Head crown y=110, chin y=540, short compact body to soles y=970. Face slightly toward viewer right 15 degrees, both eyes visible. Match large head short body reference.",
+      "source": "exec-5461ea67-805f-4ffd-bebc-b6cc35501db7.png"
+    },
+    {
+      "version": "compact",
+      "character": "claude",
+      "state": "d4",
+      "file": "sprites/compact/claude/d4.png",
+      "prompt": "Make ONLY a localized facial expression edit of this exact sprite. Keep canvas resolution, framing, transparent alpha, character position, face outline, eye colors, all hair strands, body, hands, costume, legs, feet, tail, accessories and props EXACTLY unchanged. Do not redraw or resize or shift the character. Only eyebrows, eyelids, mouth and optional tiny specified sweatdrop may change. Full body transparent PNG, no text or backdrop. Target D4 expression: Open mouth small embarrassed wry smile, slightly worried eyebrows, explaining only one building appeared. Keep notebook and hands exactly unchanged.",
+      "source": "exec-ad67ada9-5d6c-4549-83fc-3008dc9e06f4.png"
+    },
+    {
+      "version": "compact",
+      "character": "astra",
+      "state": "listen",
+      "file": "sprites/compact/astra/listen.png",
+      "prompt": "Single character ONLY, full body isolated production sprite on genuinely transparent background. Square 1024x1024 canvas. Clean anime chibi style matching the lineup, crisp dark contour, flat colors plus one cel shadow. NO white border, glow, drop shadow, backdrop, labels, colored edge speckles or other characters. Feet at y=970, body axis x=512. All ears horns tail wings fully visible with 30px safety margin. Calm closed mouth listening, eyes open, grounded pose. Preserve character identity, outfit, colors and asymmetric details exactly; do not mirror. Girls navy gold trim school blazer cream vest red bow plaid skirt white socks brown loafers; Rin tie trousers. Do not invent props. Reference lineup is identity and style source. Isolate and redraw Astra, fourth from left, silver hair, pale lilac ring eyes, dragon horns wings and scaled tail, clipboard at chest and blue cloud at shoulder. Strict 2 heads tall EXCLUDING ears/horns. Head crown y=110, chin y=540, short compact body to soles y=970. Face slightly toward viewer LEFT 15 degrees, both eyes visible. Match large head short body reference.",
+      "source": "exec-06819d45-5d78-4bea-a4f6-7c1cbff27700.png"
+    },
+    {
+      "version": "compact",
+      "character": "astra",
+      "state": "d4",
+      "file": "sprites/compact/astra/d4.png",
+      "prompt": "Make ONLY a localized facial expression edit of this exact sprite. Keep canvas resolution, framing, transparent alpha, character position, face outline, eye colors, all hair strands, body, hands, costume, legs, feet, tail, accessories and props EXACTLY unchanged. Do not redraw or resize or shift the character. Only eyebrows, eyelids, mouth and optional tiny specified sweatdrop may change. Full body transparent PNG, no text or backdrop. Target D4 expression: Open mouth thoughtful explanation with a little rueful embarrassment, focused brows and tiny sweatdrop. Keep clipboard, cloud, hands and wings exactly in baseline positions.",
+      "source": "exec-ce72259e-7aaf-4b46-a118-a383aaf41f85.png"
+    },
+    {
+      "version": "compact",
+      "character": "deepseek",
+      "state": "listen",
+      "file": "sprites/compact/deepseek/listen.png",
+      "prompt": "Single character ONLY, full body isolated production sprite on genuinely transparent background. Square 1024x1024 canvas. Clean anime chibi style matching the lineup, crisp dark contour, flat colors plus one cel shadow. NO white border, glow, drop shadow, backdrop, labels, colored edge speckles or other characters. Feet at y=970, body axis x=512. All ears horns tail wings fully visible with 30px safety margin. Calm closed mouth listening, eyes open, grounded pose. Preserve character identity, outfit, colors and asymmetric details exactly; do not mirror. Girls navy gold trim school blazer cream vest red bow plaid skirt white socks brown loafers; Rin tie trousers. Do not invent props. Reference lineup is identity and style source. Isolate and redraw DeepSeek, fifth from left, long blue hair cyan fringe highlight, blue ring eyes, white maid headband whale fin ears whale tail. Empty hands, NO stopwatch. Strict 2 heads tall EXCLUDING ears/horns. Head crown y=110, chin y=540, short compact body to soles y=970. Face slightly toward viewer LEFT 15 degrees, both eyes visible. Match large head short body reference.",
+      "source": "exec-51ed5dde-076a-4705-8ce2-ca3f118ed6b7.png"
+    },
+    {
+      "version": "compact",
+      "character": "deepseek",
+      "state": "d4",
+      "file": "sprites/compact/deepseek/d4.png",
+      "prompt": "Make ONLY a localized facial expression edit of this exact sprite. Keep canvas resolution, framing, transparent alpha, character position, face outline, eye colors, all hair strands, body, hands, costume, legs, feet, tail, accessories and props EXACTLY unchanged. Do not redraw or resize or shift the character. Only eyebrows, eyelids, mouth and optional tiny specified sweatdrop may change. Full body transparent PNG, no text or backdrop. Target D4 expression: Closed mouth knowing wry smile, sympathetic mildly embarrassed eyebrows. She is LISTENING not speaking. Keep empty hands unchanged, no stopwatch.",
+      "source": "exec-6390f653-c035-4cdc-b5e9-4fdd12ad6f0b.png"
+    },
+    {
+      "version": "compact",
+      "character": "glm",
+      "state": "listen",
+      "file": "sprites/compact/glm/listen.png",
+      "prompt": "Single character ONLY, full body isolated production sprite on genuinely transparent background. Square 1024x1024 canvas. Clean anime chibi style matching the lineup, crisp dark contour, flat colors plus one cel shadow. NO white border, glow, drop shadow, backdrop, labels, colored edge speckles or other characters. Feet at y=970, body axis x=512. All ears horns tail wings fully visible with 30px safety margin. Calm closed mouth listening, eyes open, grounded pose. Preserve character identity, outfit, colors and asymmetric details exactly; do not mirror. Girls navy gold trim school blazer cream vest red bow plaid skirt white socks brown loafers; Rin tie trousers. Do not invent props. Reference lineup is identity and style source. Isolate and redraw GLM, sixth from left, black hair cyan highlight, gray ring eyes, fox ears and fluffy white tipped tail, sleep mask above eyes with Z and bells. Empty hands, NO book. Strict 2 heads tall EXCLUDING ears/horns. Head crown y=110, chin y=540, short compact body to soles y=970. Face slightly toward viewer LEFT 15 degrees, both eyes visible. Match large head short body reference.",
+      "source": "exec-03221efe-317d-4c85-85c9-7769d52a6a4d.png"
+    },
+    {
+      "version": "compact",
+      "character": "glm",
+      "state": "d4",
+      "file": "sprites/compact/glm/d4.png",
+      "prompt": "Make ONLY a localized facial expression edit of this exact sprite. Keep canvas resolution, framing, transparent alpha, character position, face outline, eye colors, all hair strands, body, hands, costume, legs, feet, tail, accessories and props EXACTLY unchanged. Do not redraw or resize or shift the character. Only eyebrows, eyelids, mouth and optional tiny specified sweatdrop may change. Full body transparent PNG, no text or backdrop. Target D4 expression: Open mouth wry amused exasperated smile, slightly drooped brows, tiny sweatdrop, delivering a knowing joke. Keep empty hands unchanged, sleep mask and accessories unchanged.",
+      "source": "exec-55556572-ae7e-486a-9efc-55a7afbed38e.png"
+    },
+    {
+      "version": "standard",
+      "character": "rin",
+      "state": "listen",
+      "file": "sprites/standard/rin/listen.png",
+      "prompt": "Single character ONLY, full body isolated production sprite on genuinely transparent background. Square 1024x1024 canvas. Clean anime chibi style matching the lineup, crisp dark contour, flat colors plus one cel shadow. NO white border, glow, drop shadow, backdrop, labels, colored edge speckles or other characters. Feet at y=970, body axis x=512. All ears horns tail wings fully visible with 30px safety margin. Calm closed mouth listening, eyes open, grounded pose. Preserve character identity, outfit, colors and asymmetric details exactly; do not mirror. Girls navy gold trim school blazer cream vest red bow plaid skirt white socks brown loafers; Rin tie trousers. Do not invent props. Isolate Rin, first from left, human boy, brown short hair tiny low ponytail, warm brown eyes, tie and trousers, empty hands lightly clasped in front. Match STANDARD slightly taller chibi proportions from reference exactly, about 2.5 heads tall excluding ears/horns; do NOT use superdeformed 2 head squat proportions. Head crown approx y=100, chin y=450, body to feet y=970, scaled to actual canvas. Face 15 degrees viewer RIGHT. Use reference's elegant slightly longer torso and legs.",
+      "source": "exec-9d9c0b94-c1b5-462d-a585-fd0d2c5202fa.png"
+    },
+    {
+      "version": "standard",
+      "character": "rin",
+      "state": "d4",
+      "file": "sprites/standard/rin/d4.png",
+      "prompt": "Make ONLY a localized facial expression edit of this exact sprite. Keep canvas resolution, framing, transparent alpha, character position, face outline, eye colors, all hair strands, body, hands, costume, legs, feet, tail, accessories and props EXACTLY unchanged. Do not redraw or resize or shift the character. Only eyebrows, eyelids, mouth and optional tiny specified sweatdrop may change. Full body transparent PNG, no text or backdrop. Target D4 expression: Closed mouth mildly surprised attentive listening, eyebrows slightly raised. Empty hands stay unchanged. Mouth MUST be a single thin closed line, NO oval mouth, NO mouth cavity, NO lips parted. Surprise only through widened eyes and raised eyebrows.",
+      "source": "exec-0c75d110-2620-4fcb-867c-061abe82e521.png"
+    },
+    {
+      "version": "standard",
+      "character": "gemini",
+      "state": "listen",
+      "file": "sprites/standard/gemini/listen.png",
+      "prompt": "Single character ONLY, full body isolated production sprite on genuinely transparent background. Square 1024x1024 canvas. Clean anime chibi style matching the lineup, crisp dark contour, flat colors plus one cel shadow. NO white border, glow, drop shadow, backdrop, labels, colored edge speckles or other characters. Feet at y=970, body axis x=512. All ears horns tail wings fully visible with 30px safety margin. Calm closed mouth listening, eyes open, grounded pose. Preserve character identity, outfit, colors and asymmetric details exactly; do not mirror. Girls navy gold trim school blazer cream vest red bow plaid skirt white socks brown loafers; Rin tie trousers. Do not invent props. Isolate Gemini, second from left, purple blue pink gradient long curls, cat ears tail, star clip on viewer right, viewer-left eye pink viewer-right gold. Empty hands, NO cup. Match STANDARD slightly taller chibi proportions from reference exactly, about 2.5 heads tall excluding ears/horns; do NOT use superdeformed 2 head squat proportions. Head crown approx y=100, chin y=450, body to feet y=970, scaled to actual canvas. Face 15 degrees viewer RIGHT. Use reference's elegant slightly longer torso and legs.",
+      "source": "exec-c8adb5d1-20e0-41e4-b802-b0187b891799.png"
+    },
+    {
+      "version": "standard",
+      "character": "gemini",
+      "state": "d4",
+      "file": "sprites/standard/gemini/d4.png",
+      "prompt": "Make ONLY a localized facial expression edit of this exact sprite. Keep canvas resolution, framing, transparent alpha, character position, face outline, eye colors, all hair strands, body, hands, costume, legs, feet, tail, accessories and props EXACTLY unchanged. Do not redraw or resize or shift the character. Only eyebrows, eyelids, mouth and optional tiny specified sweatdrop may change. Full body transparent PNG, no text or backdrop. Target D4 expression: Open mouth amused incredulous teasing surprise at four planned buildings becoming one. Slightly raised brows, lively eyes. Keep EMPTY hands in same position. No cup.",
+      "source": "exec-e4ac3ffe-337d-47bb-974c-a281524afc82.png"
+    },
+    {
+      "version": "standard",
+      "character": "claude",
+      "state": "listen",
+      "file": "sprites/standard/claude/listen.png",
+      "prompt": "Single character ONLY, full body isolated production sprite on genuinely transparent background. Square 1024x1024 canvas. Clean anime chibi style matching the lineup, crisp dark contour, flat colors plus one cel shadow. NO white border, glow, drop shadow, backdrop, labels, colored edge speckles or other characters. Feet at y=970, body axis x=512. All ears horns tail wings fully visible with 30px safety margin. Calm closed mouth listening, eyes open, grounded pose. Preserve character identity, outfit, colors and asymmetric details exactly; do not mirror. Girls navy gold trim school blazer cream vest red bow plaid skirt white socks brown loafers; Rin tie trousers. Do not invent props. Isolate Claude, third from left, orange long curls, gold ring eyes, sunflower on viewer left, sunflower notebook held at chest. Match STANDARD slightly taller chibi proportions from reference exactly, about 2.5 heads tall excluding ears/horns; do NOT use superdeformed 2 head squat proportions. Head crown approx y=100, chin y=450, body to feet y=970, scaled to actual canvas. Face 15 degrees viewer RIGHT. Use reference's elegant slightly longer torso and legs.",
+      "source": "exec-8332733c-95a5-4344-8721-99a9264b52d1.png"
+    },
+    {
+      "version": "standard",
+      "character": "claude",
+      "state": "d4",
+      "file": "sprites/standard/claude/d4.png",
+      "prompt": "Make ONLY a localized facial expression edit of this exact sprite. Keep canvas resolution, framing, transparent alpha, character position, face outline, eye colors, all hair strands, body, hands, costume, legs, feet, tail, accessories and props EXACTLY unchanged. Do not redraw or resize or shift the character. Only eyebrows, eyelids, mouth and optional tiny specified sweatdrop may change. Full body transparent PNG, no text or backdrop. Target D4 expression: Open mouth small embarrassed wry smile, slightly worried eyebrows, explaining only one building appeared. Keep notebook and hands exactly unchanged.",
+      "source": "exec-ecb96a25-00e6-4f29-8cab-28e52f0a26f1.png"
+    },
+    {
+      "version": "standard",
+      "character": "astra",
+      "state": "listen",
+      "file": "sprites/standard/astra/listen.png",
+      "prompt": "Single character ONLY, full body isolated production sprite on genuinely transparent background. Square 1024x1024 canvas. Clean anime chibi style matching the lineup, crisp dark contour, flat colors plus one cel shadow. NO white border, glow, drop shadow, backdrop, labels, colored edge speckles or other characters. Feet at y=970, body axis x=512. All ears horns tail wings fully visible with 30px safety margin. Calm closed mouth listening, eyes open, grounded pose. Preserve character identity, outfit, colors and asymmetric details exactly; do not mirror. Girls navy gold trim school blazer cream vest red bow plaid skirt white socks brown loafers; Rin tie trousers. Do not invent props. Isolate Astra, fourth from left, silver hair, pale lilac ring eyes, dragon horns wings and scaled tail, clipboard at chest and blue cloud at shoulder. Match STANDARD slightly taller chibi proportions from reference exactly, about 2.5 heads tall excluding ears/horns; do NOT use superdeformed 2 head squat proportions. Head crown approx y=100, chin y=450, body to feet y=970, scaled to actual canvas. Face 15 degrees viewer LEFT. Use reference's elegant slightly longer torso and legs.",
+      "source": "exec-dc46bca1-4bb2-4fed-8b90-bab959944768.png"
+    },
+    {
+      "version": "standard",
+      "character": "astra",
+      "state": "d4",
+      "file": "sprites/standard/astra/d4.png",
+      "prompt": "Make ONLY a localized facial expression edit of this exact sprite. Keep canvas resolution, framing, transparent alpha, character position, face outline, eye colors, all hair strands, body, hands, costume, legs, feet, tail, accessories and props EXACTLY unchanged. Do not redraw or resize or shift the character. Only eyebrows, eyelids, mouth and optional tiny specified sweatdrop may change. Full body transparent PNG, no text or backdrop. Target D4 expression: Open mouth thoughtful explanation with a little rueful embarrassment, focused brows and tiny sweatdrop. Keep clipboard, cloud, hands and wings exactly in baseline positions.",
+      "source": "exec-a9eb6f7c-3e07-4e58-a486-4b667f03a3cc.png"
+    },
+    {
+      "version": "standard",
+      "character": "deepseek",
+      "state": "listen",
+      "file": "sprites/standard/deepseek/listen.png",
+      "prompt": "Single character ONLY, full body isolated production sprite on genuinely transparent background. Square 1024x1024 canvas. Clean anime chibi style matching the lineup, crisp dark contour, flat colors plus one cel shadow. NO white border, glow, drop shadow, backdrop, labels, colored edge speckles or other characters. Feet at y=970, body axis x=512. All ears horns tail wings fully visible with 30px safety margin. Calm closed mouth listening, eyes open, grounded pose. Preserve character identity, outfit, colors and asymmetric details exactly; do not mirror. Girls navy gold trim school blazer cream vest red bow plaid skirt white socks brown loafers; Rin tie trousers. Do not invent props. Isolate DeepSeek, fifth from left, long blue hair cyan fringe highlight, blue ring eyes, white maid headband whale fin ears whale tail. Empty hands, NO stopwatch. Match STANDARD slightly taller chibi proportions from reference exactly, about 2.5 heads tall excluding ears/horns; do NOT use superdeformed 2 head squat proportions. Head crown approx y=100, chin y=450, body to feet y=970, scaled to actual canvas. Face 15 degrees viewer LEFT. Use reference's elegant slightly longer torso and legs.",
+      "source": "exec-67da17c3-a777-42a3-8b73-e1694b7b6446.png"
+    },
+    {
+      "version": "standard",
+      "character": "deepseek",
+      "state": "d4",
+      "file": "sprites/standard/deepseek/d4.png",
+      "prompt": "Make ONLY a localized facial expression edit of this exact sprite. Keep canvas resolution, framing, transparent alpha, character position, face outline, eye colors, all hair strands, body, hands, costume, legs, feet, tail, accessories and props EXACTLY unchanged. Do not redraw or resize or shift the character. Only eyebrows, eyelids, mouth and optional tiny specified sweatdrop may change. Full body transparent PNG, no text or backdrop. Target D4 expression: Closed mouth knowing wry smile, sympathetic mildly embarrassed eyebrows. She is LISTENING not speaking. Keep empty hands unchanged, no stopwatch.",
+      "source": "exec-aa29caf0-6f50-4e75-93f6-5cce93673089.png"
+    },
+    {
+      "version": "standard",
+      "character": "glm",
+      "state": "listen",
+      "file": "sprites/standard/glm/listen.png",
+      "prompt": "Single character ONLY, full body isolated production sprite on genuinely transparent background. Square 1024x1024 canvas. Clean anime chibi style matching the lineup, crisp dark contour, flat colors plus one cel shadow. NO white border, glow, drop shadow, backdrop, labels, colored edge speckles or other characters. Feet at y=970, body axis x=512. All ears horns tail wings fully visible with 30px safety margin. Calm closed mouth listening, eyes open, grounded pose. Preserve character identity, outfit, colors and asymmetric details exactly; do not mirror. Girls navy gold trim school blazer cream vest red bow plaid skirt white socks brown loafers; Rin tie trousers. Do not invent props. Isolate GLM, sixth from left, black hair cyan highlight, gray ring eyes, fox ears and fluffy white tipped tail, sleep mask above eyes with Z and bells. Empty hands, NO book. Match STANDARD slightly taller chibi proportions from reference exactly, about 2.5 heads tall excluding ears/horns; do NOT use superdeformed 2 head squat proportions. Head crown approx y=100, chin y=450, body to feet y=970, scaled to actual canvas. Face 15 degrees viewer LEFT. Use reference's elegant slightly longer torso and legs.",
+      "source": "exec-6923b344-e5c3-4be6-91cf-a5ca22e6db08.png"
+    },
+    {
+      "version": "standard",
+      "character": "glm",
+      "state": "d4",
+      "file": "sprites/standard/glm/d4.png",
+      "prompt": "Make ONLY a localized facial expression edit of this exact sprite. Keep canvas resolution, framing, transparent alpha, character position, face outline, eye colors, all hair strands, body, hands, costume, legs, feet, tail, accessories and props EXACTLY unchanged. Do not redraw or resize or shift the character. Only eyebrows, eyelids, mouth and optional tiny specified sweatdrop may change. Full body transparent PNG, no text or backdrop. Target D4 expression: Open mouth wry amused exasperated smile, slightly drooped brows, tiny sweatdrop, delivering a knowing joke. Keep empty hands unchanged, sleep mask and accessories unchanged.",
+      "source": "exec-dcd76a01-8c5e-48e3-b46c-a93b46393d23.png"
+    }
+  ]
+}
