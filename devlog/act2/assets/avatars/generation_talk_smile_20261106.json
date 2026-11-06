@@ -1,0 +1,37 @@
+{
+  "tool": "built-in image_gen",
+  "assets": [
+    {
+      "version": "compact",
+      "character": "claude",
+      "state": "talk_smile",
+      "file": "sprites/compact/claude/talk_smile.png",
+      "prompt": "Edit this existing single character baseline into a natural warm smiling speaking/explaining pose. Preserve EXACT character identity, costume colors and details, hair, accessories, head size, head placement, facing direction, overall body proportions, foot baseline, canvas size and transparent alpha background. Allow a relaxed upper body and natural asymmetrical ARM/HAND gesture, not rigidly clasping everything. Open mouth gentle friendly smile, relaxed eyebrows, welcoming thoughtful eyes, not embarrassed, not smug, no sweatdrop. Full body must remain visible with safe margins. No new props or symbols, no text, no backdrop, no white sticker outline, no colored edge fringes. Keep all hands and props around chest/upper waist level, easily readable when cropped to waist-up. Claude: one arm gently cradles sunflower notebook against chest, other forearm extends naturally toward viewer right with open palm up in a friendly presenting gesture, wrist relaxed, fingers anatomically clear, exactly TWO arms. Slight conversational shoulder openness.",
+      "source": "exec-7a02776f-e2dd-434a-a14c-49471fed0baa.png"
+    },
+    {
+      "version": "compact",
+      "character": "astra",
+      "state": "talk_smile",
+      "file": "sprites/compact/astra/talk_smile.png",
+      "prompt": "Edit this existing single character baseline into a natural warm smiling speaking/explaining pose. Preserve EXACT character identity, costume colors and details, hair, accessories, head size, head placement, facing direction, overall body proportions, foot baseline, canvas size and transparent alpha background. Allow a relaxed upper body and natural asymmetrical ARM/HAND gesture, not rigidly clasping everything. Open mouth gentle friendly smile, relaxed eyebrows, welcoming thoughtful eyes, not embarrassed, not smug, no sweatdrop. Full body must remain visible with safe margins. No new props or symbols, no text, no backdrop, no white sticker outline, no colored edge fringes. Keep all hands and props around chest/upper waist level, easily readable when cropped to waist-up. Astra: one arm holds checklist clipboard against chest, other forearm extends toward viewer left palm up with relaxed fingers explaining a point, exactly TWO arms. Keep floating blue cloud at its original shoulder position, dragon horns, wings and tail intact. Slight relaxed shoulder openness.",
+      "source": "exec-815d50a0-7c26-42c2-999b-af0cb89301ee.png"
+    },
+    {
+      "version": "standard",
+      "character": "claude",
+      "state": "talk_smile",
+      "file": "sprites/standard/claude/talk_smile.png",
+      "prompt": "Edit this existing single character baseline into a natural warm smiling speaking/explaining pose. Preserve EXACT character identity, costume colors and details, hair, accessories, head size, head placement, facing direction, overall body proportions, foot baseline, canvas size and transparent alpha background. Allow a relaxed upper body and natural asymmetrical ARM/HAND gesture, not rigidly clasping everything. Open mouth gentle friendly smile, relaxed eyebrows, welcoming thoughtful eyes, not embarrassed, not smug, no sweatdrop. Full body must remain visible with safe margins. No new props or symbols, no text, no backdrop, no white sticker outline, no colored edge fringes. Keep all hands and props around chest/upper waist level, easily readable when cropped to waist-up. Claude: one arm gently cradles sunflower notebook against chest, other forearm extends naturally toward viewer right with open palm up in a friendly presenting gesture, wrist relaxed, fingers anatomically clear, exactly TWO arms. Slight conversational shoulder openness.",
+      "source": "exec-50665bfd-cd38-4212-afe4-50cb1e1a8410.png"
+    },
+    {
+      "version": "standard",
+      "character": "astra",
+      "state": "talk_smile",
+      "file": "sprites/standard/astra/talk_smile.png",
+      "prompt": "Edit this existing single character baseline into a natural warm smiling speaking/explaining pose. Preserve EXACT character identity, costume colors and details, hair, accessories, head size, head placement, facing direction, overall body proportions, foot baseline, canvas size and transparent alpha background. Allow a relaxed upper body and natural asymmetrical ARM/HAND gesture, not rigidly clasping everything. Open mouth gentle friendly smile, relaxed eyebrows, welcoming thoughtful eyes, not embarrassed, not smug, no sweatdrop. Full body must remain visible with safe margins. No new props or symbols, no text, no backdrop, no white sticker outline, no colored edge fringes. Keep all hands and props around chest/upper waist level, easily readable when cropped to waist-up. Astra: one arm holds checklist clipboard against chest, other forearm extends toward viewer left palm up with relaxed fingers explaining a point, exactly TWO arms. Keep floating blue cloud at its original shoulder position, dragon horns, wings and tail intact. Slight relaxed shoulder openness.",
+      "source": "exec-980f2b16-6b67-414a-89aa-22ef97894995.png"
+    }
+  ]
+}

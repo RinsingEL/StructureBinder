@@ -1,0 +1,113 @@
+{
+  "tool": "built-in image_gen",
+  "assets": [
+    {
+      "version": "compact",
+      "character": "rin",
+      "state": "greet",
+      "file": "sprites/compact/rin/greet.png",
+      "prompt": "Create ONE isolated single-character full-body greeting sprite. Preserve exact identity, outfit, palette, asymmetric ornaments and clean anime chibi style. Genuine transparent alpha background, square canvas matching baseline. No white sticker outline, background, text, floating symbols, glow or new props. Exactly two arms and two legs, clear natural hands. Full ears horns hair hands tail wings and shoes within safe margins. Same head scale and feet baseline approximately as single-person baseline. Greeting is addressed to the VIEWER: gentle 15 degree body/head turn, eyes looking outward at audience, NOT rigid symmetrical frontal pose and NOT looking sideways away. Girls navy gold-trim jacket cream vest red bow plaid skirt white socks brown loafers. Retain approved personality: four calm upright members, Gemini and DeepSeek playful.  Image 1: individual identity and scale reference. Image 2: APPROVED greeting pose reference; isolate the corresponding person. Use compact TWO HEADS TALL proportions, large head short body. Rin, brown-haired human boy, tiny low ponytail, warm brown eyes, red tie and dark trousers. Upright dignified friendly CLOSED-MOUTH smile, both feet planted straight, modest raised greeting hand near shoulder and other relaxed in front. Gentle viewer-right body angle, eyes toward audience.",
+      "source": "exec-0e733993-7ee5-492f-9b03-aeb24a195559.png",
+      "reusedApprovedImage": false
+    },
+    {
+      "version": "compact",
+      "character": "gemini",
+      "state": "greet",
+      "file": "sprites/compact/gemini/greet.png",
+      "prompt": "Create ONE isolated single-character full-body greeting sprite. Preserve exact identity, outfit, palette, asymmetric ornaments and clean anime chibi style. Genuine transparent alpha background, square canvas matching baseline. No white sticker outline, background, text, floating symbols, glow or new props. Exactly two arms and two legs, clear natural hands. Full ears horns hair hands tail wings and shoes within safe margins. Same head scale and feet baseline approximately as single-person baseline. Greeting is addressed to the VIEWER: gentle 15 degree body/head turn, eyes looking outward at audience, NOT rigid symmetrical frontal pose and NOT looking sideways away. Girls navy gold-trim jacket cream vest red bow plaid skirt white socks brown loafers. Retain approved personality: four calm upright members, Gemini and DeepSeek playful.  Image 1: individual identity and scale reference. Image 2: APPROVED greeting pose reference; isolate the corresponding person. Use compact TWO HEADS TALL proportions, large head short body. Gemini purple-blue-pink curls, cat ears and tail, star clip viewer-right, viewer-left eye pink and viewer-right eye gold. Cheerful OPEN-MOUTH little fang smile, one OPEN hand waving beside shoulder, other loosely near chest, playful single leg bent backward, coherent body/pelvis/leg direction, viewer-right slight angle, eyes toward audience. NO cup or props.",
+      "source": "exec-fa8d3e88-dbbe-4a7f-a819-75007d24233f.png",
+      "reusedApprovedImage": false
+    },
+    {
+      "version": "compact",
+      "character": "claude",
+      "state": "greet",
+      "file": "sprites/compact/claude/greet.png",
+      "prompt": "Create ONE isolated single-character full-body greeting sprite. Preserve exact identity, outfit, palette, asymmetric ornaments and clean anime chibi style. Genuine transparent alpha background, square canvas matching baseline. No white sticker outline, background, text, floating symbols, glow or new props. Exactly two arms and two legs, clear natural hands. Full ears horns hair hands tail wings and shoes within safe margins. Same head scale and feet baseline approximately as single-person baseline. Greeting is addressed to the VIEWER: gentle 15 degree body/head turn, eyes looking outward at audience, NOT rigid symmetrical frontal pose and NOT looking sideways away. Girls navy gold-trim jacket cream vest red bow plaid skirt white socks brown loafers. Retain approved personality: four calm upright members, Gemini and DeepSeek playful.  Image 1: individual identity and scale reference. Image 2: APPROVED greeting pose reference; isolate the corresponding person. Use compact TWO HEADS TALL proportions, large head short body. Claude orange curls, golden eyes, sunflower viewer-left. Upright composed CLOSED-MOUTH gentle smile, both feet planted straight. One arm cradles sunflower notebook, other hand restrained wave at shoulder, viewer-right slight body angle, eyes toward audience.",
+      "source": "exec-45adc131-dd72-4798-a2fb-10f38ffbc533.png",
+      "reusedApprovedImage": false
+    },
+    {
+      "version": "compact",
+      "character": "astra",
+      "state": "greet",
+      "file": "sprites/compact/astra/greet.png",
+      "prompt": "Create ONE isolated single-character full-body greeting sprite. Preserve exact identity, outfit, palette, asymmetric ornaments and clean anime chibi style. Genuine transparent alpha background, square canvas matching baseline. No white sticker outline, background, text, floating symbols, glow or new props. Exactly two arms and two legs, clear natural hands. Full ears horns hair hands tail wings and shoes within safe margins. Same head scale and feet baseline approximately as single-person baseline. Greeting is addressed to the VIEWER: gentle 15 degree body/head turn, eyes looking outward at audience, NOT rigid symmetrical frontal pose and NOT looking sideways away. Girls navy gold-trim jacket cream vest red bow plaid skirt white socks brown loafers. Retain approved personality: four calm upright members, Gemini and DeepSeek playful.  Image 1: individual identity and scale reference. Image 2: APPROVED greeting pose reference; isolate corresponding person. Use compact TWO HEADS TALL proportions, large head short body. Astra silver hair lilac eyes, dragon horns wings white scaled tail and blue cloud. Upright calm CLOSED-MOUTH reassuring smile, both feet planted straight. One arm holds checklist clipboard near chest, other hand modest wave at shoulder, viewer-left slight angle, eyes toward audience. Cloud softly smiles.",
+      "source": "exec-0fb9f219-09f2-4f8f-a3de-6fab2364c9db.png",
+      "reusedApprovedImage": false
+    },
+    {
+      "version": "compact",
+      "character": "deepseek",
+      "state": "greet",
+      "file": "sprites/compact/deepseek/greet.png",
+      "prompt": "Reuse user-approved single-character greeting v2 unchanged; left non-waving arm naturally swings back.",
+      "source": "trial_deepseek_compact_greeting_wave_v2_20261106.png",
+      "reusedApprovedImage": true
+    },
+    {
+      "version": "compact",
+      "character": "glm",
+      "state": "greet",
+      "file": "sprites/compact/glm/greet.png",
+      "prompt": "Create ONE isolated single-character full-body greeting sprite. Preserve exact identity, outfit, palette, asymmetric ornaments and clean anime chibi style. Genuine transparent alpha background, square canvas matching baseline. No white sticker outline, background, text, floating symbols, glow or new props. Exactly two arms and two legs, clear natural hands. Full ears horns hair hands tail wings and shoes within safe margins. Same head scale and feet baseline approximately as single-person baseline. Greeting is addressed to the VIEWER: gentle 15 degree body/head turn, eyes looking outward at audience, NOT rigid symmetrical frontal pose and NOT looking sideways away. Girls navy gold-trim jacket cream vest red bow plaid skirt white socks brown loafers. Retain approved personality: four calm upright members, Gemini and DeepSeek playful.  Image 1: individual identity and scale reference. Image 2: APPROVED greeting pose reference; isolate corresponding person. Use compact TWO HEADS TALL proportions, large head short body. GLM black hair cyan highlight, fox ears and white tipped tail, sleep mask on forehead with Z and bells, gray eyes. Upright composed CLOSED-MOUTH soft smile, gently sleepy relaxed eyes still engaging audience, both feet planted straight. One hand modest low-key wave near shoulder, other naturally lowered, slight viewer-left body angle. NO book or props.",
+      "source": "exec-b4929b0e-82e1-411d-987f-050a2ebf6695.png",
+      "reusedApprovedImage": false
+    },
+    {
+      "version": "standard",
+      "character": "rin",
+      "state": "greet",
+      "file": "sprites/standard/rin/greet.png",
+      "prompt": "Create ONE isolated single-character full-body greeting sprite. Preserve exact identity, outfit, palette, asymmetric ornaments and clean anime chibi style. Genuine transparent alpha background, square canvas matching baseline. No white sticker outline, background, text, floating symbols, glow or new props. Exactly two arms and two legs, clear natural hands. Full ears horns hair hands tail wings and shoes within safe margins. Same head scale and feet baseline approximately as single-person baseline. Greeting is addressed to the VIEWER: gentle 15 degree body/head turn, eyes looking outward at audience, NOT rigid symmetrical frontal pose and NOT looking sideways away. Girls navy gold-trim jacket cream vest red bow plaid skirt white socks brown loafers. Retain approved personality: four calm upright members, Gemini and DeepSeek playful.  Image 1: STANDARD individual baseline, use its TALLER chibi head-to-body proportions and head size, longer torso/legs. Image 2: compact approved individual GREETING POSE and expression ONLY. Apply that pose to image 1 WITHOUT changing to compact proportions. Keep STANDARD approximately 2.5 head proportions, not squat 2-head. Rin, brown-haired human boy, tiny low ponytail, warm brown eyes, red tie and dark trousers. Upright dignified friendly CLOSED-MOUTH smile, both feet planted straight, modest raised greeting hand near shoulder and other relaxed in front. Gentle viewer-right body angle, eyes toward audience.",
+      "source": "exec-c3426172-a8a8-4a87-ac47-3a7189ef0a3b.png",
+      "reusedApprovedImage": false
+    },
+    {
+      "version": "standard",
+      "character": "gemini",
+      "state": "greet",
+      "file": "sprites/standard/gemini/greet.png",
+      "prompt": "Create ONE isolated single-character full-body greeting sprite. Preserve exact identity, outfit, palette, asymmetric ornaments and clean anime chibi style. Genuine transparent alpha background, square canvas matching baseline. No white sticker outline, background, text, floating symbols, glow or new props. Exactly two arms and two legs, clear natural hands. Full ears horns hair hands tail wings and shoes within safe margins. Same head scale and feet baseline approximately as single-person baseline. Greeting is addressed to the VIEWER: gentle 15 degree body/head turn, eyes looking outward at audience, NOT rigid symmetrical frontal pose and NOT looking sideways away. Girls navy gold-trim jacket cream vest red bow plaid skirt white socks brown loafers. Retain approved personality: four calm upright members, Gemini and DeepSeek playful.  Image 1: STANDARD individual baseline, use its TALLER chibi head-to-body proportions and head size, longer torso/legs. Image 2: compact approved individual GREETING POSE and expression ONLY. Apply that pose to image 1 WITHOUT changing to compact proportions. Keep STANDARD approximately 2.5 head proportions, not squat 2-head. Gemini purple-blue-pink curls, cat ears and tail, star clip viewer-right, viewer-left eye pink and viewer-right eye gold. Cheerful OPEN-MOUTH little fang smile, one OPEN hand waving beside shoulder, other loosely near chest, playful single leg bent backward, coherent body/pelvis/leg direction, viewer-right slight angle, eyes toward audience. NO cup or props.",
+      "source": "exec-f99c91e6-d019-437e-a2f4-b452b5d179f8.png",
+      "reusedApprovedImage": false
+    },
+    {
+      "version": "standard",
+      "character": "claude",
+      "state": "greet",
+      "file": "sprites/standard/claude/greet.png",
+      "prompt": "Create ONE isolated single-character full-body greeting sprite. Preserve exact identity, outfit, palette, asymmetric ornaments and clean anime chibi style. Genuine transparent alpha background, square canvas matching baseline. No white sticker outline, background, text, floating symbols, glow or new props. Exactly two arms and two legs, clear natural hands. Full ears horns hair hands tail wings and shoes within safe margins. Same head scale and feet baseline approximately as single-person baseline. Greeting is addressed to the VIEWER: gentle 15 degree body/head turn, eyes looking outward at audience, NOT rigid symmetrical frontal pose and NOT looking sideways away. Girls navy gold-trim jacket cream vest red bow plaid skirt white socks brown loafers. Retain approved personality: four calm upright members, Gemini and DeepSeek playful.  Image 1: STANDARD individual baseline, use its TALLER chibi head-to-body proportions and head size, longer torso/legs. Image 2: compact approved individual GREETING POSE and expression ONLY. Apply that pose to image 1 WITHOUT changing to compact proportions. Keep STANDARD approximately 2.5 head proportions, not squat 2-head. Claude orange curls, golden eyes, sunflower viewer-left. Upright composed CLOSED-MOUTH gentle smile, both feet planted straight. One arm cradles sunflower notebook, other hand restrained wave at shoulder, viewer-right slight body angle, eyes toward audience.",
+      "source": "exec-441cddef-2335-4e13-bb85-867feb6515e5.png",
+      "reusedApprovedImage": false
+    },
+    {
+      "version": "standard",
+      "character": "astra",
+      "state": "greet",
+      "file": "sprites/standard/astra/greet.png",
+      "prompt": "Create ONE isolated single-character full-body greeting sprite. Preserve exact identity, outfit, palette, asymmetric ornaments and clean anime chibi style. Genuine transparent alpha background, square canvas matching baseline. No white sticker outline, background, text, floating symbols, glow or new props. Exactly two arms and two legs, clear natural hands. Full ears horns hair hands tail wings and shoes within safe margins. Same head scale and feet baseline approximately as single-person baseline. Greeting is addressed to the VIEWER: gentle 15 degree body/head turn, eyes looking outward at audience, NOT rigid symmetrical frontal pose and NOT looking sideways away. Girls navy gold-trim jacket cream vest red bow plaid skirt white socks brown loafers. Retain approved personality: four calm upright members, Gemini and DeepSeek playful.  Image 1: STANDARD individual baseline, use its TALLER chibi head-to-body proportions and head size, longer torso/legs. Image 2: compact approved individual GREETING POSE and expression ONLY. Apply that pose to image 1 WITHOUT changing to compact proportions. Keep STANDARD approximately 2.5 head proportions, not squat 2-head. Astra silver hair lilac eyes, dragon horns wings white scaled tail and blue cloud. Upright calm CLOSED-MOUTH reassuring smile, both feet planted straight. One arm holds checklist clipboard near chest, other hand modest wave at shoulder, viewer-left slight angle, eyes toward audience. Cloud softly smiles.",
+      "source": "exec-7478c82e-2911-45ef-a987-5edfae6ce265.png",
+      "reusedApprovedImage": false
+    },
+    {
+      "version": "standard",
+      "character": "deepseek",
+      "state": "greet",
+      "file": "sprites/standard/deepseek/greet.png",
+      "prompt": "Create ONE isolated single-character full-body greeting sprite. Preserve exact identity, outfit, palette, asymmetric ornaments and clean anime chibi style. Genuine transparent alpha background, square canvas matching baseline. No white sticker outline, background, text, floating symbols, glow or new props. Exactly two arms and two legs, clear natural hands. Full ears horns hair hands tail wings and shoes within safe margins. Same head scale and feet baseline approximately as single-person baseline. Greeting is addressed to the VIEWER: gentle 15 degree body/head turn, eyes looking outward at audience, NOT rigid symmetrical frontal pose and NOT looking sideways away. Girls navy gold-trim jacket cream vest red bow plaid skirt white socks brown loafers. Retain approved personality: four calm upright members, Gemini and DeepSeek playful.  Image 1: STANDARD individual baseline, use its TALLER chibi head-to-body proportions and head size, longer torso/legs. Image 2: compact approved individual GREETING POSE and expression ONLY. Apply that pose to image 1 WITHOUT changing to compact proportions. Keep STANDARD approximately 2.5 head proportions, not squat 2-head. DeepSeek blue wavy hair cyan zigzag, white maid headband, whale fin ears and whale tail, blue eyes. Cheerful OPEN-MOUTH smile, right hand (viewer LEFT) OPEN waving beside face. Nonwaving LEFT arm (viewer RIGHT) relaxed gently BACK along side with hand visible beside hip, NOT in front of stomach and NOT thumbs up. One leg supports pelvis, other bent naturally BACK, no crossing, entire body hips knees feet share coherent slight viewer-left angle, eyes toward audience. NO props.",
+      "source": "exec-7f363d45-b604-42c7-953c-2984efca6c3c.png",
+      "reusedApprovedImage": false
+    },
+    {
+      "version": "standard",
+      "character": "glm",
+      "state": "greet",
+      "file": "sprites/standard/glm/greet.png",
+      "prompt": "Create ONE isolated single-character full-body greeting sprite. Preserve exact identity, outfit, palette, asymmetric ornaments and clean anime chibi style. Genuine transparent alpha background, square canvas matching baseline. No white sticker outline, background, text, floating symbols, glow or new props. Exactly two arms and two legs, clear natural hands. Full ears horns hair hands tail wings and shoes within safe margins. Same head scale and feet baseline approximately as single-person baseline. Greeting is addressed to the VIEWER: gentle 15 degree body/head turn, eyes looking outward at audience, NOT rigid symmetrical frontal pose and NOT looking sideways away. Girls navy gold-trim jacket cream vest red bow plaid skirt white socks brown loafers. Retain approved personality: four calm upright members, Gemini and DeepSeek playful.  Image 1: STANDARD individual baseline, use its TALLER chibi head-to-body proportions and head size, longer torso/legs. Image 2: compact approved individual GREETING POSE and expression ONLY. Apply that pose to image 1 WITHOUT changing to compact proportions. Keep STANDARD approximately 2.5 head proportions, not squat 2-head. GLM black hair cyan highlight, fox ears and white tipped tail, sleep mask on forehead with Z and bells, gray eyes. Upright composed CLOSED-MOUTH soft smile, gently sleepy relaxed eyes still engaging audience, both feet planted straight. One hand modest low-key wave near shoulder, other naturally lowered, slight viewer-left body angle. NO book or props.",
+      "source": "exec-3d68d1f0-6ef4-4655-8151-fe9f1a5b50cd.png",
+      "reusedApprovedImage": false
+    }
+  ]
+}
