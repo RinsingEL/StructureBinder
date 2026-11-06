@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>开放日测试画面 · D4</title>
+<style>
+  :root {
+    --paper: #f2ece0;
+    --ink: #2b2a26;
+    --wood-1: #d8b98c;
+    --wood-2: #c49a64;
+  }
+  html, body { margin: 0; background: #1e1d1b; }
+  #stage {
+    position: relative; width: 1920px; height: 1080px; overflow: hidden;
+    background:
+      radial-gradient(circle at 20% 15%, rgba(255,255,255,.35), transparent 40%),
+      radial-gradient(circle at 80% 90%, rgba(196,154,100,.12), transparent 45%),
+      #ece4d4;
+    font-family: "WenQuanYi Zen Hei", "Noto Sans SC", sans-serif;
+  }
+  /* 软木板一样的浅木框，里面钉着第二幕的手账 */
+  #frame {
+    position: absolute; left: 250px; top: 34px; width: 1420px; height: 632px;
+    padding: 16px; box-sizing: border-box; border-radius: 10px;
+    background: linear-gradient(135deg, var(--wood-1), var(--wood-2));
+    box-shadow: 0 10px 28px rgba(60,40,20,.22), inset 0 0 0 2px rgba(255,255,255,.25);
+  }
+  #frame img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 3px; }
+  .tape {
+    position: absolute; width: 132px; height: 34px; opacity: .82;
+    background: repeating-linear-gradient(90deg, #f6c9cf 0 14px, #fbe3e6 14px 28px);
+    box-shadow: 0 1px 3px rgba(0,0,0,.12);
+  }
+  .tape.t1 { left: 214px; top: 30px; transform: rotate(-32deg); }
+  .tape.t2 { left: 1574px; top: 30px; transform: rotate(32deg);
+    background: repeating-linear-gradient(90deg, #c9e2f2 0 14px, #e3f1fa 14px 28px); }
+  .tape.t3 { left: 214px; top: 636px; transform: rotate(30deg);
+    background: repeating-linear-gradient(90deg, #f3e2a6 0 14px, #faf0cf 14px 28px); }
+  .tape.t4 { left: 1574px; top: 636px; transform: rotate(-30deg);
+    background: repeating-linear-gradient(90deg, #cfe8cf 0 14px, #e6f4e6 14px 28px); }
+
+  /* 二头身小人：贴纸白边在合成时统一加 */
+  .member {
+    position: absolute; width: 420px; height: 420px; bottom: -36px;
+    transform-origin: 50% 100%;
+    transition: filter .25s ease;
+  }
+  .member img {
+    position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0;
+    filter:
+      drop-shadow(3px 0 0 #fff) drop-shadow(-3px 0 0 #fff)
+      drop-shadow(0 3px 0 #fff) drop-shadow(0 -3px 0 #fff)
+      drop-shadow(0 6px 8px rgba(60,40,20,.25));
+  }
+  .member img.on { opacity: 1; }
+  .member.dim { filter: brightness(.72) saturate(.8); }
+
+  /* 字幕 */
+  #sub {
+    position: absolute; left: 600px; right: 600px; top: 720px; height: 300px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+  }
+  #name {
+    font-size: 26px; font-weight: bold; color: #fff; padding: 4px 18px; border-radius: 999px;
+    margin-bottom: 14px; letter-spacing: 2px;
+  }
+  #line {
+    font-size: 32px; line-height: 1.5; color: var(--ink); text-align: center;
+    background: rgba(255,253,247,.92); padding: 16px 30px; border-radius: 14px;
+    box-shadow: 0 4px 14px rgba(60,40,20,.12); max-width: 560px; text-wrap: balance; white-space: pre-line;
+  }
+  #name, #line { transition: opacity .2s ease; }
+  .hidden { opacity: 0; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="frame"><img src="d4_ppt.jpg" alt=""></div>
+  <div class="tape t1"></div><div class="tape t2"></div><div class="tape t3"></div><div class="tape t4"></div>
+  <div id="members"></div>
+  <div id="sub"><div id="name" class="hidden"></div><div id="line" class="hidden"></div></div>
+</div>
+<script>
+const SPRITES = '../../act2/assets/avatars/sprites/compact/';
+// 左下 Rin、Gemini、Claude；右下 Astra、DeepSeek、GLM（交付标准第二版的站位）
+const members = [
+  { id: 'rin',      name: 'Rin',      color: '#8a6a4f', x: -40,  z: 1 },
+  { id: 'gemini',   name: 'Gemini',   color: '#8a63d2', x: 125,  z: 2 },
+  { id: 'claude',   name: 'Claude',   color: '#d9772b', x: 290,  z: 3 },
+  { id: 'astra',    name: 'Astra',    color: '#7f8db5', x: 1225, z: 3 },
+  { id: 'deepseek', name: 'DeepSeek', color: '#3a6fc4', x: 1380, z: 2 },
+  { id: 'glm',      name: 'GLM',      color: '#3d3d46', x: 1520, z: 1 },
+];
+const states = ['listen', 'greet', 'd4', 'talk_smile'];
+
+// 开放日实录第二段 D4：按剪辑方案缩短 Astra 第一句，其余照原话分屏
+const script = [
+  { who: 'claude', face: 'd4',         cards: ['然后，程序算完了……', '只落下了一栋。'] },
+  { who: 'gemini', face: 'd4',         cards: ['你们俩刚夸完数算得舒服、还想搬进去住，', '结果四栋一下没了三栋，五十六个学生只剩十六张床了。', '另外那三栋是怎么没放上去的呀？'] },
+  { who: 'astra',  face: 'talk_smile', cards: ['这里得分清\n「想放四栋」和「实际算出四栋」。', 'AI 填的四栋是请求，程序这次返回的位置却只有一个。', '刚才六十四张床只是计划，得回头检查排布。'] },
+  { who: 'glm',    face: 'd4',         cards: ['懂，太懂了——我九月那两次提交被打回来重选，就是这种感觉。', '看来夸房子也得等程序点了头再夸。'] },
+];
+
+// 字幕时长：约每秒 6 字，再留一点余量
+const INTRO = 1.2, OUTRO = 1.6;
+const timeline = [];
+let t = INTRO;
+for (const line of script) {
+  const start = t;
+  for (const text of line.cards) {
+    const dur = Math.max(1.8, text.length / 6 + 0.7);
+    timeline.push({ who: line.who, face: line.face, text, start: t, end: t + dur, lineStart: start });
+    t += dur;
+  }
+  t += 0.25;
+}
+window.DURATION = t + OUTRO;
+
+const box = document.getElementById('members');
+for (const m of members) {
+  const el = document.createElement('div');
+  el.className = 'member'; el.style.left = m.x + 'px'; el.id = 'm-' + m.id;
+  for (const s of states) {
+    const img = document.createElement('img');
+    img.dataset.state = s;
+    img.src = SPRITES + m.id + '/' + s + '.png';
+    img.onerror = () => img.remove();
+    el.appendChild(img);
+  }
+  box.appendChild(el);
+}
+
+function ease(x) { return x < 0 ? 0 : x > 1 ? 1 : 1 - Math.pow(1 - x, 3); }
+
+// 给定时间 t（秒），画出这一帧
+window.render = function (time) {
+  const cue = timeline.find(c => time >= c.start && time < c.end);
+  for (const m of members) {
+    const el = document.getElementById('m-' + m.id);
+    const speaking = cue && cue.who === m.id;
+    const face = speaking ? cue.face : 'listen';
+    for (const img of el.querySelectorAll('img')) img.classList.toggle('on', img.dataset.state === face);
+    el.classList.toggle('dim', !!cue && !speaking);
+    // 说话的人：开口那一下弹起，说话期间轻轻上下浮动
+    let lift = 0, scale = 1;
+    if (speaking) {
+      const since = time - cue.lineStart;
+      lift = 26 * Math.sin(Math.min(since / 0.35, 1) * Math.PI) * (since < 0.35 ? 1 : 0) + 10;
+      lift += 3 * Math.sin(time * 6);
+      scale = 1.08;
+    }
+    el.style.transform = `translateY(${-lift}px) scale(${scale})`;
+    el.style.zIndex = speaking ? 10 : m.z;
+  }
+  const name = document.getElementById('name'), line = document.getElementById('line');
+  if (cue) {
+    const who = members.find(m => m.id === cue.who);
+    name.textContent = who.name; name.style.background = who.color;
+    line.textContent = cue.text;
+    const fade = ease((time - cue.start) / 0.2);
+    name.classList.remove('hidden'); line.classList.remove('hidden');
+    line.style.opacity = fade;
+  } else {
+    name.classList.add('hidden'); line.classList.add('hidden'); line.style.opacity = 0;
+  }
+};
+
+// 直接在浏览器里打开时自动播放
+if (!location.search.includes('static')) {
+  const t0 = performance.now();
+  (function loop() {
+    const time = ((performance.now() - t0) / 1000) % window.DURATION;
+    window.render(time); requestAnimationFrame(loop);
+  })();
+}
+</script>
+</body>
+</html>
