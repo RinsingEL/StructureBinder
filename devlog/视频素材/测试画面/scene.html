@@ -19,6 +19,16 @@
       #ece4d4;
     font-family: "WenQuanYi Zen Hei", "Noto Sans SC", sans-serif;
   }
+  /* 社团活动室：PPT 投在后墙的白板上（白板内侧约 x 295–1623，y 87–636） */
+  #room { position: absolute; inset: 0; width: 1920px; height: 1080px; }
+  #board {
+    position: absolute; left: 311px; top: 99px; width: 1296px; height: 526px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #board img {
+    max-width: 100%; max-height: 100%; display: block;
+    mix-blend-mode: multiply; filter: contrast(1.02) saturate(.95);
+  }
   /* 软木板一样的浅木框，里面钉着第二幕的手账 */
   #frame {
     position: absolute; left: 250px; top: 34px; width: 1420px; height: 632px;
@@ -73,8 +83,8 @@
 </head>
 <body>
 <div id="stage">
-  <div id="frame"><img src="d4_ppt.jpg" alt=""></div>
-  <div class="tape t1"></div><div class="tape t2"></div><div class="tape t3"></div><div class="tape t4"></div>
+  <img id="room" src="../开放日插画/clubroom.png" alt="">
+  <div id="board"><img src="d4_ppt.jpg" alt=""></div>
   <div id="members"></div>
   <div id="sub"><div id="name" class="hidden"></div><div id="line" class="hidden"></div></div>
 </div>
@@ -89,16 +99,16 @@ const members = [
   { id: 'deepseek', name: 'DeepSeek', color: '#3a6fc4', x: 1380, z: 2 },
   { id: 'glm',      name: 'GLM',      color: '#3d3d46', x: 1520, z: 1 },
 ];
-const states = ['listen', 'greet', 'd4', 'talk_smile', 'think'];
+const states = ['listen', 'greet', 'd4', 'talk_smile', 'think', 'moved', 'wry'];
 // 缺图时按顺序找替代：比如还没画的「思考」先用反应图
-const FALLBACK = { think: ['d4', 'talk_smile'], talk_smile: ['d4'], d4: ['talk_smile'], greet: ['listen'] };
+const FALLBACK = { think: ['d4', 'talk_smile'], talk_smile: ['d4'], d4: ['talk_smile'], greet: ['listen'], moved: ['talk_smile'], wry: ['d4'] };
 
 // 开放日实录第二段 D4：按剪辑方案缩短 Astra 第一句，其余照原话分屏
 const script = [
   { who: 'claude', face: 'd4',         cards: ['然后，程序算完了……', '只落下了一栋。'] },
-  { who: 'gemini', face: 'd4',         cards: ['你们俩刚夸完数算得舒服、还想搬进去住，', '结果四栋一下没了三栋，五十六个学生只剩十六张床了。', { text: '另外那三栋是怎么没放上去的呀？', face: 'think' }] },
+  { who: 'gemini', face: 'd4',         cards: ['你们俩刚夸完数算得舒服、还想搬进去住，', '结果四栋一下没了三栋，\n五十六个学生只剩十六张床了。', { text: '另外那三栋是怎么没放上去的呀？', face: 'think' }] },
   { who: 'astra',  face: 'talk_smile', cards: ['这里得分清\n「想放四栋」和「实际算出四栋」。', 'AI 填的四栋是请求，程序这次返回的位置却只有一个。', '刚才六十四张床只是计划，得回头检查排布。'] },
-  { who: 'glm',    face: 'd4',         cards: ['懂，太懂了——我九月那两次提交被打回来重选，就是这种感觉。', '看来夸房子也得等程序点了头再夸。'] },
+  { who: 'glm',    face: 'wry',         cards: ['懂，太懂了——我九月那两次提交被打回来重选，就是这种感觉。', '看来夸房子也得等程序点了头再夸。'] },
 ];
 
 // 字幕时长：约每秒 6 字，再留一点余量
