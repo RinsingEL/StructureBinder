@@ -20,7 +20,12 @@
     font-family: "WenQuanYi Zen Hei", "Noto Sans SC", sans-serif;
   }
   /* 社团活动室：PPT 投在后墙的白板上（白板内侧约 x 295–1623，y 87–636） */
+  /* 镜头推近白板：字看得清，前景的课桌和茶点也移出画面，不和小人抢位置 */
+  #scene { position: absolute; inset: 0; transform-origin: 959px 361px; transform: scale(1.22); }
   #room { position: absolute; inset: 0; width: 1920px; height: 1080px; }
+  /* 底部用墙裙色收住，盖掉露出来的椅背 */
+  #floor { position: absolute; left: 0; right: 0; bottom: 0; height: 170px;
+    background: linear-gradient(to bottom, rgba(74,78,98,0), rgba(74,78,98,.96) 45%, #4a4e62); }
   #board {
     position: absolute; left: 311px; top: 99px; width: 1296px; height: 526px;
     display: flex; align-items: center; justify-content: center;
@@ -83,8 +88,11 @@
 </head>
 <body>
 <div id="stage">
-  <img id="room" src="../开放日插画/clubroom.png" alt="">
-  <div id="board"><img src="d4_ppt.jpg" alt=""></div>
+  <div id="scene">
+    <img id="room" src="../开放日插画/clubroom.png" alt="">
+    <div id="board"><img src="d4_ppt.jpg" alt=""></div>
+  </div>
+  <div id="floor"></div>
   <div id="members"></div>
   <div id="sub"><div id="name" class="hidden"></div><div id="line" class="hidden"></div></div>
 </div>
