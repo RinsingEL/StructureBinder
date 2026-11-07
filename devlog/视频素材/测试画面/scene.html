@@ -19,45 +19,21 @@
       #ece4d4;
     font-family: "WenQuanYi Zen Hei", "Noto Sans SC", sans-serif;
   }
-  /* 社团活动室：PPT 投在后墙的白板上（白板内侧约 x 295–1623，y 87–636） */
-  /* 镜头推近白板：字看得清，前景的课桌和茶点也移出画面，不和小人抢位置 */
-  #scene { position: absolute; inset: 0; transform-origin: 959px 361px; transform: scale(1.22); }
+  /* 社团活动室 v2：PPT 投在后墙的大白板上（白板内侧 x 122–1799，y 41–697），不再需要推近镜头 */
+  #scene { position: absolute; inset: 0; }
   #room { position: absolute; inset: 0; width: 1920px; height: 1080px; }
-  /* 底部用墙裙色收住，盖掉露出来的椅背 */
-  #floor { position: absolute; left: 0; right: 0; bottom: 0; height: 170px;
-    background: linear-gradient(to bottom, rgba(74,78,98,0), rgba(74,78,98,.96) 45%, #4a4e62); }
   #board {
-    position: absolute; left: 311px; top: 99px; width: 1296px; height: 526px;
+    position: absolute; left: 136px; top: 49px; width: 1649px; height: 640px;
     display: flex; align-items: center; justify-content: center;
   }
   #board img {
     max-width: 100%; max-height: 100%; display: block;
     mix-blend-mode: multiply; filter: contrast(1.02) saturate(.95);
   }
-  /* 软木板一样的浅木框，里面钉着第二幕的手账 */
-  #frame {
-    position: absolute; left: 250px; top: 34px; width: 1420px; height: 632px;
-    padding: 16px; box-sizing: border-box; border-radius: 10px;
-    background: linear-gradient(135deg, var(--wood-1), var(--wood-2));
-    box-shadow: 0 10px 28px rgba(60,40,20,.22), inset 0 0 0 2px rgba(255,255,255,.25);
-  }
-  #frame img { display: block; width: 100%; height: 100%; object-fit: cover; border-radius: 3px; }
-  .tape {
-    position: absolute; width: 132px; height: 34px; opacity: .82;
-    background: repeating-linear-gradient(90deg, #f6c9cf 0 14px, #fbe3e6 14px 28px);
-    box-shadow: 0 1px 3px rgba(0,0,0,.12);
-  }
-  .tape.t1 { left: 214px; top: 30px; transform: rotate(-32deg); }
-  .tape.t2 { left: 1574px; top: 30px; transform: rotate(32deg);
-    background: repeating-linear-gradient(90deg, #c9e2f2 0 14px, #e3f1fa 14px 28px); }
-  .tape.t3 { left: 214px; top: 636px; transform: rotate(30deg);
-    background: repeating-linear-gradient(90deg, #f3e2a6 0 14px, #faf0cf 14px 28px); }
-  .tape.t4 { left: 1574px; top: 636px; transform: rotate(-30deg);
-    background: repeating-linear-gradient(90deg, #cfe8cf 0 14px, #e6f4e6 14px 28px); }
 
   /* 二头身小人：贴纸白边在合成时统一加 */
   .member {
-    position: absolute; width: 420px; height: 420px; bottom: -36px;
+    position: absolute; width: 420px; height: 420px; bottom: -64px;
     transform-origin: 50% 100%;
   }
   .member img {
@@ -89,10 +65,9 @@
 <body>
 <div id="stage">
   <div id="scene">
-    <img id="room" src="../开放日插画/clubroom.png" alt="">
+    <img id="room" src="../开放日插画/clubroom_v2.png" alt="">
     <div id="board"><img src="d4_ppt.jpg" alt=""></div>
   </div>
-  <div id="floor"></div>
   <div id="members"></div>
   <div id="sub"><div id="name" class="hidden"></div><div id="line" class="hidden"></div></div>
 </div>

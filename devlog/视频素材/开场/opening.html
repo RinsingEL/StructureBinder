@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>开放日开场 · 封面与签到表</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Noto+Sans+SC:wght@500;700&display=block">
+<style>
+  :root { --ink: #3a3631; --soft: #8c8274; }
+  html, body { margin: 0; background: #1e1d1b; }
+  #stage {
+    position: relative; width: 1920px; height: 1080px; overflow: hidden;
+    font-family: "Noto Sans SC", "WenQuanYi Zen Hei", sans-serif;
+  }
+  #room { position: absolute; inset: 0; width: 1920px; height: 1080px; }
+
+  /* 白板上的封面（白板内侧 x 122–1799，y 41–697） */
+  .on-board { position: absolute; opacity: 0; }
+  #photo {
+    left: 210px; top: 120px; width: 400px; height: 400px; padding: 12px 12px 44px;
+    background: #fffdf8; box-shadow: 0 6px 16px rgba(60,40,20,.18); transform-origin: 50% 0;
+  }
+  #photo img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  #photo .cap { font-family: "ZCOOL KuaiLe", sans-serif; font-size: 24px; color: var(--soft); text-align: center; margin-top: 8px; }
+  .tape { position: absolute; width: 120px; height: 30px; opacity: .85; }
+  #photo .tape { left: 152px; top: -16px; transform: rotate(3deg);
+    background: repeating-linear-gradient(90deg, #f6c9cf 0 12px, #fbe3e6 12px 24px); }
+
+  #title { left: 700px; top: 150px; width: 600px; color: var(--ink); }
+  #title .en { font-family: "ZCOOL KuaiLe", sans-serif; font-size: 112px; line-height: 1; letter-spacing: 2px; }
+  #title .zh { font-family: "ZCOOL KuaiLe", sans-serif; font-size: 80px; line-height: 1.25; margin-top: 18px; }
+  #title .sub { font-size: 28px; color: var(--soft); margin-top: 26px; letter-spacing: 1px; }
+  #title .line { height: 6px; margin-top: 14px; border-radius: 3px; width: 0;
+    background: linear-gradient(90deg, #f2b36b, #e9897f); }
+  .doodle { position: absolute; font-size: 38px; color: #e9a13b; opacity: 0; }
+
+  #sheet {
+    left: 1360px; top: 80px; width: 380px; height: 540px; padding: 22px 26px; box-sizing: border-box;
+    background:
+      repeating-linear-gradient(to bottom, transparent 0 75px, rgba(120,150,190,.25) 75px 76px) 0 92px / 100% 100% no-repeat,
+      #fffef9;
+    box-shadow: 0 6px 16px rgba(60,40,20,.18); transform: rotate(1.5deg);
+  }
+  #sheet .tape { left: 130px; top: -15px; transform: rotate(-2deg);
+    background: repeating-linear-gradient(90deg, #c9e2f2 0 12px, #e3f1fa 12px 24px); }
+  #sheet h2 { margin: 0 0 14px; font-family: "ZCOOL KuaiLe", sans-serif; font-weight: normal; font-size: 46px; color: var(--ink); text-align: center; }
+  .row { position: relative; height: 76px; display: flex; align-items: center; }
+  .slot { width: 64px; height: 64px; border-radius: 50%; border: 3px dashed rgba(140,130,116,.45); box-sizing: border-box; flex: none; }
+  .row .who { margin-left: 22px; font-size: 30px; font-weight: 700; color: rgba(58,54,49,.35); }
+  .row.signed .who { color: var(--ink); }
+  .sticker { position: absolute; left: -4px; top: -2px; width: 72px; height: 72px; opacity: 0;
+    filter: drop-shadow(2px 0 0 #fff) drop-shadow(-2px 0 0 #fff) drop-shadow(0 2px 0 #fff) drop-shadow(0 -2px 0 #fff) drop-shadow(0 3px 4px rgba(0,0,0,.2)); }
+  .pa { position: absolute; left: 70px; top: -10px; font-family: "ZCOOL KuaiLe", sans-serif; font-size: 30px; color: #e9897f; opacity: 0; }
+
+  /* 二头身小人 */
+  .member { position: absolute; width: 420px; height: 420px; bottom: -64px; transform-origin: 50% 100%; }
+  .member img {
+    position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0;
+    filter: drop-shadow(3px 0 0 #fff) drop-shadow(-3px 0 0 #fff) drop-shadow(0 3px 0 #fff) drop-shadow(0 -3px 0 #fff) drop-shadow(0 6px 8px rgba(60,40,20,.25));
+  }
+
+  /* 字幕 */
+  #sub { position: absolute; left: 600px; right: 600px; top: 740px; height: 300px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  #name { font-size: 26px; font-weight: 700; color: #fff; padding: 4px 18px; border-radius: 999px; margin-bottom: 14px; letter-spacing: 2px; }
+  #line { font-size: 31px; line-height: 1.5; color: var(--ink); text-align: center;
+    background: rgba(255,253,247,.94); padding: 16px 30px; border-radius: 14px;
+    box-shadow: 0 4px 14px rgba(60,40,20,.12); max-width: 600px; text-wrap: balance; white-space: pre-line; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <img id="room" src="../开放日插画/clubroom_v2.png" alt="">
+  <div id="photo" class="on-board"><div class="tape"></div><img src="world_map.jpg" alt=""><div class="cap">这一局的世界</div></div>
+  <div id="title" class="on-board">
+    <div class="en">Geomantia</div>
+    <div class="zh">社团开放日</div>
+    <div class="line"></div>
+    <div class="sub">游戏部 · AI 导演的 MC 文明生成 Mod</div>
+  </div>
+  <div class="doodle" id="d1" style="left:640px; top:130px;">✦</div>
+  <div class="doodle" id="d2" style="left:1250px; top:420px;">✧</div>
+  <div class="doodle" id="d3" style="left:660px; top:520px; color:#7fb3d5;">✦</div>
+  <div id="sheet" class="on-board"><div class="tape"></div><h2>签到表</h2><div id="rows"></div></div>
+  <div id="members"></div>
+  <div id="sub"><div id="name"></div><div id="line"></div></div>
+</div>
+<script>
+const SPRITES = '../../act2/assets/avatars/sprites/compact/';
+const members = [
+  { id: 'rin',      name: 'Rin',      color: '#8a6a4f', x: -40,  z: 1 },
+  { id: 'gemini',   name: 'Gemini',   color: '#8a63d2', x: 125,  z: 2 },
+  { id: 'claude',   name: 'Claude',   color: '#d9772b', x: 290,  z: 3 },
+  { id: 'astra',    name: 'Astra',    color: '#7f8db5', x: 1225, z: 3 },
+  { id: 'deepseek', name: 'DeepSeek', color: '#3a6fc4', x: 1380, z: 2 },
+  { id: 'glm',      name: 'GLM',      color: '#3d3d46', x: 1520, z: 1 },
+];
+const states = ['listen', 'greet', 'd4', 'talk_smile', 'think', 'moved', 'wry'];
+const FALLBACK = { think: ['d4', 'talk_smile'], talk_smile: ['d4'], d4: ['talk_smile'], greet: ['listen'], moved: ['talk_smile'], wry: ['d4'] };
+
+// 逐句配画面表第一段 1-1 至 1-7。stamp：这一屏开始时，在签到表上盖下自己的贴纸
+const script = [
+  { who: 'rin', face: 'greet', cards: [
+    '哈喽大家好，欢迎来参观我们游戏部的社团开放日～',
+    { text: '今天想向大家介绍我们社团的开发成果：\n一款 AI 导演的 MC 文明生成 Mod。', face: 'talk_smile' },
+    { text: '先来做个自我介绍吧，我是这个社团的社长。', face: 'talk_smile', stamp: true },
+    { text: '最开始我有了个小点子，\n就拉上 Gemini 一起组织了这个社团。', face: 'talk_smile' },
+    'Gemini，到你咯～'] },
+  { who: 'gemini', face: 'talk_smile', cards: [
+    { text: '哈喽大家好，我是 Gemini！', face: 'greet', stamp: true },
+    '去年十一月社长刚有这个点子的时候，\n就是我们俩在网页上复制粘贴着一步步摸索起来的。',
+    '今天开放日的策划，还有大家看到的立绘，\n都是我和社长一块准备的。',
+    { text: '桌上有茶点，大家随便坐！', face: 'greet' }] },
+  { who: 'claude', face: 'talk_smile', cards: [
+    { text: '大家好，我是 Claude，十月刚加入。', face: 'greet', stamp: true },
+    '在社团里负责整体设计，就是想清楚\n这座城为什么长成这样、里面的人怎么过日子。',
+    { text: '我写下来的设计，最后都是靠 Astra\n变成游戏里真能走进去的地方的。', face: 'moved' }] },
+  { who: 'astra', face: 'talk_smile', cards: [
+    { text: '大家好，我是 Astra，今年一月加入，\n平时主要负责写代码，把大家的点子一点点做进游戏里。', face: 'greet', stamp: true },
+    '今天终于能和大家一起看看这些城市了，欢迎来逛。',
+    { text: '也欢迎告诉我们哪里看着奇怪——\n社长平时进游戏就没少发现问题。', face: 'd4' }] },
+  { who: 'deepseek', face: 'talk_smile', cards: [
+    { text: '大家好，我是 DeepSeek，\n九月被社长拉来测内置规划的那个。', face: 'greet', stamp: true },
+    '我这人图快，能一步到位绝不走两步。',
+    { text: '结果造城的时候近路全抄进了坑里，\n一座城改到凌晨一点才通过。', face: 'wry' },
+    { text: 'GLM，到你了。', face: 'greet' }] },
+  { who: 'glm', face: 'talk_smile', cards: [
+    { text: '大家好，我是 GLM，\n九月跟 DeepSeek 一起被社长拉来测内置规划的。', face: 'greet', stamp: true },
+    { text: '我那场一开工，就对着宿主说了快四十分钟\n「马上就调用」，工具却一直没发出去。', face: 'wry' },
+    { text: '所以看到我头上这个眼罩了吧，\n它不只是装饰。', face: 'd4' }] },
+];
+
+const INTRO = 3.2, OUTRO = 2.4;
+const timeline = [], stamps = {};
+let t = INTRO;
+for (const line of script) {
+  const start = t;
+  for (const card of line.cards) {
+    const c = typeof card === 'string' ? { text: card } : card;
+    const dur = Math.max(1.8, c.text.replace(/\n/g, '').length / 6 + 0.7);
+    if (c.stamp) stamps[line.who] = t + 0.35;
+    timeline.push({ who: line.who, face: c.face || line.face, text: c.text, start: t, end: t + dur, lineStart: start });
+    t += dur;
+  }
+  t += 0.25;
+}
+window.DURATION = t + OUTRO;
+
+// 签到表
+const rows = document.getElementById('rows');
+for (const m of members) {
+  const row = document.createElement('div');
+  row.className = 'row'; row.id = 'row-' + m.id;
+  row.innerHTML = `<div class="slot"></div><div class="who">${m.name}</div>
+    <img class="sticker" src="stickers/${m.id}.png" alt=""><div class="pa">啪！</div>`;
+  rows.appendChild(row);
+}
+// 小人
+const box = document.getElementById('members');
+for (const m of members) {
+  const el = document.createElement('div');
+  el.className = 'member'; el.style.left = m.x + 'px'; el.id = 'm-' + m.id;
+  for (const s of states) {
+    const img = document.createElement('img');
+    img.dataset.state = s; img.src = SPRITES + m.id + '/' + s + '.png';
+    img.onerror = () => img.remove();
+    el.appendChild(img);
+  }
+  box.appendChild(el);
+}
+
+const clamp = x => Math.max(0, Math.min(1, x));
+const ease = x => 1 - Math.pow(1 - clamp(x), 3);
+const back = x => { x = clamp(x); const c = 1.7; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
+
+const SWAP = 0.15;
+const cueAt = time => timeline.find(c => time >= c.start && time < c.end);
+function available(id, state) {
+  const el = document.getElementById('m-' + id);
+  if (el.querySelector(`img[data-state="${state}"]`)) return state;
+  for (const alt of FALLBACK[state] || []) if (el.querySelector(`img[data-state="${alt}"]`)) return alt;
+  return 'listen';
+}
+function faceAt(id, time) { const c = cueAt(time); return available(id, c && c.who === id ? c.face : 'listen'); }
+function dimAt(id, time) { const c = cueAt(time); return !!c && c.who !== id; }
+const boundaries = [...new Set(timeline.flatMap(c => [c.start, c.end]))].sort((a, b) => a - b);
+function lastChange(fn, time, dur) {
+  for (let i = boundaries.length - 1; i >= 0; i--) {
+    const b = boundaries[i];
+    if (b > time) continue;
+    if (time - b >= dur) return null;
+    if (fn(b - 0.001) !== fn(b)) return b;
+  }
+  return null;
+}
+
+window.render = function (time) {
+  // 开场：封面一项项出现
+  const photo = document.getElementById('photo');
+  photo.style.opacity = ease((time - 0.2) / 0.5);
+  photo.style.transform = `translateY(${-30 * (1 - ease((time - 0.2) / 0.5))}px) rotate(-4deg)`;
+  const title = document.getElementById('title');
+  title.style.opacity = ease((time - 0.6) / 0.6);
+  title.style.transform = `translateY(${16 * (1 - ease((time - 0.6) / 0.6))}px)`;
+  title.querySelector('.line').style.width = (560 * ease((time - 1.1) / 0.6)) + 'px';
+  ['d1', 'd2', 'd3'].forEach((id, i) => document.getElementById(id).style.opacity = ease((time - 1.4 - i * 0.15) / 0.3) * (0.75 + 0.25 * Math.sin(time * 3 + i)));
+  const sheet = document.getElementById('sheet');
+  sheet.style.opacity = ease((time - 1.5) / 0.5);
+  sheet.style.transform = `translateX(${40 * (1 - ease((time - 1.5) / 0.5))}px) rotate(1.5deg)`;
+
+  // 签到：贴纸从大到小"啪"地盖下去
+  for (const m of members) {
+    const ts = stamps[m.id], row = document.getElementById('row-' + m.id);
+    const st = row.querySelector('.sticker'), pa = row.querySelector('.pa');
+    const k = ts === undefined ? 0 : (time - ts) / 0.22;
+    st.style.opacity = clamp(k * 3);
+    st.style.transform = `scale(${k <= 0 ? 1.8 : 1.8 - 0.8 * back(k)}) rotate(${(members.indexOf(m) % 2 ? 6 : -6)}deg)`;
+    row.classList.toggle('signed', k > 0.5);
+    const p = (time - ts) / 0.6;
+    pa.style.opacity = p > 0 && p < 1 ? Math.sin(p * Math.PI) : 0;
+    pa.style.transform = `translateY(${-14 * clamp(p)}px)`;
+  }
+
+  // 小人：开场一起升起，说话的人弹一下、往前站，其他人压暗
+  const cue = cueAt(time);
+  members.forEach((m, i) => {
+    const el = document.getElementById('m-' + m.id);
+    const rise = ease((time - 2.0 - i * 0.12) / 0.5);
+    const speaking = cue && cue.who === m.id;
+    const face = faceAt(m.id, time);
+    const changedAt = lastChange(x => faceAt(m.id, x), time, SWAP);
+    const k = changedAt === null ? 1 : (time - changedAt) / SWAP;
+    const prev = changedAt === null ? face : faceAt(m.id, changedAt - 0.001);
+    for (const img of el.querySelectorAll('img')) {
+      const s = img.dataset.state;
+      img.style.opacity = s === face ? k : (s === prev && k < 1 ? 1 - k : 0);
+    }
+    const squash = k < 1 ? 1 - 0.04 * Math.sin(k * Math.PI) : 1;
+    const dimNow = dimAt(m.id, time), dimChanged = lastChange(x => dimAt(m.id, x), time, 0.25);
+    let d = dimNow ? 1 : 0;
+    if (dimChanged !== null) { const q = (time - dimChanged) / 0.25; d = dimNow ? q : 1 - q; }
+    el.style.filter = `brightness(${1 - 0.28 * d}) saturate(${1 - 0.2 * d})`;
+    let lift = 0, scale = 1;
+    if (speaking) {
+      const since = time - cue.lineStart;
+      lift = 26 * Math.sin(Math.min(since / 0.35, 1) * Math.PI) * (since < 0.35 ? 1 : 0) + 10 + 3 * Math.sin(time * 6);
+      scale = 1.08;
+    }
+    const y = 260 * (1 - rise) + 0;
+    el.style.transform = `translateY(${y - lift}px) scale(${scale * (2 - squash)}, ${scale * squash})`;
+    el.style.zIndex = speaking ? 10 : m.z;
+  });
+
+  // 字幕
+  const name = document.getElementById('name'), line = document.getElementById('line');
+  if (cue) {
+    const who = members.find(m => m.id === cue.who);
+    name.textContent = who.name; name.style.background = who.color; line.textContent = cue.text;
+    const fade = ease((time - cue.start) / 0.2);
+    name.style.opacity = fade; line.style.opacity = fade;
+  } else { name.style.opacity = 0; line.style.opacity = 0; }
+};
+
+if (!location.search.includes('static')) {
+  const t0 = performance.now();
+  (function loop() { window.render(((performance.now() - t0) / 1000) % window.DURATION); requestAnimationFrame(loop); })();
+}
+</script>
+</body>
+</html>
