@@ -181,9 +181,22 @@ function available(id, state) {
   for (const alt of FALLBACK[state] || []) if (el.querySelector(`img[data-state="${alt}"]`)) return alt;
   return 'listen';
 }
-function faceAt(id, time) { const c = cueAt(time); return available(id, c && c.who === id ? c.face : 'listen'); }
+// 说完话不马上回到聆听：最后的表情留 HOLD 秒的余韵，像还在接话。HOLD_UNTIL_NEXT 为 true 时一直留到下次开口
+const HOLD = 2.0, HOLD_UNTIL_NEXT = false;
+function lastOwnCue(id, time) {
+  let last = null;
+  for (const c of timeline) if (c.who === id && c.end <= time) last = c;
+  return last;
+}
+function faceAt(id, time) {
+  const c = timeline.find(x => time >= x.start && time < x.end);
+  if (c && c.who === id) return available(id, c.face);
+  const last = lastOwnCue(id, time);
+  if (last && (HOLD_UNTIL_NEXT || time - last.end < HOLD)) return available(id, last.face);
+  return 'listen';
+}
 function dimAt(id, time) { const c = cueAt(time); return !!c && c.who !== id; }
-const boundaries = [...new Set(timeline.flatMap(c => [c.start, c.end]))].sort((a, b) => a - b);
+const boundaries = [...new Set(timeline.flatMap(c => [c.start, c.end, c.end + HOLD]))].sort((a, b) => a - b);
 function lastChange(fn, time, dur) {
   for (let i = boundaries.length - 1; i >= 0; i--) {
     const b = boundaries[i];
