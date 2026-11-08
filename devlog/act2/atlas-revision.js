@@ -6,7 +6,6 @@ const beat=()=>beats[index][0];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const districtName=d=>d.role.replace(/【.*?】/g,'');
 const districtOrder=[...revision.districts.filter(d=>d.groupId==='student_south'),...revision.districts.filter(d=>d.groupId!=='student_south')];
-function progressDistrict(p){return p<.3?clamp(p/.3):1+clamp((p-.3)/.7)*15}
 function requestGroup(line){return revision.requests[line].districtDesign.groups[0]}
 function paramRows(g){
  const a=g.anchorBlock;
@@ -29,8 +28,13 @@ function revisionPanels(s,p){
  explain.hidden=!['D1b','D1c','D1d','D1e'].includes(id);explain.classList.toggle('declarations',id==='D1e');
  if(id==='D1b')explain.innerHTML='<h2>镜潮 · 城市职责</h2>'+['教学 · 藏书 · 议事','研究 · 维护 · 生活供应','学生生活 · 港口访客服务'].map((t,i)=>`<p style="opacity:${clamp(p*3-i)}">${t}</p>`).join('')+'<small>国度设定 · 职责摘要</small>';
  if(id==='D1e'){
-  const {active,count:n}=declarationState(p),d=revision.districts[active];
-  explain.innerHTML='<h2>职责 → 功能区</h2>'+revision.districts.map((d,i)=>`<div id="district-${i}" class="district-row" style="opacity:${i<n?1:0};color:${i===active?'#B07A4F':'inherit'};font-weight:${i===active?700:400}">${String(i+1).padStart(2,'0')} · ${esc(districtName(d))}<span class="direction">${esc(intentDirections[d.groupId])}</span></div>`).join('')+`<div class="intent">${esc(d.intent)}</div><small>总方案 · 方位来自设计意图，尚未确定具体坐标</small>`;
+  const {active,flip}=declarationState(p),d=revision.districts[active];
+  const hi=1-clamp(flip/.2);
+  explain.innerHTML='<h2>职责 → 功能区</h2>'+revision.districts.map((d,i)=>{
+   const r=i===0?1:rowFlip(i,flip);
+   const style=i===0?`opacity:1;color:${hi>.5?'#B07A4F':'inherit'};font-weight:${hi>.5?700:400}`:`opacity:${r>0?1:0};transform:perspective(500px) rotateX(${(1-ease(r))*90}deg);transform-origin:50% 0`;
+   return `<div id="district-${i}" class="district-row" style="${style}">${String(i+1).padStart(2,'0')} · ${esc(districtName(d))}<span class="direction">${esc(intentDirections[d.groupId])}</span></div>`;
+  }).join('')+`<div class="intent">${esc(flip>0?'十六个功能区先定好分工和相互位置，具体坐标留到逐区设计时再定。':d.intent)}</div><small>总方案 · 方位来自设计意图，尚未确定具体坐标</small>`;
  }
  params.hidden=!['D3','D4','D5a','D5b','D6','D7'].includes(id);params.classList.toggle('fast',id==='D7');
  if(id==='D3')params.innerHTML=renderParams('南宿院 · 申请四栋',requestGroup('345'),p,'四栋小宿舍围合公共内庭');
@@ -76,10 +80,13 @@ function intentMapTargets(s){
  h.scriptorium=between(h.library,h.seminars);h.botanical=e;h.logistics=offset(h.arrival,30,-110);
  return h;
 }
-function declarationState(p){const q=progressDistrict(p),active=Math.min(15,Math.floor(q));return {active,count:active+1,phase:p>=1?1:q-Math.floor(q)}}
-function intentFlight(i,phase,target){
- // The first part of each beat is reserved for reading the highlighted phrase.
- const t=ease(clamp((phase-.3)/.55));let source=[654,173+i*24];
+// 第一个功能区当例子慢慢讲；之后其余十五个像翻牌子一样一口气翻出来，点位一起飞到地图上
+const D1E_EXAMPLE=.45,D1E_FLIP=.25;
+function declarationState(p){return p<D1E_EXAMPLE?{active:0,count:1,phase:clamp(p/D1E_EXAMPLE),flip:0}:{active:0,count:16,phase:1,flip:clamp((p-D1E_EXAMPLE)/D1E_FLIP)}}
+function rowFlip(i,flip){return clamp((flip-(i-1)/15*.45)/.25)}
+function intentFlight(i,phase,target,tOverride){
+ // The first part of the example is reserved for reading the highlighted phrase.
+ const t=tOverride??ease(clamp((phase-.3)/.55));let source=[654,173+i*24];
  const row=$('district-'+i),sheet=$('sheet');
  if(row?.getBoundingClientRect&&sheet.getBoundingClientRect){const r=row.getBoundingClientRect(),b=sheet.getBoundingClientRect(),scale=b.width/1600;if(scale>0&&r.height>0)source=[(r.right-b.left)/scale+4,(r.top+r.height/2-b.top)/scale]}
  return {t,x:mix(source[0],target[0],t),y:mix(source[1],target[1],t)-Math.sin(Math.PI*t)*28};
@@ -92,17 +99,19 @@ function introMap(s,p){
   if(x>(id==='D1e'?690:420)&&x<1500&&y>100&&y<590)text(patch.mapLabel,x,y,12,.5);
  }
  if(id!=='D1e')return;
- const {active,count,phase}=declarationState(p),d=revision.districts[active],targets=intentMapTargets(s);
+ const {active,count,phase,flip}=declarationState(p),d=revision.districts[active],targets=intentMapTargets(s);
  const patch=revision.patches.find(p=>d.intent.includes(p.mapLabel));
- if(patch&&phase>.2){ctx.save();ctx.fillStyle='#C9A63E';ctx.globalAlpha=.23;for(const c of patch.memberCells){const [px,py]=xy(c.blockMinX,c.blockMinZ,s);ctx.fillRect(px,py,16*580/s.range,16*580/s.range)}ctx.restore()}
+ if(patch&&phase>.2&&flip<.2){ctx.save();ctx.fillStyle='#C9A63E';ctx.globalAlpha=.23;for(const c of patch.memberCells){const [px,py]=xy(c.blockMinX,c.blockMinZ,s);ctx.fillRect(px,py,16*580/s.range,16*580/s.range)}ctx.restore()}
  revision.districts.slice(0,count).forEach((item,i)=>{
-  const selected=i===active,target=targets[item.groupId],f=selected?intentFlight(i,phase,target):{t:1,x:target[0],y:target[1]};
+  const selected=i===active&&flip<.2,target=targets[item.groupId];
+  const f=i===0?(selected?intentFlight(0,phase,target):{t:1,x:target[0],y:target[1]}):intentFlight(i,1,target,ease(clamp((flip-.45)/.5)));
   if(selected&&phase<.3)return;
+  if(i>0&&rowFlip(i,flip)<1)return;
   if(selected){ctx.save();ctx.globalAlpha=.13*f.t;dot(target[0],target[1],28,'#B07A4F');ctx.restore()}
   dot(f.x,f.y,selected?9:6,selected?'#B07A4F':'#5E8C9A');
   if(f.t>.9){const label=String(i+1).padStart(2,'0')+' '+intentShortNames[i];ctx.fillStyle=PAPER;ctx.fillRect(f.x+11,f.y-12,label.length*13+8,20);text(label,f.x+15,f.y+3,13,selected?1:.8);}
  });
- text(String(active+1).padStart(2,'0')+' · '+districtName(d),700,600,15);
+ text(flip>0?'16 个功能区 · 分工和相互位置':String(active+1).padStart(2,'0')+' · '+districtName(d),700,600,15);
  text('总方案：先说明用途和大致关系，具体坐标在后续组团设计时确定。',700,625,13,.85);
  $('sheet').dataset.activeDistrict=d.groupId;
  $('sheet').dataset.intentPresentation='approximate-map-flight';

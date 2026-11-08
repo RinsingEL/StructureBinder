@@ -80,7 +80,6 @@
       <svg width="900" height="620" style="position:absolute;left:30px;top:20px" id="fields-svg"></svg>
       <div class="photo" style="left:960px;top:40px;width:660px;height:372px;position:absolute;transform:rotate(-1.5deg)"><img src="../开放日插画/fields.png" alt=""></div>
       <div class="cap" style="position:absolute;left:960px;top:450px;width:680px">田地和树林是主角<small>谷仓、风车、两三间小屋，稀稀落落</small></div>
-      <div id="fields-test" class="hand" style="position:absolute;left:960px;top:560px;font-size:30px;color:#d9772b;opacity:0">程序已写好 · 等进游戏验收</div>
     </div>
 
     <!-- 社长：最强的多模态 -->
@@ -151,7 +150,10 @@
       <div class="hand" style="position:absolute;left:1340px;top:440px;width:300px;font-size:34px;line-height:1.5">遇见<br>机械动力城<div style="font-size:22px;color:#8c8274">手账速写</div></div>
     </div>
 
-    <!-- 线索撒在路上；难度梯度圈；旅人 -->
+    <!-- 三种遇见：开局就在机械城里 / 远远望见（速写）/ 被商人的齿轮牵过去；最后三张并排 -->
+    <div id="enc" class="full"><svg id="enc-svg" width="1677" height="656"></svg></div>
+
+    <!-- 难度梯度圈；旅人 -->
     <div id="road" class="full"><svg width="1677" height="656" id="road-svg"></svg></div>
 
     <div id="finale" class="full" style="display:flex;flex-direction:column;align-items:center;justify-content:center">
@@ -160,6 +162,7 @@
     </div>
   </div>
 </div>
+<script>window.STAGE_CONFIG = { SHOTS: [['harbor', '@4-5'], ['day', '@4-16'], ['night', '@4-20'], ['gears', '@4-26'], ['valley', '@4-35'], ['rings', 'finale']] };</script>
 <script src="act4_script.js"></script>
 <script src="../common/stage.js"></script>
 <script>
@@ -312,6 +315,98 @@ window.BGEAR = gear($('bench-gear'), 280, 110, 34, 8, '#e2b04a');
   window.NOVICE = txt({ x: 838, y: 396, 'text-anchor': 'middle', class: 'lbl', 'font-size': 22, opacity: 0 }, '新手村', g);
 })();
 
+
+// 三种遇见
+(function () {
+  const g = $('enc-svg');
+  const mk = () => svg('g', {}, g);
+  window.ENC = { g1: mk(), g2: mk(), g3: mk(), labels: svg('g', {}, g) };
+  // 每张画在 1000×560 的本地坐标里
+  for (const k of ['g1', 'g2', 'g3']) svg('rect', { width: 1000, height: 560, rx: 18, fill: '#fbf6ea', stroke: '#cfc5b5', 'stroke-width': 3 }, ENC[k]);
+  // 1：开局就在机械城里
+  svg('ellipse', { cx: 500, cy: 470, rx: 430, ry: 70, fill: '#d8e6c0' }, ENC.g1);
+  ENC.g1gears = [];
+  [[250, 300, 90, 150], [390, 250, 110, 200], [560, 270, 100, 180], [700, 310, 90, 140], [470, 340, 80, 110]].forEach(([x, w0, w, h]) => {
+    svg('rect', { x: x - w / 2, y: 470 - h, width: w, height: h, fill: '#e8dcc8', stroke: '#3a3631', 'stroke-width': 3 }, ENC.g1);
+    svg('path', { d: `M${x - w / 2 - 8} ${470 - h} L${x} ${470 - h - 40} L${x + w / 2 + 8} ${470 - h}Z`, fill: '#b8c3cc', stroke: '#3a3631', 'stroke-width': 3 }, ENC.g1);
+    ENC.g1gears.push(gear(ENC.g1, x + w / 2 - 6, 470 - h - 10, 26, 8, '#e2b04a'));
+  });
+  ENC.g1man = svg('g', {}, ENC.g1);
+  svg('circle', { cx: 0, cy: -46, r: 16, fill: '#8a6a4f', stroke: '#3a3631', 'stroke-width': 3 }, ENC.g1man);
+  svg('rect', { x: -14, y: -30, width: 28, height: 30, rx: 6, fill: '#3a6fc4', stroke: '#3a3631', 'stroke-width': 3 }, ENC.g1man);
+  ENC.g1fx = svg('g', {}, ENC.g1);
+  // 2：远远望见（Astra 画的手账速写）
+  svg('image', { href: '../开放日插画/encounter_sketch.png', x: 12, y: 12, width: 976, height: 536, preserveAspectRatio: 'xMidYMid slice' }, ENC.g2);
+  // 3：心里想着齿轮，在别的大陆遇到卖齿轮的商人，跟着他指的路找过去
+  svg('path', { d: 'M40 520 C 60 380, 200 330, 330 350 C 470 370, 560 420, 600 520Z', fill: '#d8e6c0', stroke: '#9fb889', 'stroke-width': 3 }, ENC.g3);
+  svg('path', { d: 'M700 260 C 760 160, 900 140, 960 200 L960 330 C 880 360, 760 350, 700 260Z', fill: '#d8e6c0', stroke: '#9fb889', 'stroke-width': 3 }, ENC.g3);
+  // 商人的摊子
+  svg('rect', { x: 400, y: 380, width: 120, height: 60, fill: '#c9a77a', stroke: '#3a3631', 'stroke-width': 3 }, ENC.g3);
+  svg('path', { d: 'M390 380 L400 340 H520 L530 380Z', fill: '#d9624f', stroke: '#3a3631', 'stroke-width': 3 }, ENC.g3);
+  ENC.g3gears = [gear(ENC.g3, 430, 372, 14, 7, '#e2b04a'), gear(ENC.g3, 470, 370, 18, 8, '#b8c3cc')];
+  const mer = svg('g', { transform: 'translate(560 440)' }, ENC.g3);
+  svg('circle', { cx: 0, cy: -46, r: 16, fill: '#e0b48a', stroke: '#3a3631', 'stroke-width': 3 }, mer);
+  svg('rect', { x: -15, y: -30, width: 30, height: 30, rx: 6, fill: '#8a3a2d', stroke: '#3a3631', 'stroke-width': 3 }, mer);
+  // 远处的齿轮城
+  ENC.g3city = svg('g', { opacity: 0 }, ENC.g3);
+  [[800, 60], [850, 90], [900, 70]].forEach(([x, h]) => svg('rect', { x: x - 22, y: 240 - h, width: 44, height: h, fill: '#e8dcc8', stroke: '#3a3631', 'stroke-width': 3 }, ENC.g3city));
+  ENC.g3cg = gear(ENC.g3city, 850, 140, 22, 8, '#e2b04a');
+  ENC.g3path = svg('path', { d: 'M380 430 C 500 300, 640 330, 700 280 S 800 240, 840 230', stroke: '#d9772b', 'stroke-width': 6, fill: 'none', 'stroke-dasharray': '14 10', pathLength: 1, opacity: 0 }, ENC.g3);
+  ENC.g3man = svg('g', {}, ENC.g3);
+  svg('circle', { cx: 0, cy: -46, r: 16, fill: '#8a6a4f', stroke: '#3a3631', 'stroke-width': 3 }, ENC.g3man);
+  svg('rect', { x: -14, y: -30, width: 28, height: 30, rx: 6, fill: '#3a6fc4', stroke: '#3a3631', 'stroke-width': 3 }, ENC.g3man);
+  ENC.g3think = svg('g', { opacity: 0 }, ENC.g3man);
+  svg('circle', { cx: 30, cy: -86, r: 5, fill: '#fff', stroke: '#8c8274', 'stroke-width': 2 }, ENC.g3think);
+  svg('circle', { cx: 46, cy: -106, r: 8, fill: '#fff', stroke: '#8c8274', 'stroke-width': 2 }, ENC.g3think);
+  svg('ellipse', { cx: 84, cy: -146, rx: 44, ry: 34, fill: '#fff', stroke: '#8c8274', 'stroke-width': 2 }, ENC.g3think);
+  ENC.g3tg = gear(ENC.g3think, 84, -146, 20, 8, '#e2b04a');
+  ENC.g3talk = svg('g', { opacity: 0 }, ENC.g3);
+  svg('rect', { x: 590, y: 372, width: 90, height: 56, rx: 20, fill: '#fff', stroke: '#3a3631', 'stroke-width': 3 }, ENC.g3talk);
+  const ta = svg('text', { x: 635, y: 410, 'text-anchor': 'middle', class: 'lbl', 'font-size': 34 }, ENC.g3talk); ta.textContent = '→';
+  // 并排时的说明
+  ['一出门就撞见', '远远望见', '跟着线索找过去'].forEach((w, i) => { const t = svg('text', { x: 300 + i * 540, y: 470, 'text-anchor': 'middle', class: 'lbl', 'font-size': 34 }, ENC.labels); t.textContent = w; });
+})();
+function drawEnc(time) {
+  const e1 = since('enc1', time), e3 = since('enc3', time), cl = since('clues', time);
+  show('enc', Math.max(between('enc1', 'sketch', time, 0.5, 0.4), between('enc3', 'rings', time, 0.5, 0.5)));
+  const tri = inout(cl / 1.0);
+  // 单张：居中放大；并排：三张缩小排成一行
+  const place = (grp, i, single) => {
+    const sx = 338, sy = 48, tx = 30 + i * 540, ty = 120, s = 1 - 0.5 * tri;
+    const x = single ? sx + (tx - sx) * tri : tx, y = single ? sy + (ty - sy) * tri : ty;
+    grp.setAttribute('transform', `translate(${x} ${y}) scale(${single ? s : 0.5})`);
+  };
+  const solo1 = e1 >= 0 && e3 < 0 && cl < 0;
+  ENC.g1.setAttribute('opacity', solo1 ? 1 : ease((cl - 0.6) / 0.4));
+  ENC.g2.setAttribute('opacity', cl >= 0 ? ease((cl - 0.8) / 0.4) : 0);
+  ENC.g3.setAttribute('opacity', e3 >= 0 ? 1 : 0);
+  place(ENC.g1, 0, false); place(ENC.g2, 1, false); place(ENC.g3, 2, true);
+  if (solo1) { ENC.g1.setAttribute('transform', 'translate(338 48)'); }
+  ENC.labels.setAttribute('opacity', ease((cl - 1.2) / 0.5));
+  // 1 的动画
+  ENC.g1gears.forEach((g, i) => g.inner.setAttribute('transform', `rotate(${(i % 2 ? -1 : 1) * time * 70})`));
+  const hop = Math.abs(Math.sin(time * 5)) * 26;
+  ENC.g1man.setAttribute('transform', `translate(500 ${470 - hop})`);
+  let fx = '';
+  for (let i = 0; i < 3; i++) { const a = ((time * 0.8 + i / 3) % 1); fx += `<path d="M0 6 C -10 -2 -10 -10 -4 -11 C 0 -12 0 -8 0 -7 C 0 -8 0 -12 4 -11 C 10 -10 10 -2 0 6Z" transform="translate(${500 + (i - 1) * 40} ${400 - a * 90}) scale(2.4)" fill="#e8707a" opacity="${1 - a}"/>`; }
+  ENC.g1fx.innerHTML = fx;
+  // 3 的动画
+  const q = e3 < 0 ? 0 : e3;
+  ENC.g3gears.forEach((g, i) => g.inner.setAttribute('transform', `rotate(${(i ? -1 : 1) * time * 60})`));
+  ENC.g3cg.inner.setAttribute('transform', `rotate(${time * 60})`);
+  ENC.g3tg.inner.setAttribute('transform', `rotate(${time * 60})`);
+  ENC.g3think.setAttribute('opacity', ease((q - 0.3) / 0.4) * (1 - ease((q - 3.2) / 0.4)));
+  ENC.g3talk.setAttribute('opacity', ease((q - 3.2) / 0.3));
+  ENC.g3city.setAttribute('opacity', ease((q - 3.8) / 0.6));
+  ENC.g3path.setAttribute('opacity', ease((q - 3.8) / 0.3));
+  ENC.g3path.setAttribute('stroke-dashoffset', 1 - inout((q - 3.8) / 1.4));
+  let mx = 120 + 230 * inout((q - 1.0) / 2.0), my = 470;
+  const walk = clamp((q - 5.6) / 7);
+  if (walk > 0) { const L = ENC.g3path.getTotalLength(), pt = ENC.g3path.getPointAtLength(L * walk); mx = pt.x; my = pt.y; }
+  const bob = (q > 1 && q < 3) || walk > 0 && walk < 1 ? Math.abs(Math.sin(time * 9)) * 6 : 0;
+  ENC.g3man.setAttribute('transform', `translate(${mx} ${my - bob})`);
+}
+
 window.drawBoard = function (time) {
   show('titlecard', ease(time / 0.4) * (1 - ease((time - 2.6) / 0.5)));
 
@@ -365,15 +460,14 @@ window.drawBoard = function (time) {
     o.h.setAttribute('opacity', a);
     if (o.pier) o.pier.setAttribute('height', 60 * ease((hs - 2 - i * 0.35) / 0.5));
   });
-  show('fields', between('fields', 'stamps', time, 0.5, 0.4));
+  show('fields', between('fields', 'day', time, 0.5, 0.4));
   const fs = since('fields', time);
   PATCH.forEach((p, i) => p.el.setAttribute('opacity', ease((fs - 0.5 - (p.cx / 900) * 2.5 - i * 0.03) / 0.4)));
   $('farm').setAttribute('opacity', ease((fs - 4) / 0.4));
   $('farm').setAttribute('transform', `translate(0 ${-30 * (1 - ease((fs - 4) / 0.4))})`);
   MILL.setAttribute('transform', `translate(448 330) rotate(${time * 40})`);
-  show('fields-test', ease((sinceLine('4-5', time)) / 0.5));
 
-  show('stamps', between('stamps', 'day', time, 0.5, 0.4));
+  show('stamps', 0);
   const ss = since('stamps', time);
   [0, 1, 2].forEach(i => {
     const s = ss - 3 - i * 1.6;
@@ -424,7 +518,7 @@ window.drawBoard = function (time) {
   show('another-b', ease((since('another', time) - 2.4) / 0.5));
   show('another-c', ease((since('another', time) - 2.8) / 0.5));
 
-  show('valley', between('valley', 'sketch', time, 0.5, 0.4));
+  show('valley', between('valley', 'enc1', time, 0.5, 0.4));
   const vs = since('valley', time);
   GLOW.setAttribute('opacity', 0.7 * ease((vs - 2) / 0.3));
   GLOW.setAttribute('stroke-dashoffset', 1 - inout((vs - 2) / 1.6));
@@ -434,17 +528,18 @@ window.drawBoard = function (time) {
   VTAG2.setAttribute('opacity', ease(since('mods', time) / 0.5)); VTAG2b.setAttribute('opacity', ease((since('mods', time) - 0.4) / 0.5));
   VTAG3.setAttribute('opacity', ease(sinceLine('4-28', time) / 0.5));
 
-  show('sketch', between('sketch', 'clues', time, 0.6, 0.4));
+  show('sketch', between('sketch', 'enc3', time, 0.6, 0.4));
+  drawEnc(time);
 
   // 路
-  show('road', between('clues', 'finale', time, 0.5, 0.6));
+  show('road', between('rings', 'finale', time, 0.5, 0.6));
   const cl = since('clues', time), rg = since('rings', time), tv = since('traveler', time);
   const ringPhase = rg >= 0;
   ROAD.setAttribute('opacity', ease((cl - 0.3) / 0.5) * (1 - ease(rg / 0.5)));
   CLUECAP.setAttribute('opacity', ease(cl / 0.5) * (1 - ease(rg / 0.4)));
   CLUES.forEach((c, i) => c.setAttribute('opacity', ease((cl - 1.2 - i * 1.4) / 0.4) * (1 - ease(rg / 0.4))));
   WHEEL.inner.setAttribute('transform', `rotate(${time * 60})`);
-  CITY.setAttribute('opacity', ease((cl - 5.4) / 0.4));
+  CITY.setAttribute('opacity', ease(rg / 0.4));
   RINGS.forEach((c, i) => { c.setAttribute('r', (50 + (4 - i) * 52) * inout((rg - (4 - i) * 0.5) / 0.6)); });
   RLAB.forEach((l, i) => l.setAttribute('opacity', ease((rg - 1.2 - i * 0.5) / 0.4)));
   RINGCAP.setAttribute('opacity', ease((rg - 0.3) / 0.4));

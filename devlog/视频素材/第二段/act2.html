@@ -21,6 +21,12 @@
   #winline { position: absolute; left: 58px; top: 24px; width: 1800px; height: 801px; border-radius: 12px; border: 2px solid rgba(60,40,20,.14); }
   /* 讲解时的头像和对话气泡 */
   #band { position: absolute; inset: 0; z-index: 31; pointer-events: none; }
+  /* 天象台照片：从照片墙里放大，聊天时镜头慢慢平移 */
+  #obsdim { position: absolute; left: 60px; top: 26px; width: 1800px; height: 801px; border-radius: 10px; background: rgba(239,230,214,.7); z-index: 30; opacity: 0; }
+  #obs { position: absolute; z-index: 30; background: #fffdf8; box-shadow: 0 10px 28px rgba(60,40,20,.28); opacity: 0; box-sizing: border-box; }
+  #obs .ph { position: absolute; overflow: hidden; }
+  #obs .ph img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; transform-origin: 50% 50%; }
+  #obs .cap { position: absolute; left: 0; right: 0; bottom: 0; font-size: 22px; color: var(--ink); white-space: nowrap; overflow: hidden; }
   /* 头像像小泡泡一样弹出来：白边外面一圈淡淡的泡泡膜，左上角一点高光 */
   .av { position: absolute; width: 170px; height: 170px; margin: -85px 0 0 -85px; }
   .av .face { position: absolute; inset: 0; border-radius: 50%; overflow: hidden; background: #fffdf8;
@@ -47,6 +53,8 @@
   </div>
   <div id="sub"><div id="name"></div><div id="line"></div></div>
   <div id="mat"><div id="win"></div><div id="winline"></div></div>
+  <div id="obsdim"></div>
+  <div id="obs"><div class="ph"><img src="../../../dev_docs/systems/city/reports/20261031_学院功能区实景报告/evidence/observatory.jpg" alt=""></div><div class="cap">天象台<span> · 原版地形 + 道路遇水自动搭桥</span></div></div>
   <div id="band"></div>
 </div>
 <script src="act2_script.js"></script>
@@ -83,7 +91,7 @@ for (const line of SCRIPT) {
     }
     if (lineStart === null) lineStart = t;
     const dur = Math.max(1.8, c.text.replace(/\n/g, '').length / 6 + 0.7);
-    timeline.push({ who: line.who, face: c.face, text: c.text, start: t, end: t + dur, lineStart });
+    timeline.push({ id: line.id, who: line.who, face: c.face, text: c.text, start: t, end: t + dur, lineStart });
     t += dur;
   }
   t += GAP;
@@ -174,6 +182,25 @@ for (const m of members) {
   av.insertAdjacentHTML('beforeend', '<div class="gloss"></div><div class="burst"></div>');
   $('band').appendChild(av);
 }
+// 天象台：Rin 说"我最喜欢那张天象台"时放大，GLM 说完"明信片"再缩回照片墙
+const OBS_FROM = { x: 1366, y: 113, w: 382, h: 199 }, OBS_TO = { x: 150, y: 40, w: 1620, h: 774 };
+const OBS0 = timeline.find(c => c.id === '2-60').start + 0.5, OBS1 = timeline.filter(c => c.id === '2-62').pop().end + 0.2, OBS_D = 0.8;
+function drawObservatory(time, op) {
+  const k = inout((time - OBS0) / OBS_D) * (1 - inout((time - OBS1) / OBS_D));
+  const box = $('obs');
+  box.style.opacity = k > 0.001 ? op : 0;
+  $('obsdim').style.opacity = op * k;
+  const r = {}; for (const key of ['x', 'y', 'w', 'h']) r[key] = OBS_FROM[key] + (OBS_TO[key] - OBS_FROM[key]) * k;
+  Object.assign(box.style, { left: r.x + 'px', top: r.y + 'px', width: r.w + 'px', height: r.h + 'px' });
+  const pad = 8 + 6 * k, capH = 36 + 18 * k;
+  Object.assign(box.querySelector('.ph').style, { left: pad + 'px', top: pad + 'px', right: pad + 'px', bottom: capH + 'px' });
+  const cap = box.querySelector('.cap');
+  cap.querySelector('span').style.opacity = clamp((k - 0.6) / 0.4);
+  cap.style.fontSize = (20 + 10 * k) + 'px'; cap.style.lineHeight = capH + 'px'; cap.style.paddingLeft = (pad + 4) + 'px';
+  // 放大以后镜头慢慢往右平移、稍微推近
+  const kb = clamp((time - OBS0 - OBS_D) / (OBS1 - OBS0 - OBS_D));
+  box.querySelector('img').style.transform = `scale(${1 + 0.08 * kb}) translateX(${-2.5 * kb}%)`;
+}
 function lastEndOf(id, time) { let e = null; for (const x of timeline) { if (x.start > time) break; if (x.who === id && x.end <= time) e = x.end; } return e; }
 function speakingAt(id, time) { const c = cueAt(time); return !!c && c.who === id; }
 function shownAt(id, time) { if (speakingAt(id, time)) return true; const e = lastEndOf(id, time); return e !== null && e > Z0 && time - e < STAY; }
@@ -251,15 +278,16 @@ window.render = function (time) {
     const who = members.find(m => m.id === cue.who);
     name.textContent = who.name; name.style.background = who.color; if (line.textContent !== cue.text) {
       // 字幕框收紧到文字的实际宽度，换行后不留一大块空白
-      line.style.width = ''; line.style.textWrap = 'balance'; line.textContent = cue.text;
+      line.style.width = ''; line.textContent = cue.text;
       const r = document.createRange(); r.selectNodeContents(line);
-      line.style.width = Math.ceil(Math.max(...[...r.getClientRects()].map(x => x.width))) + 2 + 'px';
-      line.style.textWrap = 'wrap'; // 宽度已经按平衡后的行定好，别再重新平衡
+      // 多留几像素，免得标点挤到下一行
+      line.style.width = Math.ceil(Math.max(...[...r.getClientRects()].map(x => x.width))) + 8 + 'px';
     }
     const fade = ease((time - cue.start) / 0.2);
     name.style.opacity = fade; line.style.opacity = fade;
   } else { name.style.opacity = 0; line.style.opacity = 0; }
   $('sub').style.transform = `translateY(${62 * full}px)`;
+  drawObservatory(time, full);
   drawBand(time, full);
 };
 

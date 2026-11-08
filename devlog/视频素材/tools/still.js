@@ -3,7 +3,7 @@
 //   node still.js <页面.html> 时间点 时间点 ...
 //
 // 时间点可以写秒数（120），也可以写"画面事件+秒数"（poly+2，即 poly 出现后 2 秒），
-// 画面事件就是 make_scripts.py 里 MARKS 的名字。图存在 tools/截图/ 下。
+// 画面事件就是 make_scripts.py 里 MARKS 的名字；写 @3-13+1 就是第 3-13 句开始后 1 秒。图存在 tools/截图/ 下。
 const { chromium } = require('playwright');
 const path = require('path');
 const fs = require('fs');
@@ -21,7 +21,7 @@ const { pathToFileURL } = require('url');
   await p.waitForTimeout(3000);
   for (const spec of times) {
     const [name, off] = spec.split('+');
-    const t = await p.evaluate(([n, o]) => (isNaN(+n) ? (window.MARKS || {})[n] : +n) + (+o || 0), [name, off]);
+    const t = await p.evaluate(([n, o]) => (n.startsWith('@') ? (window.LINES || {})[n.slice(1)] : isNaN(+n) ? (window.MARKS || {})[n] : +n) + (+o || 0), [name, off]);
     if (t == null || isNaN(t)) { console.log(`找不到画面事件：${spec}`); continue; }
     await p.evaluate(t => window.render(t), t);
     const file = path.join(outDir, `${path.basename(page, '.html')}_${spec}.png`);

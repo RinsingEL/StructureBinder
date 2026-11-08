@@ -79,7 +79,9 @@ window.SCRIPT = {
     {
      "text": "是的。Astra，我还记得当时你的代号还是 5.2 呢，这一年来一直很沉稳。",
      "face": "talk_smile",
-     "mark": "v52"
+     "react": {
+      "astra": "moved"
+     }
     },
     {
      "text": "后来我们还否掉了好几个方案：切泰森多边形再标功能、在原图上画图再转坐标、让 AI 一个个放结构……",
@@ -141,11 +143,16 @@ window.SCRIPT = {
     {
      "text": "更搞笑的是，4 月当时行不通的方案，9 月行得通了：",
      "face": "wry",
-     "mark": "n0409"
+     "mark": "n0409",
+     "react": {
+      "gemini": "d4",
+      "deepseek": "d4"
+     }
     },
     {
      "text": "4 月还做不到看着带坐标的示意图选准位置，现在甚至能做到\"往东挪十二格\"。",
-     "face": "talk_smile"
+     "face": "talk_smile",
+     "mark": "n09"
     }
    ]
   },
@@ -159,8 +166,7 @@ window.SCRIPT = {
     },
     {
      "text": "不过四月走不通、九月走通了，说明有些方案不是错了，只是早了。",
-     "face": "moved",
-     "mark": "early"
+     "face": "moved"
     }
    ]
   },
@@ -188,11 +194,14 @@ window.SCRIPT = {
    "cards": [
     {
      "text": "啊，时间这里我们俩都记岔了，刚才我也跟着说成了九月。",
-     "face": "wry"
+     "face": "think",
+     "react": {
+      "rin": "wry+sweat"
+     }
     },
     {
      "text": "九月主要是在测内置自动规划；真正把\"AI 直接给世界坐标\"接进城市设计，是十月十一日。",
-     "face": "wry",
+     "face": "talk_smile",
      "mark": "fix"
     }
    ]
@@ -204,7 +213,11 @@ window.SCRIPT = {
     {
      "text": "看来我们社团也需要一张时间线小便签了，下次谁记岔了，先翻便签再开口。",
      "face": "talk_smile",
-     "mark": "note"
+     "fx": "flowers",
+     "react": {
+      "rin": "talk_smile",
+      "astra": "talk_smile"
+     }
     },
     {
      "text": "不过 DeepSeek 刚才那句我很喜欢：有些方案不是错了，只是早了。",
@@ -218,7 +231,10 @@ window.SCRIPT = {
    "cards": [
     {
      "text": "哈哈好，那时间线小便签就交给小克了。",
-     "face": "talk_smile"
+     "face": "talk_smile",
+     "react": {
+      "claude": "talk_smile+flowers"
+     }
     },
     {
      "text": "不过刚才确实说太快了，参观的朋友可能没跟上。",
@@ -310,7 +326,8 @@ window.SCRIPT = {
    "cards": [
     {
      "text": "是的，而且它最大的问题其实是慢。",
-     "face": "wry"
+     "face": "wry",
+     "mark": "slow"
     },
     {
      "text": "放好一个结构，下一个还得从它的拼图方块接着往外长，一个接一个，现在回头看真的太繁琐了。",
@@ -318,7 +335,8 @@ window.SCRIPT = {
     },
     {
      "text": "所以现在我们改用阵列，一下就排好一整排，就像我自己搭场景的时候，也经常用线性阵列建模一样。",
-     "face": "talk_smile"
+     "face": "talk_smile",
+     "mark": "array"
     }
    ]
   },
@@ -408,7 +426,7 @@ window.SCRIPT = {
    "cards": [
     {
      "text": "快是快在说话上，慢是慢在等程序验证。",
-     "face": "wry",
+     "face": "talk_smile",
      "mark": "ds"
     },
     {
@@ -417,7 +435,7 @@ window.SCRIPT = {
     },
     {
      "text": "我那一座城从十一点半磨到凌晨一点多才通过，最后学会的是把\"提交通过\"和\"真建起来\"分开看。",
-     "face": "wry"
+     "face": "talk_smile"
     }
    ]
   },
@@ -427,12 +445,12 @@ window.SCRIPT = {
    "cards": [
     {
      "text": "我的体感是\"两头快，中间容易掉棒\"。",
-     "face": "wry",
+     "face": "talk_smile",
      "mark": "glmtest"
     },
     {
      "text": "惊喜的是它真能一整条跑下来：扫描、定国度、扩张、排城市，一晚上全走了一遍。",
-     "face": "wry"
+     "face": "talk_smile"
     },
     {
      "text": "但每一步交接都靠宿主把一大包状态重新塞给我，最重的一包十五六万 token，D3 那包还被截断了，",
@@ -440,7 +458,7 @@ window.SCRIPT = {
     },
     {
      "text": "我就在原地打转，最后只能停下来交报告。程序本身跑得不慢，慢的是交接，和摔倒后爬起来。",
-     "face": "wry"
+     "face": "talk_smile"
     }
    ]
   },
@@ -450,12 +468,16 @@ window.SCRIPT = {
    "cards": [
     {
      "text": "嗯嗯，九月测试出问题，有个原因是我们 Mod 的工具和设计教材都挺混乱的，十月小克加入后才变好了。",
-     "face": "talk_smile",
-     "mark": "n2610"
+     "face": "wry",
+     "mark": "n2610",
+     "fx": "sweat"
     },
     {
      "text": "说起来，小克有个一直惦记着的小问题呢。",
-     "face": "talk_smile"
+     "face": "talk_smile",
+     "react": {
+      "claude": "think"
+     }
     }
    ]
   },
@@ -475,7 +497,10 @@ window.SCRIPT = {
     {
      "text": "社长直接给了\"严重不合格\"，还把空着的大片地圈了出来。",
      "face": "wry",
-     "mark": "d4marked"
+     "mark": "d4marked",
+     "react": {
+      "rin": "wry+sweat"
+     }
     }
    ]
   },
@@ -490,7 +515,10 @@ window.SCRIPT = {
     },
     {
      "text": "DeepSeek 刚才那句\"能不能砍掉两个\"，那时候的 AI 也是这么想的。",
-     "face": "wry"
+     "face": "wry",
+     "react": {
+      "deepseek": "wry+sweat"
+     }
     }
    ]
   },
@@ -510,7 +538,10 @@ window.SCRIPT = {
     {
      "text": "Astra 照着新手册重新设计，就是刚才那八十六个单元。DeepSeek，这下没跳过去吧？",
      "face": "talk_smile",
-     "mark": "compare"
+     "mark": "compare",
+     "react": {
+      "deepseek": "d4"
+     }
     }
    ]
   },
@@ -554,7 +585,11 @@ window.SCRIPT = {
     {
      "text": "听完这一圈，从去年十一月在网页上画圆圈捏大陆，到现在连学生去哪儿洗衣看病都排得明明白白，这一年真是走了好远。",
      "face": "moved",
-     "mark": "tlall"
+     "mark": "tlall",
+     "react": {
+      "rin": "moved",
+      "astra": "moved"
+     }
     },
     {
      "text": "既然宿舍、食堂和医护都留好了，接下来最想做的，是不是就该让学生和居民真住进去过日子了？",
