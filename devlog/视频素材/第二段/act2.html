@@ -251,10 +251,10 @@ window.render = function (time) {
     const who = members.find(m => m.id === cue.who);
     name.textContent = who.name; name.style.background = who.color; if (line.textContent !== cue.text) {
       // 字幕框收紧到文字的实际宽度，换行后不留一大块空白
-      line.style.width = ''; line.style.textWrap = 'balance'; line.textContent = cue.text;
+      line.style.width = ''; line.textContent = cue.text;
       const r = document.createRange(); r.selectNodeContents(line);
-      line.style.width = Math.ceil(Math.max(...[...r.getClientRects()].map(x => x.width))) + 2 + 'px';
-      line.style.textWrap = 'wrap'; // 宽度已经按平衡后的行定好，别再重新平衡
+      // 多留几像素，免得标点挤到下一行
+      line.style.width = Math.ceil(Math.max(...[...r.getClientRects()].map(x => x.width))) + 8 + 'px';
     }
     const fade = ease((time - cue.start) / 0.2);
     name.style.opacity = fade; line.style.opacity = fade;
