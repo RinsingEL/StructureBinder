@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>第四段 · 展望</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Noto+Sans+SC:wght@500;700&display=block">
+<style>
+  :root { --ink: #3a3631; --soft: #8c8274; --red: #d9624f; --orange: #d9772b; --paper: #fffdf8; }
+  html, body { margin: 0; background: #1e1d1b; }
+  #stage { position: relative; width: 1920px; height: 1080px; overflow: hidden; font-family: "Noto Sans SC", "WenQuanYi Zen Hei", sans-serif; }
+  #room { position: absolute; inset: 0; width: 1920px; height: 1080px; }
+  /* 白板内侧 x 122–1799，y 41–697；下面的坐标都相对白板 */
+  #board { position: absolute; left: 122px; top: 41px; width: 1677px; height: 656px; overflow: hidden; color: var(--ink); }
+  #board > * { position: absolute; opacity: 0; }
+  .hand { font-family: "ZCOOL KuaiLe", sans-serif; }
+  .lbl { font-family: "ZCOOL KuaiLe", sans-serif; fill: var(--ink); }
+  .note { font-family: "Noto Sans SC", sans-serif; font-weight: 500; fill: #5d6b6b; }
+  .cap { font-family: "ZCOOL KuaiLe", sans-serif; font-size: 44px; }
+  .cap small { display: block; font-family: "Noto Sans SC", sans-serif; font-size: 24px; color: var(--soft); margin-top: 8px; font-weight: 500; }
+  .photo { background: var(--paper); padding: 10px; box-shadow: 0 6px 16px rgba(60,40,20,.2); }
+  .photo img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .full { left: 0; top: 0; width: 1677px; height: 656px; }
+  .bubble { background: #fff; border: 3px solid var(--ink); border-radius: 26px; padding: 12px 26px; font-family: "ZCOOL KuaiLe"; font-size: 34px; position: absolute; }
+  .bubble::after { content: ''; position: absolute; left: 40px; bottom: -22px; border: 11px solid transparent; border-top: 12px solid var(--ink); }
+  #titlecard { inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  #titlecard .big { font-size: 150px; letter-spacing: 30px; }
+  #titlecard .small { font-size: 34px; color: var(--soft); margin-top: 10px; letter-spacing: 4px; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <img id="room" src="../开放日插画/clubroom_v2.png" alt="">
+  <div id="board">
+    <div id="titlecard" class="hand"><div class="big">展望</div><div class="small">城建好了，迟早要住人</div></div>
+
+    <!-- 学院岛：白天、商队之后回来、夜里查房 -->
+    <div id="isl" style="left:255px;top:14px;width:1166px;height:621px">
+      <svg viewBox="0 0 1014 540" width="1166" height="621" style="border-radius:10px">
+        <defs><clipPath id="isl-clip"><rect width="1014" height="540" rx="9"/></clipPath>
+          <radialGradient id="torch"><stop offset="0" stop-color="#fff4c2" stop-opacity=".95"/><stop offset="1" stop-color="#fff4c2" stop-opacity="0"/></radialGradient></defs>
+        <g clip-path="url(#isl-clip)">
+          <image href="../../act2/assets/academy.webp" x="0" y="-50" width="1014" height="640"/>
+          <rect id="dusk" width="1014" height="540" fill="#f2994a" opacity="0" style="mix-blend-mode:multiply"/>
+          <rect id="dark" width="1014" height="540" fill="#1d2747" opacity="0" style="mix-blend-mode:multiply"/>
+          <g id="dots"></g>
+          <g id="torchg" opacity="0"><circle id="torchc" cx="650" cy="390" r="70" fill="url(#torch)"/></g>
+          <g id="windows" opacity="0"></g>
+        </g>
+        <g id="moon" opacity="0"><circle cx="930" cy="70" r="34" fill="#fff6d0"/><circle cx="946" cy="60" r="30" fill="#2a3150"/></g>
+      </svg>
+      <div id="clock" style="position:absolute;right:22px;top:20px;width:150px;height:150px;opacity:0">
+        <svg width="150" height="150"><circle cx="75" cy="75" r="68" fill="#fffdf8" stroke="#3a3631" stroke-width="5"/>
+          <g stroke="#3a3631" stroke-width="4" stroke-linecap="round"><line x1="75" y1="14" x2="75" y2="24"/><line x1="136" y1="75" x2="126" y2="75"/><line x1="75" y1="136" x2="75" y2="126"/><line x1="14" y1="75" x2="24" y2="75"/></g>
+          <line id="hh" x1="75" y1="75" x2="75" y2="38" stroke="#3a3631" stroke-width="7" stroke-linecap="round"/>
+          <line id="mh" x1="75" y1="75" x2="75" y2="22" stroke="#d9772b" stroke-width="4" stroke-linecap="round"/></svg>
+        <div id="clocktxt" class="hand" style="text-align:center;font-size:34px;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,.5)"></div>
+      </div>
+      <div id="isl-tag" class="bubble" style="left:260px;top:-4px;opacity:0"></div>
+      <div id="court" style="position:absolute;left:330px;top:150px;opacity:0">
+        <div class="bubble" style="position:relative">那个每天有人坐着聊天的院子</div>
+        <div class="hand" style="display:inline-block;font-size:28px;color:#8c8274;margin:36px 0 0 30px;background:rgba(255,253,248,.92);border-radius:10px;padding:4px 14px"><s>地图上第几个区</s></div>
+      </div>
+      <div id="beds" class="bubble" style="left:640px;top:520px;opacity:0;font-size:30px">南宿院查房：56 个学生 · 56 张床</div>
+    </div>
+
+    <!-- 港口：岸线弯，整排房子跟着弯 -->
+    <div id="harbor" class="full">
+      <svg width="900" height="620" style="position:absolute;left:30px;top:20px" id="harbor-svg">
+        <path d="M0 0 H900 V620 H0Z" fill="#fbf6ea"/>
+        <path id="sea" d="M0 620 L0 470 C 180 430, 260 300, 430 300 C 600 300, 640 430, 900 380 L900 620Z" fill="#a9cfe0"/>
+        <path id="coast" d="M0 470 C 180 430, 260 300, 430 300 C 600 300, 640 430, 900 380" fill="none" stroke="#3a3631" stroke-width="4" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/>
+        <g id="harbor-houses"></g>
+      </svg>
+      <div class="photo" style="left:960px;top:40px;width:660px;height:372px;position:absolute;transform:rotate(1.5deg)"><img src="../开放日插画/harbor.png" alt=""></div>
+      <div class="cap" style="position:absolute;left:960px;top:450px;width:680px">顺着真实的海岸线排<small>第一排面朝大海，码头往水里伸</small></div>
+    </div>
+    <!-- 乡村：田块铺开，农舍小组落下 -->
+    <div id="fields" class="full">
+      <svg width="900" height="620" style="position:absolute;left:30px;top:20px" id="fields-svg"></svg>
+      <div class="photo" style="left:960px;top:40px;width:660px;height:372px;position:absolute;transform:rotate(-1.5deg)"><img src="../开放日插画/fields.png" alt=""></div>
+      <div class="cap" style="position:absolute;left:960px;top:450px;width:680px">田地和树林是主角<small>谷仓、风车、两三间小屋，稀稀落落</small></div>
+      <div id="fields-test" class="hand" style="position:absolute;left:960px;top:560px;font-size:30px;color:#d9772b;opacity:0">程序已写好 · 等进游戏验收</div>
+    </div>
+
+    <!-- 社长：最强的多模态 -->
+    <div id="stamps" class="full">
+      <img src="../开场/stickers/rin.png" style="position:absolute;left:300px;top:150px;width:300px;height:300px;border-radius:50%;background:#fff;box-shadow:0 5px 14px rgba(60,40,20,.2)" alt="">
+      <div class="cap" style="position:absolute;left:660px;top:120px;font-size:56px">社团最强的多模态</div>
+      <div id="st0" style="position:absolute;left:670px;top:240px;width:280px;text-align:center"><svg width="140" height="110" viewBox="0 0 140 110"><path d="M10 55 Q70 -5 130 55 Q70 115 10 55Z" fill="#fff" stroke="#3a3631" stroke-width="6"/><circle cx="70" cy="55" r="22" fill="#3a6fc4"/><circle cx="78" cy="48" r="7" fill="#fff"/></svg><div class="hand" style="font-size:32px">眼睛看画面</div></div>
+      <div id="st1" style="position:absolute;left:960px;top:240px;width:280px;text-align:center"><svg width="140" height="110" viewBox="0 0 140 110"><g fill="#8a6a4f"><ellipse cx="55" cy="68" rx="20" ry="30"/><circle cx="40" cy="26" r="7"/><circle cx="55" cy="21" r="7"/><circle cx="70" cy="26" r="7"/><ellipse cx="100" cy="50" rx="16" ry="25" opacity=".7"/><circle cx="90" cy="16" r="6" opacity=".7"/><circle cx="103" cy="12" r="6" opacity=".7"/><circle cx="115" cy="17" r="6" opacity=".7"/></g></svg><div class="hand" style="font-size:32px">脚去走一圈</div></div>
+      <div id="st2" style="position:absolute;left:1250px;top:240px;width:280px;text-align:center"><svg width="140" height="110" viewBox="0 0 140 110"><path d="M70 100 C 10 60, 10 15, 45 12 C 60 11, 68 22, 70 30 C 72 22, 80 11, 95 12 C 130 15, 130 60, 70 100Z" fill="#e8707a" stroke="#3a3631" stroke-width="5"/></svg><div class="hand" style="font-size:32px">心里知道舒不舒服</div></div>
+      <div id="st3" class="hand" style="position:absolute;left:670px;top:440px;font-size:34px;color:#d9772b;opacity:0">港口和田野，等社长验收</div>
+    </div>
+
+    <!-- 商队带来传闻 -->
+    <div id="caravan" class="full">
+      <div class="photo" style="left:170px;top:20px;width:1080px;height:608px;position:absolute"><img src="../开放日插画/caravan.png" alt=""></div>
+      <div id="rumor" class="bubble" style="left:560px;top:70px;opacity:0">"北边的港口新到了一批船"</div>
+      <div id="rumor2" class="hand" style="position:absolute;left:1290px;top:300px;width:360px;font-size:38px;line-height:1.5;opacity:0">传闻都有来处，<br>跟着去看，<br>真能找到那个地方</div>
+    </div>
+
+    <!-- 心愿与机械动力 -->
+    <div id="wish" class="hand" style="left:0;top:40px;width:1677px;text-align:center;font-size:64px">每种爱好，都能找到自己的文明</div>
+    <div id="gears" class="full">
+      <div class="photo" style="left:360px;top:150px;width:900px;height:470px;position:absolute;transform:rotate(-1deg)"><img src="../开放日插画/workshops.png" alt=""></div>
+      <svg width="1677" height="656" style="position:absolute;left:0;top:0" id="gear-svg"></svg>
+    </div>
+
+    <!-- 三格流程：写好类型 → AI 挑选改成当地样子 → 程序落地 -->
+    <div id="config" class="full">
+      <div class="cap" style="position:absolute;left:0;top:30px;width:1677px;text-align:center">"动态配出来"</div>
+      <div id="cf"></div>
+      <div id="bench" style="position:absolute;left:560px;top:430px;width:560px;height:180px;opacity:0">
+        <svg width="560" height="180">
+          <g id="bench-a"><rect x="180" y="70" width="200" height="30" fill="#c9a77a" stroke="#3a3631" stroke-width="4"/><rect x="195" y="100" width="20" height="60" fill="#c9a77a" stroke="#3a3631" stroke-width="4"/><rect x="345" y="100" width="20" height="60" fill="#c9a77a" stroke="#3a3631" stroke-width="4"/><text x="280" y="50" text-anchor="middle" class="lbl" font-size="28">铁匠铺的工作台</text></g>
+          <g id="bench-b" opacity="0"><rect x="190" y="60" width="180" height="100" rx="8" fill="#b8c3cc" stroke="#3a3631" stroke-width="4"/><g id="bench-gear"></g><text x="280" y="40" text-anchor="middle" class="lbl" font-size="28">换成真的机器</text></g>
+        </svg>
+      </div>
+    </div>
+
+    <!-- 帮工 → 打工 → 学徒 → 出师；委托单；竞速赛 -->
+    <div id="ladder" class="full">
+      <svg width="1100" height="600" style="position:absolute;left:40px;top:30px" id="ladder-svg"></svg>
+      <div id="noticeb" style="position:absolute;left:1180px;top:80px;width:400px;height:330px;background:#b88a5a;border-radius:10px;box-shadow:0 5px 12px rgba(60,40,20,.25)">
+        <div class="hand" style="color:#fff;font-size:30px;text-align:center;margin-top:10px">告示板</div>
+        <div id="notice" style="position:absolute;left:60px;top:70px;width:280px;height:200px;background:#fffaf0;transform:rotate(-3deg);box-shadow:0 3px 8px rgba(0,0,0,.2);opacity:0">
+          <div class="hand" style="font-size:24px;color:#8c8274;margin:16px 0 0 20px">委托</div>
+          <div class="hand" style="font-size:40px;margin:10px 20px">修好北边水车</div>
+          <div class="hand" style="font-size:22px;color:#8c8274;margin:0 20px">报酬面议</div>
+        </div>
+      </div>
+      <div id="race" style="position:absolute;left:1220px;top:440px;opacity:0"><svg width="340" height="160"><line x1="40" y1="20" x2="40" y2="150" stroke="#3a3631" stroke-width="6"/><path id="flag" d="M40 20 Q90 10 140 25 Q190 40 230 25 L230 85 Q190 100 140 85 Q90 70 40 80Z" fill="#d9624f"/></svg><div class="hand" style="font-size:34px;margin-top:-20px">节日 · 机械竞速赛</div></div>
+    </div>
+
+    <!-- 换一局，换一个文明 -->
+    <div id="another" class="full">
+      <div class="photo" style="left:150px;top:90px;width:620px;height:349px;position:absolute;transform:rotate(-2deg)"><img src="../开放日插画/plaza.png" alt=""></div>
+      <div class="photo" id="another-b" style="left:900px;top:110px;width:620px;height:349px;position:absolute;transform:rotate(2deg)"><img src="../开放日插画/workshops.png" alt=""></div>
+      <div class="cap" style="position:absolute;left:150px;top:480px;width:640px;text-align:center">今天：魔法学院</div>
+      <div class="cap" id="another-c" style="position:absolute;left:900px;top:500px;width:640px;text-align:center">换个人开一局：另一个文明</div>
+    </div>
+
+    <!-- 河谷：地形先说话 + 装了哪些 Mod -->
+    <div id="valley" class="full"><svg width="1677" height="656" id="valley-svg"></svg></div>
+
+    <!-- 遇见机械动力城 -->
+    <div id="sketch" class="full">
+      <div class="photo" style="left:250px;top:30px;width:1060px;height:596px;position:absolute;transform:rotate(-1.2deg)"><img src="../开放日插画/encounter_sketch.png" alt=""></div>
+      <div style="position:absolute;left:700px;top:16px;width:160px;height:40px;background:rgba(240,225,170,.85);transform:rotate(3deg)"></div>
+      <div class="hand" style="position:absolute;left:1340px;top:440px;width:300px;font-size:34px;line-height:1.5">遇见<br>机械动力城<div style="font-size:22px;color:#8c8274">手账速写</div></div>
+    </div>
+
+    <!-- 线索撒在路上；难度梯度圈；旅人 -->
+    <div id="road" class="full"><svg width="1677" height="656" id="road-svg"></svg></div>
+
+    <div id="finale" class="full" style="display:flex;flex-direction:column;align-items:center;justify-content:center">
+      <div id="fin1" class="hand" style="font-size:92px;letter-spacing:4px">每一局，都是不同的异世界</div>
+      <div id="fin2" class="hand" style="font-size:46px;color:#8c8274;margin-top:30px">故事和剧情，由我们相遇，由我们书写</div>
+    </div>
+  </div>
+</div>
+<script src="act4_script.js"></script>
+<script src="../common/stage.js"></script>
+<script>
+const NS = 'http://www.w3.org/2000/svg';
+function svg(tag, attrs, parent) { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; }
+function txt(attrs, s, parent) { const e = svg('text', attrs, parent); e.textContent = s; return e; }
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+function show(id, op) { const e = typeof id === 'string' ? $(id) : id; e.style.opacity = op; e.style.visibility = op > 0.001 ? 'visible' : 'hidden'; }
+function gearPath(r, teeth) {
+  let d = ''; const n = teeth * 2;
+  for (let i = 0; i < n * 2; i++) { const a = i / (n * 2) * Math.PI * 2, rr = (Math.floor(i / 2) % 2 ? r * 0.8 : r); d += (i ? 'L' : 'M') + (rr * Math.cos(a)).toFixed(1) + ' ' + (rr * Math.sin(a)).toFixed(1); }
+  return d + 'Z';
+}
+function gear(parent, x, y, r, teeth, color) {
+  const g = svg('g', { transform: `translate(${x} ${y})` }, parent);
+  const inner = svg('g', {}, g);
+  svg('path', { d: gearPath(r, teeth), fill: color, stroke: '#3a3631', 'stroke-width': 4, 'stroke-linejoin': 'round' }, inner);
+  svg('circle', { r: r * 0.3, fill: '#fffdf8', stroke: '#3a3631', 'stroke-width': 4 }, inner);
+  return { g, inner, r };
+}
+
+// 学院岛上的小人点：宿院 → 教学区 / 书馆 / 食堂 → 广场
+const SPOT = { dorm: [650, 390], class: [555, 160], lib: [350, 190], hall: [540, 300], plaza: [437, 270], field: [200, 330] };
+const DOTS = (() => {
+  const r = rng(13), g = $('dots'), out = [];
+  for (let i = 0; i < 46; i++) {
+    const job = i < 30 ? 'class' : i < 36 ? 'lib' : i < 41 ? 'hall' : 'field';
+    const j = () => [(r() - 0.5) * 70, (r() - 0.5) * 44];
+    out.push({ el: svg('circle', { r: 6, fill: job === 'class' ? '#3a6fc4' : job === 'hall' ? '#d9772b' : job === 'lib' ? '#8a63d2' : '#5f9c4a', stroke: '#fff', 'stroke-width': 2 }, g),
+      home: SPOT.dorm.map((v, k) => v + j()[k] * (k ? 1.6 : 1.8)), work: SPOT[job].map((v, k) => v + j()[k]), noon: SPOT.hall.map((v, k) => v + j()[k] * 1.3), eve: SPOT.plaza.map((v, k) => v + j()[k] * 1.5), delay: r() * 1.2 });
+  }
+  // 宿院窗户
+  for (let i = 0; i < 14; i++) svg('rect', { x: 600 + (i % 5) * 26 + r() * 10, y: 350 + Math.floor(i / 5) * 34 + r() * 8, width: 7, height: 7, fill: '#ffd36b' }, $('windows'));
+  return out;
+})();
+const lerp = (a, b, k) => [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k];
+
+// 港口
+(function () {
+  const g = $('harbor-houses'), path = $('coast'), L = path.getTotalLength();
+  window.HARBOR = [];
+  for (let i = 0; i < 13; i++) {
+    const s = (0.05 + i * 0.072) * L, p = path.getPointAtLength(s), q = path.getPointAtLength(s + 2);
+    const ang = Math.atan2(q.y - p.y, q.x - p.x) * 180 / Math.PI;
+    const h = svg('g', { transform: `translate(${p.x} ${p.y}) rotate(${ang})`, opacity: 0 }, g);
+    svg('rect', { x: -22, y: -64, width: 44, height: 36, fill: '#f2d3ae', stroke: '#3a3631', 'stroke-width': 3 }, h);
+    svg('path', { d: 'M-26 -64 L0 -84 L26 -64Z', fill: '#c0533f', stroke: '#3a3631', 'stroke-width': 3 }, h);
+    svg('rect', { x: -6, y: -40, width: 12, height: 12, fill: '#3a3631' }, h);
+    let pier = null;
+    if (i % 3 === 1) pier = svg('rect', { x: -6, y: 6, width: 12, height: 0, fill: '#a07a52', stroke: '#3a3631', 'stroke-width': 2 }, h);
+    HARBOR.push({ h, pier });
+  }
+  txt({ x: 40, y: 70, class: 'lbl', 'font-size': 46 }, '新排法 · 港口', $('harbor-svg'));
+  txt({ x: 40, y: 112, class: 'note', 'font-size': 24 }, '岸线弯，整排房子就跟着弯', $('harbor-svg'));
+})();
+
+// 乡村
+(function () {
+  const g = $('fields-svg'), r = rng(21);
+  svg('rect', { width: 900, height: 620, fill: '#fbf6ea' }, g);
+  svg('path', { d: 'M560 0 C 600 160, 520 300, 640 420 S 720 560, 700 620', stroke: '#a9cfe0', 'stroke-width': 26, fill: 'none', 'stroke-linecap': 'round' }, g);
+  window.PATCH = [];
+  const cols = ['#e8d27a', '#c9dc8e', '#a8c97a', '#f0e2a0', '#7fae6a', '#d8c46a'];
+  for (let i = 0; i < 26; i++) {
+    const cx = 60 + r() * 780, cy = 150 + r() * 440;
+    if (Math.abs(cx - (560 + (cy / 620) * 120)) < 50) continue;
+    const pts = []; const n = 5 + Math.floor(r() * 3), rad = 38 + r() * 34;
+    for (let k = 0; k < n; k++) { const a = k / n * Math.PI * 2 + r() * 0.4; const rr = rad * (0.75 + r() * 0.4); pts.push([cx + rr * Math.cos(a) * 1.4, cy + rr * Math.sin(a)]); }
+    const isTree = r() < 0.25;
+    PATCH.push({ el: svg('path', { d: 'M' + pts.map(p => p.join(' ')).join('L') + 'Z', fill: isTree ? '#6f9e5c' : cols[Math.floor(r() * cols.length)], stroke: '#5b6b45', 'stroke-width': 2, opacity: 0 }, g), cx, cy });
+  }
+  const farm = svg('g', { id: 'farm', opacity: 0 }, g);
+  svg('rect', { x: 330, y: 340, width: 70, height: 50, fill: '#c0533f', stroke: '#3a3631', 'stroke-width': 3 }, farm);
+  svg('path', { d: 'M322 340 L365 305 L408 340Z', fill: '#8a3a2d', stroke: '#3a3631', 'stroke-width': 3 }, farm);
+  svg('rect', { x: 440, y: 330, width: 16, height: 60, fill: '#e8dcc8', stroke: '#3a3631', 'stroke-width': 3 }, farm);
+  window.MILL = svg('g', { transform: 'translate(448 330)' }, farm);
+  for (let k = 0; k < 4; k++) svg('rect', { x: -4, y: -46, width: 8, height: 46, fill: '#fffdf8', stroke: '#3a3631', 'stroke-width': 2, transform: `rotate(${k * 90})` }, MILL);
+  [[270, 380], [480, 395], [300, 420]].forEach(([x, y]) => { svg('rect', { x, y, width: 34, height: 26, fill: '#f2d3ae', stroke: '#3a3631', 'stroke-width': 3 }, farm); svg('path', { d: `M${x - 4} ${y} L${x + 17} ${y - 16} L${x + 38} ${y}Z`, fill: '#c0533f', stroke: '#3a3631', 'stroke-width': 3 }, farm); });
+  txt({ x: 40, y: 70, class: 'lbl', 'font-size': 46 }, '新排法 · 乡村', g);
+  txt({ x: 40, y: 112, class: 'note', 'font-size': 24 }, '一块一块，顺着坡和水边铺开', g);
+})();
+
+// 齿轮涂鸦
+window.GEARS = [gear($('gear-svg'), 200, 330, 90, 10, '#e2b04a'), gear($('gear-svg'), 315, 470, 60, 7, '#c9b8a3'), gear($('gear-svg'), 1440, 300, 80, 9, '#b8c3cc'), gear($('gear-svg'), 1540, 420, 50, 6, '#e2b04a')];
+window.BGEAR = gear($('bench-gear'), 280, 110, 34, 8, '#e2b04a');
+
+// 三格流程
+['写好有哪些类型<small>整合包作者 / 我们</small>', 'AI 按国家风格挑选<small>改成当地的样子</small>', '程序落地<small>摆进城里</small>'].forEach((w, i) => {
+  const d = document.createElement('div'); d.className = 'cap'; d.id = 'cf' + i;
+  d.style.cssText = `position:absolute;left:${110 + i * 520}px;top:120px;width:420px;height:200px;background:#fffdf8;border-radius:14px;box-shadow:0 5px 14px rgba(60,40,20,.16);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;font-size:40px;opacity:0`;
+  d.innerHTML = w; $('cf').appendChild(d);
+  if (i < 2) { const a = document.createElement('div'); a.className = 'hand'; a.id = 'cfa' + i; a.textContent = '→'; a.style.cssText = `position:absolute;left:${540 + i * 520}px;top:180px;font-size:60px;color:#d9772b;opacity:0`; $('cf').appendChild(a); }
+});
+
+// 台阶
+(function () {
+  const g = $('ladder-svg');
+  window.STEPS = ['帮工', '打工', '学徒', '出师'].map((w, i) => {
+    const s = svg('g', { opacity: 0 }, g);
+    svg('rect', { x: 60 + i * 240, y: 470 - i * 110, width: 240, height: 110 + i * 110, fill: ['#efe3cc', '#e8d5b0', '#e2c690', '#d9b46a'][i], stroke: '#3a3631', 'stroke-width': 4 }, s);
+    txt({ x: 180 + i * 240, y: 530 - i * 110, 'text-anchor': 'middle', class: 'lbl', 'font-size': 44 }, w, s);
+    return s;
+  });
+  window.CLIMBER = svg('g', { opacity: 0 }, g);
+  svg('circle', { cx: 0, cy: -46, r: 16, fill: '#8a6a4f', stroke: '#3a3631', 'stroke-width': 3 }, CLIMBER);
+  svg('rect', { x: -14, y: -30, width: 28, height: 30, rx: 6, fill: '#3a6fc4', stroke: '#3a3631', 'stroke-width': 3 }, CLIMBER);
+  txt({ x: 60, y: 70, class: 'lbl', 'font-size': 46 }, '在机械城里学手艺', g);
+})();
+
+// 河谷
+(function () {
+  const g = $('valley-svg');
+  svg('rect', { x: 120, y: 30, width: 1100, height: 590, rx: 10, fill: '#f4efdf', stroke: '#3a3631', 'stroke-width': 3 }, g);
+  [[260, 260, 120], [420, 200, 150], [900, 210, 140], [1060, 260, 110], [680, 160, 120]].forEach(([x, y, w]) => svg('path', { d: `M${x - w} ${y + 110} L${x} ${y - 40} L${x + w} ${y + 110}Z`, fill: '#cdbfa6', stroke: '#3a3631', 'stroke-width': 3 }, g));
+  svg('path', { id: 'river', d: 'M640 40 C 600 200, 720 300, 660 420 S 560 560, 600 620', stroke: '#7fb6d6', 'stroke-width': 30, fill: 'none', 'stroke-linecap': 'round' }, g);
+  window.GLOW = svg('path', { d: 'M640 40 C 600 200, 720 300, 660 420 S 560 560, 600 620', stroke: '#ffe17a', 'stroke-width': 60, fill: 'none', 'stroke-linecap': 'round', opacity: 0, 'pathLength': 1, 'stroke-dasharray': 1, 'stroke-dashoffset': 1 }, g);
+  g.appendChild($('river'));
+  window.VGEAR = gear(g, 760, 400, 46, 8, '#e2b04a');
+  VGEAR.g.setAttribute('opacity', 0);
+  window.VTAG1 = txt({ x: 1260, y: 230, class: 'lbl', 'font-size': 44, opacity: 0 }, '地形先说话', g);
+  window.VTAG1b = txt({ x: 1260, y: 275, class: 'note', 'font-size': 24, opacity: 0 }, '有山有河，适合架水车', g);
+  window.VTAG2 = txt({ x: 1260, y: 380, class: 'lbl', 'font-size': 44, opacity: 0 }, '也看装了哪些 Mod', g);
+  window.VTAG2b = txt({ x: 1260, y: 425, class: 'note', 'font-size': 24, opacity: 0 }, '装了机械动力，就一定有地方安家', g);
+  window.VTAG3 = txt({ x: 1260, y: 530, class: 'note', 'font-size': 24, opacity: 0 }, '在哪里遇到、多快遇到：交给 AI 按地图安排', g);
+})();
+
+// 路：线索 → 城；难度梯度圈；旅人
+(function () {
+  const g = $('road-svg');
+  window.RINGS = [4, 3, 2, 1, 0].map(i => svg('circle', { cx: 838, cy: 350, r: 0, fill: ['#f6efd9', '#ecd9b4', '#dcb98a', '#c48f63', '#9b6347'][i], opacity: 0.9, stroke: '#3a3631', 'stroke-width': 2 }, g));
+  window.RLAB = ['城边 · 最安全', '', '怪物越强，迷宫越难', '', '越远，奖励越好'].map((w, i) => txt({ x: 838, y: i === 0 ? 442 : 350 - 50 - i * 52 + 34, 'text-anchor': 'middle', class: 'lbl', 'font-size': 28, fill: i > 2 ? '#fff' : '#3a3631', opacity: 0 }, w, g));
+  window.ROAD = svg('path', { d: 'M120 600 C 380 600, 380 380, 620 400 S 820 340, 838 350', stroke: '#8c7a62', 'stroke-width': 10, fill: 'none', 'stroke-dasharray': '2 18', 'stroke-linecap': 'round', opacity: 0 }, g);
+  window.TRADE = svg('path', { d: 'M838 350 C 1000 300, 1100 420, 1250 380 S 1480 200, 1560 120', stroke: '#d9772b', 'stroke-width': 8, fill: 'none', 'stroke-dasharray': '16 12', opacity: 0 }, g);
+  const city = svg('g', { id: 'city', opacity: 0 }, g);
+  [[-50, 0, 40, 46], [-8, -20, 44, 66], [40, 0, 36, 46]].forEach(([x, y, w, h]) => svg('rect', { x: 838 + x, y: 350 + y - h / 2, width: w, height: h, fill: '#e8dcc8', stroke: '#3a3631', 'stroke-width': 3 }, city));
+  window.CITY = city;
+  // 三个线索：零件、传闻气泡、水车
+  window.CLUES = [];
+  const c0 = svg('g', { opacity: 0 }, g); gear(c0, 300, 560, 30, 7, '#e2b04a'); txt({ x: 300, y: 630, 'text-anchor': 'middle', class: 'lbl', 'font-size': 26 }, '没见过的零件', c0);
+  const c1 = svg('g', { opacity: 0 }, g); svg('rect', { x: 400, y: 330, width: 170, height: 64, rx: 30, fill: '#fff', stroke: '#3a3631', 'stroke-width': 3 }, c1); txt({ x: 485, y: 372, 'text-anchor': 'middle', class: 'lbl', 'font-size': 26 }, '商队的传闻', c1);
+  const c2 = svg('g', { opacity: 0 }, g); const wh = gear(c2, 680, 400, 34, 10, '#9cc3d8'); txt({ x: 680, y: 470, 'text-anchor': 'middle', class: 'lbl', 'font-size': 26 }, '远远的水车', c2);
+  CLUES.push(c0, c1, c2); window.WHEEL = wh;
+  window.CLUECAP = txt({ x: 120, y: 90, class: 'lbl', 'font-size': 46, opacity: 0 }, '被一条线索牵着走过去', g);
+  window.RINGCAP = txt({ x: 120, y: 90, class: 'lbl', 'font-size': 46, opacity: 0 }, '难度梯度', g);
+  window.TRADECAP = txt({ x: 1180, y: 160, class: 'lbl', 'font-size': 30, fill: '#d9772b', opacity: 0 }, '商人 · 国与国的商路', g);
+  window.TRAV = svg('g', { opacity: 0 }, g);
+  svg('circle', { cx: 0, cy: -30, r: 12, fill: '#8a6a4f', stroke: '#3a3631', 'stroke-width': 3 }, TRAV);
+  svg('path', { d: 'M-12 -18 L12 -18 L10 6 L-10 6Z', fill: '#3a6fc4', stroke: '#3a3631', 'stroke-width': 3 }, TRAV);
+  svg('line', { x1: 16, y1: -30, x2: 16, y2: 8, stroke: '#8c7a62', 'stroke-width': 4 }, TRAV);
+  window.NOVICE = txt({ x: 838, y: 396, 'text-anchor': 'middle', class: 'lbl', 'font-size': 22, opacity: 0 }, '新手村', g);
+})();
+
+window.drawBoard = function (time) {
+  show('titlecard', ease(time / 0.4) * (1 - ease((time - 2.6) / 0.5)));
+
+  // 学院岛：title → harbor；day → caravan；dayback → wish
+  const islOp = Math.max(between('title', 'harbor', time, 0.6, 0.4, 2.6), between('day', 'caravan', time, 0.5, 0.4), between('dayback', 'wish', time, 0.5, 0.4));
+  show('isl', islOp);
+  const dy = since('day', time), db = since('dayback', time), nt = since('night', time);
+  let hour = 7;
+  const dayOn = dy >= 0 && since('caravan', time) < 0;
+  if (dayOn) hour = 7 + 11 * clamp(dy / 16);
+  if (db >= 0) hour = 15 + 3 * clamp(db / 10);
+  if (nt >= 0) hour = 18 + 4 * clamp(nt / 2);
+  const showClock = (dayOn || db >= 0) ? 1 : 0;
+  show('clock', showClock);
+  $('hh').setAttribute('transform', `rotate(${hour * 30} 75 75)`);
+  $('mh').setAttribute('transform', `rotate(${hour * 360} 75 75)`);
+  $('clocktxt').textContent = hour < 10 ? '早上' : hour < 13.5 ? '中午' : hour < 18.5 ? '傍晚' : '夜里';
+  $('dusk').setAttribute('opacity', 0.35 * clamp((hour - 14) / 3) * (1 - clamp((hour - 19) / 2)));
+  $('dark').setAttribute('opacity', 0.78 * ease(nt / 1.2));
+  $('moon').setAttribute('opacity', ease((nt - 0.8) / 0.6));
+  $('windows').setAttribute('opacity', ease((nt - 1.2) / 0.6));
+  $('torchg').setAttribute('opacity', ease((nt - 2) / 0.5));
+  $('torchc').setAttribute('cx', 620 + 60 * Math.sin(time * 0.9));
+  $('torchc').setAttribute('cy', 390 + 22 * Math.sin(time * 1.3));
+  show('beds', ease((nt - 2.6) / 0.5));
+  // 小人点：早上去上课上工，中午去食堂，傍晚去广场，夜里回宿院
+  const dotsOn = dy >= 0;
+  DOTS.forEach(d => {
+    let p = d.home;
+    const h = hour - d.delay * 0.6;
+    if (h >= 7.3 && h < 11) p = lerp(d.home, d.work, inout((h - 7.3) / 1.6));
+    else if (h >= 11 && h < 14) p = lerp(d.work, d.noon, inout((h - 11) / 1.2));
+    else if (h >= 14 && h < 18) p = lerp(d.noon, d.eve, inout((h - 14) / 1.5));
+    else if (h >= 18) p = lerp(d.eve, d.home, inout((h - 18) / 1.2));
+    d.el.setAttribute('cx', p[0]); d.el.setAttribute('cy', p[1]);
+    d.el.setAttribute('opacity', dotsOn ? 1 - 0.85 * ease(nt / 1.5) : 0);
+  });
+  const tag = $('isl-tag');
+  const tags = [['title', '学院岛 · 城建好了，迟早要住人', 'harbor'], ['day', '从早到晚，城里都怎么过日子？', 'caravan']];
+  let tagOp = 0;
+  for (const [m, w, e] of tags) { const o = between(m, e, time, 0.5, 0.3, m === 'title' ? 3.2 : 0.4); if (o > 0) { tag.textContent = w; tagOp = o; } }
+  show(tag, tagOp);
+  show('court', between('courtyard', 'night', time, 0.5, 0.3));
+
+  // 港口与乡村
+  show('harbor', between('harbor', 'fields', time, 0.5, 0.4));
+  const hs = since('harbor', time);
+  $('coast').setAttribute('stroke-dashoffset', 1 - inout((hs - 0.4) / 1.2));
+  HARBOR.forEach((o, i) => {
+    const a = ease((hs - 1.6 - i * 0.35) / 0.3);
+    o.h.setAttribute('opacity', a);
+    if (o.pier) o.pier.setAttribute('height', 60 * ease((hs - 2 - i * 0.35) / 0.5));
+  });
+  show('fields', between('fields', 'stamps', time, 0.5, 0.4));
+  const fs = since('fields', time);
+  PATCH.forEach((p, i) => p.el.setAttribute('opacity', ease((fs - 0.5 - (p.cx / 900) * 2.5 - i * 0.03) / 0.4)));
+  $('farm').setAttribute('opacity', ease((fs - 4) / 0.4));
+  $('farm').setAttribute('transform', `translate(0 ${-30 * (1 - ease((fs - 4) / 0.4))})`);
+  MILL.setAttribute('transform', `translate(448 330) rotate(${time * 40})`);
+  show('fields-test', ease((sinceLine('4-5', time)) / 0.5));
+
+  show('stamps', between('stamps', 'day', time, 0.5, 0.4));
+  const ss = since('stamps', time);
+  [0, 1, 2].forEach(i => {
+    const s = ss - 3 - i * 1.6;
+    show('st' + i, ease(s / 0.08));
+    $('st' + i).style.transform = `scale(${s < 0.12 ? 1.6 - 0.6 * clamp(s / 0.12) : 1}) rotate(${(i - 1) * 4}deg)`;
+  });
+  show('st3', ease(sinceLine('4-11', time) / 0.5));
+
+  show('caravan', between('caravan', 'dayback', time, 0.5, 0.4));
+  const cs = since('caravan', time);
+  show('rumor', ease((cs - 4) / 0.3));
+  $('rumor').style.transform = `scale(${cs - 4 < 0.25 ? 0.6 + 0.4 * ease((cs - 4) / 0.25) : 1})`;
+  show('rumor2', ease((cs - 8.6) / 0.6));
+
+  // 心愿、齿轮
+  show('wish', between('wish', 'config', time, 0.8, 0.4));
+  show('gears', between('gears', 'config', time, 0.6, 0.4));
+  GEARS.forEach((g, i) => {
+    const dir = i % 2 ? -1 : 1, sp = 30 * 90 / g.r;
+    g.inner.setAttribute('transform', `rotate(${dir * time * sp})`);
+    g.g.setAttribute('opacity', ease((since('gears', time) - 1 - i * 0.4) / 0.4));
+  });
+
+  show('config', between('config', 'ladder', time, 0.5, 0.4));
+  const cg = since('config', time);
+  [0, 1, 2].forEach(i => { const a = ease((cg - 0.6 - i * 2.4) / 0.4); $('cf' + i).style.opacity = a; $('cf' + i).style.transform = `translateY(${(1 - a) * 20}px)`; if (i < 2) $('cfa' + i).style.opacity = ease((cg - 1.6 - i * 2.4) / 0.3); });
+  const mc = since('machine', time);
+  show('bench', ease((mc - 0.2) / 0.4));
+  $('bench-a').setAttribute('opacity', 1 - ease((mc - 4) / 0.4));
+  $('bench-b').setAttribute('opacity', ease((mc - 4) / 0.4));
+  BGEAR.inner.setAttribute('transform', `rotate(${time * 90})`);
+
+  show('ladder', between('ladder', 'another', time, 0.5, 0.4));
+  const ld = since('ladder', time);
+  STEPS.forEach((s, i) => s.setAttribute('opacity', ease((ld - 0.4 - i * 1.0) / 0.4)));
+  const step = clamp((ld - 1.2) / 4.2) * 3;
+  const si = Math.min(3, Math.floor(step)), sf = step - si;
+  const cx = 180 + (si + (si < 3 ? ease(sf) : 0)) * 240, cy = 470 - (si + (si < 3 ? ease(sf) : 0)) * 110 - (si < 3 ? 40 * Math.sin(Math.PI * clamp(sf)) : 0);
+  CLIMBER.setAttribute('opacity', ease((ld - 1) / 0.3));
+  CLIMBER.setAttribute('transform', `translate(${cx} ${cy})`);
+  const nb = since('notice', time);
+  show('notice', ease(nb / 0.15));
+  $('notice').style.transform = `rotate(-3deg) scale(${nb < 0.2 ? 1.4 - 0.4 * clamp(nb / 0.2) : 1})`;
+  show('race', ease(since('race', time) / 0.4));
+  $('flag').setAttribute('d', `M40 20 Q90 ${10 + 8 * Math.sin(time * 6)} 140 25 Q190 ${40 - 8 * Math.sin(time * 6)} 230 25 L230 85 Q190 ${100 - 8 * Math.sin(time * 6)} 140 85 Q90 ${70 + 8 * Math.sin(time * 6)} 40 80Z`);
+
+  show('another', between('another', 'valley', time, 0.5, 0.4));
+  show('another-b', ease((since('another', time) - 2.4) / 0.5));
+  show('another-c', ease((since('another', time) - 2.8) / 0.5));
+
+  show('valley', between('valley', 'sketch', time, 0.5, 0.4));
+  const vs = since('valley', time);
+  GLOW.setAttribute('opacity', 0.7 * ease((vs - 2) / 0.3));
+  GLOW.setAttribute('stroke-dashoffset', 1 - inout((vs - 2) / 1.6));
+  VGEAR.g.setAttribute('opacity', ease((vs - 4) / 0.4));
+  VGEAR.inner.setAttribute('transform', `rotate(${time * 50})`);
+  VTAG1.setAttribute('opacity', ease((vs - 2.4) / 0.5)); VTAG1b.setAttribute('opacity', ease((vs - 2.8) / 0.5));
+  VTAG2.setAttribute('opacity', ease(since('mods', time) / 0.5)); VTAG2b.setAttribute('opacity', ease((since('mods', time) - 0.4) / 0.5));
+  VTAG3.setAttribute('opacity', ease(sinceLine('4-28', time) / 0.5));
+
+  show('sketch', between('sketch', 'clues', time, 0.6, 0.4));
+
+  // 路
+  show('road', between('clues', 'finale', time, 0.5, 0.6));
+  const cl = since('clues', time), rg = since('rings', time), tv = since('traveler', time);
+  const ringPhase = rg >= 0;
+  ROAD.setAttribute('opacity', ease((cl - 0.3) / 0.5) * (1 - ease(rg / 0.5)));
+  CLUECAP.setAttribute('opacity', ease(cl / 0.5) * (1 - ease(rg / 0.4)));
+  CLUES.forEach((c, i) => c.setAttribute('opacity', ease((cl - 1.2 - i * 1.4) / 0.4) * (1 - ease(rg / 0.4))));
+  WHEEL.inner.setAttribute('transform', `rotate(${time * 60})`);
+  CITY.setAttribute('opacity', ease((cl - 5.4) / 0.4));
+  RINGS.forEach((c, i) => { c.setAttribute('r', (50 + (4 - i) * 52) * inout((rg - (4 - i) * 0.5) / 0.6)); });
+  RLAB.forEach((l, i) => l.setAttribute('opacity', ease((rg - 1.2 - i * 0.5) / 0.4)));
+  RINGCAP.setAttribute('opacity', ease((rg - 0.3) / 0.4));
+  TRADE.setAttribute('opacity', ease(since('merchant', time) / 0.5));
+  TRADECAP.setAttribute('opacity', ease((since('merchant', time) - 0.4) / 0.5));
+  NOVICE.setAttribute('opacity', ease((tv - 0.2) / 0.4));
+  TRAV.setAttribute('opacity', ease(tv / 0.3));
+  const tl = TRADE.getTotalLength(), tp = TRADE.getPointAtLength(tl * clamp((tv - 0.8) / 12));
+  TRAV.setAttribute('transform', `translate(${tp.x} ${tp.y - 4 * Math.abs(Math.sin(time * 8))}) scale(${1 + 0.6 * clamp((tv - 0.8) / 12)})`);
+
+  show('finale', ease((since('finale', time) - 0.2) / 0.8));
+  show('fin2', ease(since('finale2', time) / 0.8));
+};
+</script>
+</body>
+</html>
