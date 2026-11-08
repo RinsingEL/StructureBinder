@@ -21,20 +21,17 @@
   #winline { position: absolute; left: 58px; top: 24px; width: 1800px; height: 801px; border-radius: 12px; border: 2px solid rgba(60,40,20,.14); }
   /* 讲解时的头像和对话气泡 */
   #band { position: absolute; inset: 0; z-index: 31; pointer-events: none; }
-  .av { position: absolute; width: 170px; height: 170px; margin: -85px 0 0 -85px; border-radius: 50%; overflow: hidden; background: #fffdf8;
-    box-shadow: 0 0 0 5px #fff, 0 6px 14px rgba(60,40,20,.25); }
+  /* 头像像小泡泡一样弹出来：白边外面一圈淡淡的泡泡膜，左上角一点高光 */
+  .av { position: absolute; width: 170px; height: 170px; margin: -85px 0 0 -85px; }
+  .av .face { position: absolute; inset: 0; border-radius: 50%; overflow: hidden; background: #fffdf8;
+    box-shadow: 0 0 0 5px #fff, 0 0 0 11px rgba(190,220,240,.45), 0 6px 16px rgba(60,40,20,.22); }
+  .av .gloss { position: absolute; inset: -9px; border-radius: 50%; border: 4px solid transparent; border-top-color: rgba(255,255,255,.9); transform: rotate(-45deg); }
+  .av .burst { position: absolute; inset: 0; border-radius: 50%; border: 4px solid rgba(190,220,240,.9); opacity: 0; }
   .av img { position: absolute; width: 340px; height: 340px; opacity: 0; }
-  #bub { position: absolute; left: 572px; width: 776px; top: 845px; height: 220px; z-index: 32; display: flex; align-items: center; justify-content: center; opacity: 0; }
-  #bubin { position: relative; width: max-content; background: #fffdf8; border-radius: 18px; padding: 14px 30px 18px; box-shadow: 0 5px 14px rgba(60,40,20,.16); max-width: 716px; }
-  #bubin::before { content: ''; position: absolute; top: 50%; margin-top: -14px; border: 14px solid transparent; }
-  #bubin.l::before { left: -26px; border-right: 14px solid #fffdf8; }
-  #bubin.r::before { right: -26px; border-left: 14px solid #fffdf8; }
-  #bname { display: inline-block; font-size: 22px; font-weight: 700; color: #fff; padding: 2px 14px; border-radius: 999px; letter-spacing: 2px; margin-bottom: 6px; }
-  #btext { font-size: 30px; line-height: 1.5; color: var(--ink); white-space: pre-line; }
   .member { position: absolute; width: 420px; height: 420px; bottom: -64px; transform-origin: 50% 100%; }
   .member img { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0;
     filter: drop-shadow(3px 0 0 #fff) drop-shadow(-3px 0 0 #fff) drop-shadow(0 3px 0 #fff) drop-shadow(0 -3px 0 #fff) drop-shadow(0 6px 8px rgba(60,40,20,.25)); }
-  #sub { position: absolute; left: 600px; right: 600px; top: 740px; height: 300px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  #sub { position: absolute; z-index: 33; left: 600px; right: 600px; top: 740px; height: 300px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
   #name { font-size: 26px; font-weight: 700; color: #fff; padding: 4px 18px; border-radius: 999px; margin-bottom: 14px; letter-spacing: 2px; }
   #line { font-size: 30px; line-height: 1.5; color: var(--ink); text-align: center; background: rgba(255,253,247,.94); padding: 16px 30px;
     border-radius: 14px; box-shadow: 0 4px 14px rgba(60,40,20,.12); max-width: 660px; text-wrap: balance; white-space: pre-line; }
@@ -51,7 +48,6 @@
   <div id="sub"><div id="name"></div><div id="line"></div></div>
   <div id="mat"><div id="win"></div><div id="winline"></div></div>
   <div id="band"></div>
-  <div id="bub"><div id="bubin"><div id="bname"></div><div id="btext"></div></div></div>
 </div>
 <script src="act2_script.js"></script>
 <script>
@@ -167,13 +163,15 @@ for (const m of members) {
   const av = document.createElement('div');
   av.className = 'av'; av.id = 'av-' + m.id; av.style.left = SLOT[m.id] + 'px'; av.style.top = '955px';
   const [hx, hy] = HEAD[m.id];
+  const faceBox = document.createElement('div'); faceBox.className = 'face'; av.appendChild(faceBox);
   for (const s of states) {
     const img = document.createElement('img');
     img.dataset.state = s; img.src = SPRITES + m.id + '/' + s + '.png';
     img.style.left = (85 - hx * 340 / 300) + 'px'; img.style.top = (85 - hy * 340 / 300) + 'px';
     img.onerror = () => img.remove();
-    av.appendChild(img);
+    faceBox.appendChild(img);
   }
+  av.insertAdjacentHTML('beforeend', '<div class="gloss"></div><div class="burst"></div>');
   $('band').appendChild(av);
 }
 function lastEndOf(id, time) { let e = null; for (const x of timeline) { if (x.start > time) break; if (x.who === id && x.end <= time) e = x.end; } return e; }
@@ -183,10 +181,10 @@ function drawBand(time, op) {
   const cue = cueAt(time);
   for (const m of members) {
     const av = $('av-' + m.id);
-    let sc = 0;
+    let sc = 0, burst = -1;
     if (shownAt(m.id, time)) {
       sc = 1;
-      if (cue && cue.who === m.id && !shownAt(m.id, cue.lineStart - 0.001)) sc = backOut((time - cue.lineStart) / 0.4);
+      if (cue && cue.who === m.id && !shownAt(m.id, cue.lineStart - 0.001)) { sc = backOut((time - cue.lineStart) / 0.4); burst = (time - cue.lineStart) / 0.5; }
     } else {
       const e = lastEndOf(m.id, time);
       if (e !== null && e > Z0 && time - e < STAY + 0.35) sc = 1 - ease((time - e - STAY) / 0.35);
@@ -197,21 +195,17 @@ function drawBand(time, op) {
     const size = 0.72 + 0.28 * big;
     const hop = spk ? 18 * Math.sin(Math.PI * clamp((time - cue.lineStart) / 0.35)) : 0;
     av.style.opacity = op * (sc > 0 ? 1 : 0);
-    av.style.transform = `translateY(${-hop + (1 - big) * 22}px) scale(${Math.max(0, sc) * size})`;
+    const float = (1 - big) * 5 * Math.sin(time * 2.2 + SLOT[m.id]);
+    av.style.transform = `translateY(${-hop + (1 - big) * 22 + float}px) scale(${Math.max(0, sc) * size})`;
+    const bu = av.querySelector('.burst');
+    bu.style.opacity = burst >= 0 && burst < 1 ? 1 - burst : 0;
+    bu.style.transform = `scale(${1 + 0.45 * clamp(burst)})`;
     av.style.filter = `brightness(${0.86 + 0.14 * big})`;
     av.style.zIndex = spk ? 2 : 1;
     const face = faceAt(m.id, time), fc = lastChange(x => faceAt(m.id, x), time, SWAP);
     const k = fc === null ? 1 : (time - fc) / SWAP, prev = fc === null ? face : faceAt(m.id, fc - 0.001);
     for (const img of av.querySelectorAll('img')) { const s = img.dataset.state; img.style.opacity = s === face ? k : (s === prev && k < 1 ? 1 - k : 0); }
   }
-  const bub = $('bub');
-  if (cue && op > 0) {
-    const who = members.find(m => m.id === cue.who);
-    $('bubin').className = LEFT.has(cue.who) ? 'l' : 'r';
-    $('bname').textContent = who.name; $('bname').style.background = who.color; $('btext').textContent = cue.text;
-    bub.style.opacity = op * ease((time - cue.start) / 0.2);
-    bub.style.justifyContent = LEFT.has(cue.who) ? 'flex-start' : 'flex-end';
-  } else bub.style.opacity = 0;
 }
 
 window.render = function (time) {
@@ -255,10 +249,17 @@ window.render = function (time) {
   const name = $('name'), line = $('line');
   if (cue) {
     const who = members.find(m => m.id === cue.who);
-    name.textContent = who.name; name.style.background = who.color; line.textContent = cue.text;
+    name.textContent = who.name; name.style.background = who.color; if (line.textContent !== cue.text) {
+      // 字幕框收紧到文字的实际宽度，换行后不留一大块空白
+      line.style.width = ''; line.style.textWrap = 'balance'; line.textContent = cue.text;
+      const r = document.createRange(); r.selectNodeContents(line);
+      line.style.width = Math.ceil(Math.max(...[...r.getClientRects()].map(x => x.width))) + 2 + 'px';
+      line.style.textWrap = 'wrap'; // 宽度已经按平衡后的行定好，别再重新平衡
+    }
     const fade = ease((time - cue.start) / 0.2);
-    name.style.opacity = fade * (1 - full); line.style.opacity = fade * (1 - full);
+    name.style.opacity = fade; line.style.opacity = fade;
   } else { name.style.opacity = 0; line.style.opacity = 0; }
+  $('sub').style.transform = `translateY(${62 * full}px)`;
   drawBand(time, full);
 };
 
