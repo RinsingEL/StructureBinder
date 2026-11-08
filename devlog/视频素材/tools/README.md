@@ -47,7 +47,7 @@ node record.js ..\第三段\act3.html
 node still.js ..\第三段\act3.html 30 poly+2 compare
 ```
 
-时间点可以写秒数（`30`），也可以写画面事件的名字，后面加秒数（`poly+2` 就是多边形出现后 2 秒）。画面事件的名字在 [../make_scripts.py](../make_scripts.py) 的 `MARKS` 里。图存在 `tools\截图\`。
+时间点可以写秒数（`30`），也可以写画面事件的名字，后面加秒数（`poly+2` 就是多边形出现后 2 秒），还可以写 `@3-13+1`（第 3-13 句开始后 1 秒）。画面事件的名字在 [../make_scripts.py](../make_scripts.py) 的 `MARKS` 里。图存在 `tools\截图\`。
 
 ## 不想装这些的时候
 

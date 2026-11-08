@@ -128,7 +128,11 @@ window.SCRIPT = {
    "cards": [
     {
      "text": "好咧，我会陪你们一起看的，毕竟这方面还真是我最擅长嘛哈哈。",
-     "face": "talk_smile"
+     "face": "talk_smile",
+     "react": {
+      "claude": "talk_smile",
+      "deepseek": "talk_smile"
+     }
     }
    ]
   },
@@ -149,11 +153,16 @@ window.SCRIPT = {
     {
      "text": "说到底，社长才是我们社团最强的多模态：",
      "face": "talk_smile",
-     "mark": "stamps"
+     "react": {
+      "rin": "wry+shy"
+     }
     },
     {
      "text": "眼睛看画面，脚去走一圈，心里还知道舒不舒服，这三样我们加起来都比不过。",
-     "face": "talk_smile"
+     "face": "talk_smile",
+     "react": {
+      "rin": "wry+shy"
+     }
     }
    ]
   },
@@ -163,7 +172,10 @@ window.SCRIPT = {
    "cards": [
     {
      "text": "那港口和田野就等社长验收了。",
-     "face": "talk_smile"
+     "face": "talk_smile",
+     "react": {
+      "rin": "talk_smile"
+     }
     },
     {
      "text": "接着说 Gemini 刚才问的：让学生和居民真的住进去，过上日子。",
@@ -251,7 +263,12 @@ window.SCRIPT = {
     },
     {
      "text": "你们看我连眼罩都随身戴着，认床这件事，我们是专业的。",
-     "face": "d4"
+     "face": "d4",
+     "react": {
+      "gemini": "d4",
+      "deepseek": "d4",
+      "rin": "talk_smile"
+     }
     }
    ]
   },
@@ -265,7 +282,10 @@ window.SCRIPT = {
     },
     {
      "text": "人有没有回自己床上睡觉，得在游戏里蹲一天。",
-     "face": "d4"
+     "face": "d4",
+     "react": {
+      "glm": "talk_smile"
+     }
     }
    ]
   },
@@ -280,7 +300,11 @@ window.SCRIPT = {
     },
     {
      "text": "到了晚上还得去南宿院查房，看看那五十六个学生有没有睡错床了。",
-     "face": "d4"
+     "face": "d4",
+     "react": {
+      "astra": "wry",
+      "glm": "d4"
+     }
     }
    ]
   },
@@ -324,7 +348,11 @@ window.SCRIPT = {
     },
     {
      "text": "啊啊啊，一不小心扯远了。",
-     "face": "talk_smile"
+     "face": "wry",
+     "fx": "sweat",
+     "react": {
+      "claude": "talk_smile"
+     }
     },
     {
      "text": "总之，我希望城市的特色能和 Mod 结合起来，为此也打算做特色购买、委托、职业甚至教学相关的适配，这些都希望是动态配出来的。",
@@ -376,7 +404,10 @@ window.SCRIPT = {
     {
      "text": "今天大家看到的是魔法学院，换成喜欢机械动力的人开一局，他遇到的就会是另一个文明。",
      "face": "moved",
-     "mark": "another"
+     "mark": "another",
+     "react": {
+      "rin": "moved"
+     }
     }
    ]
   },
@@ -434,7 +465,11 @@ window.SCRIPT = {
    "cards": [
     {
      "text": "按我的性子，肯定希望一出门就撞见，最好走五分钟就到，还能赶上早饭。",
-     "face": "talk_smile"
+     "face": "talk_smile",
+     "mark": "enc1",
+     "react": {
+      "gemini": "d4"
+     }
     },
     {
      "text": "不过真这么顺，大概就没惊喜了。找过去的那段路，本身也挺好玩的。",
@@ -463,7 +498,8 @@ window.SCRIPT = {
    "cards": [
     {
      "text": "我最想先在出生点附近的小镇集市上，看到商队拉来没见过的齿轮零件，",
-     "face": "moved"
+     "face": "moved",
+     "mark": "enc3"
     },
     {
      "text": "听他们聊起\"顺着北边的河往山里走，有一座全靠水车转起来的大城\"。",

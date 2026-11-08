@@ -28,7 +28,7 @@
   #titlecard .small { font-size: 34px; color: var(--soft); margin-top: 10px; letter-spacing: 4px; }
   #map { left: 38px; top: 15px; width: 1600px; height: 626px; overflow: hidden; border-radius: 4px; }
   #map img, #map svg { position: absolute; left: 0; top: 0; width: 1600px; height: 626px; }
-  #world { left: 258px; top: 29px; width: 540px; height: 540px; padding: 12px; background: var(--paper); box-shadow: 0 6px 16px rgba(60,40,20,.18); transform: rotate(-2deg); }
+  #world { left: 556px; top: 29px; width: 540px; height: 540px; padding: 12px; background: var(--paper); box-shadow: 0 6px 16px rgba(60,40,20,.18); transform: rotate(-2deg); }
   #worldcap { left: 888px; width: 700px; top: 209px; font-size: 52px; line-height: 1.5; }
   #worldcap small { display: block; font-size: 28px; color: var(--soft); margin-top: 12px; }
   #tag { left: 58px; top: 609px; font-size: 18px; color: var(--soft); }
@@ -57,7 +57,6 @@
   #methods .x { position: absolute; right: 20px; top: 14px; font-size: 64px; color: var(--red); font-family: "ZCOOL KuaiLe"; }
 
   #when { left: 0; top: 160px; width: 1677px; height: 470px; }
-  #sticky { left: 1270px; top: 380px; width: 300px; padding: 22px 24px; background: #fbe79a; box-shadow: 0 6px 14px rgba(60,40,20,.22); font-family: "ZCOOL KuaiLe"; }
 
   #poly { left: 0; top: 140px; width: 1677px; height: 500px; }
   #jig { left: 0; top: 140px; width: 1677px; height: 500px; }
@@ -102,24 +101,17 @@
       </svg>
     </div>
     <img id="world" src="../开场/world_map.jpg" alt="">
-    <div id="worldcap" class="hand">先生成世界，<br>再顺着原本的山海安排国家<small>2025 年 12 月 · 第一次转向</small></div>
     <div id="tag">据 2025-11-21 提交 6d3560e4 · FixedBiomeSource.java 重绘 · 坐标单位为区块</div>
 
     <div id="tl"><svg width="1677" height="130" style="position:absolute;left:0;top:0"><line id="tl-line" x1="90" y1="72" x2="90" y2="72" stroke="#cfc5b5" stroke-width="4" stroke-linecap="round"/></svg></div>
 
     <!-- 网页上复制粘贴 -->
-    <div id="copy">
-      <div class="win" id="w1" style="left:0;top:40px"><i style="width:70%"></i><i style="width:50%"></i><i style="width:80%"></i><i style="width:40%"></i><i style="width:65%"></i></div>
-      <div class="win" id="w2" style="left:330px;top:120px"><i style="width:60%"></i><i style="width:75%"></i><i style="width:35%"></i><i style="width:70%"></i></div>
-      <div class="win" id="w3" style="left:660px;top:30px"><i style="width:80%"></i><i style="width:45%"></i><i style="width:60%"></i><i style="width:55%"></i><i style="width:75%"></i></div>
-      <div class="kbd" id="kc">Ctrl+C</div><div class="kbd" id="kv">Ctrl+V</div>
-      <div class="cap" style="position:absolute;left:0;top:350px;width:1080px;text-align:center">在网页上一段段复制粘贴<small>2025 年 · Rin 和 Gemini 两个人</small></div>
-    </div>
+    <!-- 网页和编辑器之间来回搬：代码拖进编辑器，运行报错，再把日志拖回网页，越来越快 -->
+    <div id="copy" style="left:200px;top:160px;width:1280px;height:470px"><svg id="copy-svg" width="1280" height="470"></svg></div>
 
     <div id="astra">
       <img class="sticker" src="../开场/stickers/astra.png" alt="">
-      <div class="cap" style="font-size:54px">2026 年 1 月 · Astra 用桌面端加入<small style="font-size:28px">地形扫描 · 国度扩张，进度一下快了起来</small>
-        <small id="v52" style="font-size:28px;color:#7f8db5;opacity:0">当时的代号还是 5.2</small></div>
+      <div class="cap" style="font-size:54px">2026 年 1 月 · Astra 用桌面端加入<small style="font-size:28px">地形扫描 · 国度扩张，进度一下快了起来</small></div>
     </div>
 
     <div id="methods">
@@ -128,27 +120,8 @@
       <div class="card"><svg width="300" height="200" viewBox="0 0 300 200"><g stroke="#3a3631" stroke-width="3" fill="#f2dcc0"><rect x="30" y="80" width="60" height="60" rx="6"/><rect x="120" y="50" width="60" height="60" rx="6"/><rect x="120" y="130" width="60" height="50" rx="6"/><rect x="210" y="80" width="60" height="60" rx="6" fill="none" stroke-dasharray="7 6"/></g><path d="M90 110 H120 M180 80 L210 110" stroke="#3a3631" stroke-width="3"/><text x="215" y="60" class="lbl" font-size="26">下一块？</text></svg><div>AI 一个个放</div><span class="x">✗</span></div>
     </div>
 
-    <!-- 4 月 → 9 月，后来更正为 10.11 -->
-    <div id="when">
-      <svg width="1677" height="470">
-        <text class="lbl" x="330" y="120" font-size="76">4 月</text>
-        <text class="lbl" x="330" y="178" font-size="30" fill="#8c8274">走不通</text>
-        <text x="510" y="112" font-size="70" fill="#d9624f" font-family="ZCOOL KuaiLe">✗</text>
-        <path id="when-arrow" d="M610 95 H930" stroke="#3a3631" stroke-width="5" fill="none" marker-end="url(#ah)" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/>
-        <defs><marker id="ah" markerWidth="10" markerHeight="10" refX="6" refY="5" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="#3a3631"/></marker></defs>
-        <g id="when-sep"><text class="lbl" x="990" y="120" font-size="76">9 月</text></g>
-        <g id="when-oct" opacity="0"><text x="990" y="120" font-size="76" fill="#d9624f" font-family="ZCOOL KuaiLe">10.11</text></g>
-        <g id="when-q" opacity="0"><line x1="980" y1="100" x2="1150" y2="80" stroke="#d9624f" stroke-width="6"/><text x="1155" y="70" font-size="70" fill="#d9624f" font-family="ZCOOL KuaiLe">?</text></g>
-        <text class="lbl" x="990" y="178" font-size="30" fill="#8c8274" id="when-ok">走通了 ✓</text>
-        <text class="note" x="840" y="250" text-anchor="middle" font-size="26" id="when-why">看着带坐标的示意图选准位置 · 甚至能"往东挪十二格"</text>
-        <text class="lbl" x="840" y="360" text-anchor="middle" font-size="54" id="when-early" fill="#3a6fc4" opacity="0">有些方案不是错了，只是早了。</text>
-        <g id="when-fix" opacity="0">
-          <text class="note" x="840" y="330" text-anchor="middle" font-size="28">九月：主要在测内置自动规划</text>
-          <text class="note" x="840" y="380" text-anchor="middle" font-size="28" fill="#d9624f">10 月 11 日：把"AI 直接给世界坐标"接进城市设计</text>
-        </g>
-      </svg>
-    </div>
-    <div id="sticky"><div style="font-size:32px">时间线小便签</div><div style="font-size:24px;margin-top:10px;line-height:1.6">9 月 · 测内置自动规划<br>10.11 · AI 直接给坐标<br><span style="color:#8c8274">记岔了先翻便签！</span></div></div>
+    <!-- 4 月：选到范围外，ERROR，被炸晕；9 月：选得准，还能往东挪十二格，PERFECT -->
+    <div id="when" style="left:0;top:150px;width:1677px;height:490px"><svg id="when-svg" width="1677" height="490"></svg></div>
 
     <!-- 切多边形 -->
     <div id="poly"><svg id="poly-svg" width="1677" height="500"></svg></div>
@@ -211,11 +184,10 @@
 
     <div id="year" style="display:flex;flex-direction:column;align-items:center;justify-content:center">
       <div class="hand" style="font-size:96px;letter-spacing:6px">2025.11 → 2026.10</div>
-      <div class="hand" style="font-size:40px;color:#8c8274;margin-top:20px">从画圆圈捏大陆，到连学生去哪儿洗衣看病都排得明明白白</div>
     </div>
   </div>
 </div>
-<script>window.STAGE_CONFIG = { INTRO: 0.5 };</script>
+<script>window.STAGE_CONFIG = { INTRO: 0.5, SHOTS: [['sea', 'tl'], ['n0409', '@3-10'], ['poly', '@3-23'], ['d4old', 'tlall']] };</script>
 <script src="act3_script.js"></script>
 <script src="../common/stage.js"></script>
 <script>
@@ -315,7 +287,20 @@ for (const n of NODES) {
   const b = svg('text', { x: 90, y: 160, class: 'note', 'font-size': 24 }, cap); b.textContent = '4 月 2 日 · 工头带施工队';
   const c = svg('text', { x: 90, y: 230, class: 'note', 'font-size': 24 }, cap); c.textContent = 'AI 选建筑、选拼接方向';
   const d = svg('text', { x: 90, y: 270, class: 'note', 'font-size': 24 }, cap); d.textContent = '程序负责检查和推进';
-  const e = svg('text', { x: 90, y: 340, class: 'lbl', 'font-size': 30, fill: '#d9624f', id: 'jig-hard', opacity: 0 }, cap); e.textContent = '一直记着总体安排，很费劲';
+  // 沙漏
+  const hg = svg('g', { id: 'hourglass', opacity: 0 }, g);
+  svg('path', { d: 'M-34 -50 H34 M-34 50 H34', stroke: '#3a3631', 'stroke-width': 6, 'stroke-linecap': 'round' }, hg);
+  svg('path', { d: 'M-26 -46 C -26 -10, -4 -6, -4 0 C -4 6, -26 10, -26 46 H26 C 26 10, 4 6, 4 0 C 4 -6, 26 -10, 26 -46Z', fill: '#fffdf8', stroke: '#3a3631', 'stroke-width': 4 }, hg);
+  const st = svg('g', { transform: 'translate(0 -6)' }, hg); svg('path', { id: 'sand-top', d: 'M-20 -36 H20 L0 -6Z', fill: '#e2b04a', 'transform-origin': '0 -6' }, st);
+  const sb = svg('g', { transform: 'translate(0 42)' }, hg); svg('path', { id: 'sand-bot', d: 'M-22 0 H22 L0 -26Z', fill: '#e2b04a' }, sb);
+  // 阵列：一整排房子一次落下
+  window.ARRAY = [0, 1, 2, 3, 4, 5].map(i => {
+    const h = svg('g', { opacity: 0 }, g), x = 640 + i * 118, y = 448;
+    svg('rect', { x: x - 40, y: y - 30, width: 80, height: 46, fill: '#f2d3ae', stroke: '#3a3631', 'stroke-width': 3 }, h);
+    svg('path', { d: `M${x - 46} ${y - 30} L${x} ${y - 58} L${x + 46} ${y - 30}Z`, fill: '#c0533f', stroke: '#3a3631', 'stroke-width': 3 }, h);
+    return h;
+  });
+  const al = svg('text', { x: 1380, y: 452, class: 'lbl', 'font-size': 32, fill: '#d9772b', id: 'array-lbl', opacity: 0 }, g); al.textContent = '阵列';
   window.JIG_RING = svg('rect', { x: 560, y: 40, width: 860, height: 380, rx: 30, fill: 'none', stroke: '#d9624f', 'stroke-width': 4, 'stroke-dasharray': '12 10', opacity: 0 }, g);
 })();
 
@@ -392,6 +377,109 @@ LIFE.forEach(([q, a], i) => {
 function show(id, op) { const e = typeof id === 'string' ? $(id) : id; e.style.opacity = op; e.style.visibility = op > 0.001 ? 'visible' : 'hidden'; }
 const R = { aier: 135.9, east: 81.5, spawn: 54.3 };
 
+
+// 复制粘贴：代码从网页拖进编辑器，运行报错，日志再拖回网页，一轮比一轮快
+(function () {
+  const g = $('copy-svg');
+  const win = (x, y, title, color) => {
+    const w = svg('g', {}, g);
+    svg('rect', { x, y, width: 520, height: 340, rx: 12, fill: '#fff', stroke: '#cfc5b5', 'stroke-width': 2 }, w);
+    svg('rect', { x, y, width: 520, height: 40, rx: 12, fill: color }, w);
+    svg('rect', { x, y: y + 28, width: 520, height: 12, fill: color }, w);
+    const t = svg('text', { x: x + 20, y: y + 28, class: 'lbl', 'font-size': 22 }, w); t.textContent = title;
+    return w;
+  };
+  window.CP_BROWSER = win(30, 40, 'Gemini · 网页', '#ece5f6');
+  window.CP_EDITOR = win(730, 40, '编辑器', '#e8eef2');
+  svg('rect', { x: 730, y: 300, width: 520, height: 80, fill: '#2f3236' }, CP_EDITOR);
+  window.CP_DYN = svg('g', {}, g);
+})();
+const CP_D = [2.8, 2.1, 1.6, 1.3, 1.1, 0.95, 0.85, 0.8, 0.75, 0.7, 0.7, 0.7];
+function drawCopy(s) {
+  CP_BROWSER.setAttribute('opacity', ease((s - 0.5) / 0.4));
+  CP_EDITOR.setAttribute('opacity', ease((s - 0.8) / 0.4));
+  let e = s - 1.4, n = 0;
+  while (n < CP_D.length - 1 && e > CP_D[n]) { e -= CP_D[n]; n++; }
+  const ph = e < 0 ? -1 : clamp(e / CP_D[n]);
+  const jit = Math.min(n, 6) * 0.35;
+  CP_BROWSER.setAttribute('transform', `rotate(${-jit * Math.sin(s * 3)} 290 210)`);
+  CP_EDITOR.setAttribute('transform', `rotate(${jit * Math.sin(s * 3.4)} 990 210)`);
+  let h = '';
+  // 网页里的对话：每一轮多一组"代码回复 + 贴回去的日志"
+  const rounds = ph < 0 ? 0 : n + (ph > 0.9 ? 1 : 0);
+  for (let i = Math.max(0, rounds - 3); i < rounds; i++) {
+    const k = i - Math.max(0, rounds - 3), y = 100 + k * 78;
+    h += `<rect x="60" y="${y}" width="250" height="30" rx="15" fill="#f3e1e1"/><rect x="72" y="${y + 11}" width="${120 + (i * 37) % 90}" height="8" rx="4" fill="#d9624f"/>`;
+    h += `<rect x="230" y="${y + 36}" width="290" height="30" rx="15" fill="#ece5f6"/><rect x="244" y="${y + 47}" width="${150 + (i * 53) % 100}" height="8" rx="4" fill="#8a63d2"/>`;
+  }
+  if (ph >= 0 || s > 1.4) h += `<rect x="230" y="${rounds >= 3 ? 334 : 100 + rounds * 78 + 36}" width="290" height="30" rx="15" fill="#ece5f6" opacity="${rounds >= 3 ? 0 : 1}"/>`;
+  // 编辑器：标签页越开越多，代码行，控制台里的红字
+  const tabs = Math.min(9, 1 + n);
+  for (let i = 0; i < tabs; i++) h += `<rect x="${742 + i * 56}" y="86" width="50" height="22" rx="4" fill="${i === tabs - 1 ? '#d9e4ea' : '#eef2f4'}"/>`;
+  for (let i = 0; i < 6; i++) h += `<rect x="760" y="${124 + i * 26}" width="${[300, 220, 380, 260, 330, 180][(i + n) % 6]}" height="9" rx="4" fill="${ph > 0.35 && ph < 0.55 ? '#c9d6dd' : '#dde3e7'}"/>`;
+  const errs = Math.min(3, rounds + (ph > 0.45 ? 1 : 0));
+  for (let i = 0; i < errs; i++) h += `<text x="750" y="${326 + i * 20}" font-family="monospace" font-size="15" fill="#ff8a7a">ERROR ×${(i + Math.max(0, rounds - 2)) * 3 + 2}</text>`;
+  // 正在搬的小方块
+  const chip = (x, y, label, color) => `<g transform="translate(${x} ${y})"><rect x="-46" y="-20" width="92" height="40" rx="10" fill="${color}" stroke="#3a3631" stroke-width="2.5"/><text x="0" y="8" text-anchor="middle" class="lbl" font-size="22" fill="#fff">${label}</text></g>`;
+  if (ph >= 0 && ph < 0.35) { const q = inout(ph / 0.35); h += chip(330 + (980 - 330) * q, 230 - Math.sin(Math.PI * q) * 120, '代码', '#8a63d2'); }
+  if (ph >= 0.55 && ph < 0.9) { const q = inout((ph - 0.55) / 0.35); h += chip(980 + (330 - 980) * q, 340 - Math.sin(Math.PI * q) * 120, '日志', '#d9624f'); }
+  if (ph >= 0.35 && ph < 0.55) h += `<text x="1180" y="80" class="lbl" font-size="24" fill="#3a8a4a">▶ 运行</text>`;
+  CP_DYN.innerHTML = h;
+}
+
+// 4 月：看着示意图选位置，选到了范围外面，ERROR，被炸晕
+// 9 月：选得准，还能往东挪十二格，PERFECT
+(function () {
+  const g = $('when-svg');
+  const panel = (px, label) => {
+    const w = svg('g', {}, g);
+    svg('rect', { x: px, y: 30, width: 600, height: 380, rx: 14, fill: '#fffdf8', stroke: '#cfc5b5', 'stroke-width': 2 }, w);
+    for (let i = 0; i <= 26; i++) svg('line', { x1: px + 40 + i * 20, y1: 80, x2: px + 40 + i * 20, y2: 360, stroke: i % 5 ? '#eee7da' : '#ddd3c2', 'stroke-width': 1 }, w);
+    for (let j = 0; j <= 14; j++) svg('line', { x1: px + 40, y1: 80 + j * 20, x2: px + 560, y2: 80 + j * 20, stroke: j % 5 ? '#eee7da' : '#ddd3c2', 'stroke-width': 1 }, w);
+    for (let i = 0; i <= 26; i += 5) { const t = svg('text', { x: px + 40 + i * 20, y: 74, 'text-anchor': 'middle', class: 'note', 'font-size': 13 }, w); t.textContent = (i - 10) * 16; }
+    svg('rect', { x: px + 240, y: 160, width: 200, height: 120, rx: 10, fill: 'rgba(217,119,43,.12)', stroke: '#d9772b', 'stroke-width': 3, 'stroke-dasharray': '10 7' }, w);
+    const t = svg('text', { x: px + 24, y: 62, class: 'lbl', 'font-size': 34 }, w); t.textContent = label;
+    return w;
+  };
+  window.WH = { a: panel(150, '4 月'), b: panel(900, '9 月') };
+  const sticker = (px) => { const s = svg('g', {}, g); svg('circle', { r: 64, fill: '#fff', stroke: '#fff', 'stroke-width': 6 }, s); svg('image', { href: '../开场/stickers/astra.png', x: -64, y: -64, width: 128, height: 128, 'clip-path': 'circle(64px)' }, s); return s; };
+  WH.sa = sticker(); WH.sb = sticker();
+  WH.dyn = svg('g', {}, g);
+})();
+function pin(x, y, color) { return `<g transform="translate(${x} ${y})"><path d="M0 0 C -14 -18 -16 -30 -16 -36 A16 16 0 1 1 16 -36 C 16 -30 14 -18 0 0Z" fill="${color}" stroke="#3a3631" stroke-width="2.5"/><circle cx="0" cy="-36" r="6" fill="#fff"/></g>`; }
+function burst(x, y, r, fill, op) { let d = ''; for (let i = 0; i < 16; i++) { const a = i / 16 * Math.PI * 2, rr = i % 2 ? r * 0.5 : r; d += (i ? 'L' : 'M') + (x + rr * Math.cos(a)).toFixed(1) + ' ' + (y + rr * Math.sin(a)).toFixed(1); } return `<path d="${d}Z" fill="${fill}" stroke="#3a3631" stroke-width="2.5" opacity="${op}"/>`; }
+function drawWhen(time) {
+  show('when', between('n0409', 'poly', time, 0.5, 0.4));
+  const a = since('n0409', time), b = since('n09', time);
+  WH.a.setAttribute('opacity', ease(a / 0.4) * (b > 0 ? 1 - 0.45 * ease(b / 0.5) : 1));
+  WH.b.setAttribute('opacity', ease(b / 0.4));
+  let h = '';
+  // 4 月
+  const ax = 150, shake = a > 2.1 ? 9 * Math.sin(a * 22) * Math.exp(-(a - 2.1) * 1.2) : 0;
+  WH.sa.setAttribute('transform', `translate(${ax + 40} 400) rotate(${shake})`);
+  WH.sa.setAttribute('opacity', ease((a - 0.2) / 0.4) * (b > 0 ? 1 - 0.45 * ease(b / 0.5) : 1));
+  if (a > 0.4 && a < 1.7) for (let i = 0; i < 3; i++) if (a > 0.5 + i * 0.3) h += `<circle cx="${ax + 120 + i * 22}" cy="${340 - i * 14}" r="${6 + i * 2}" fill="#fff" stroke="#8c8274" stroke-width="2"/>`;
+  if (a > 1.6) { const q = ease((a - 1.6) / 0.25); h += `<g opacity="${b > 0 ? 0.55 : 1}">` + pin(ax + 582, 250 - 60 * (1 - q), '#d9624f');
+    if (a > 1.9) { const e = clamp((a - 1.9) / 0.5); h += burst(ax + 582, 222, 70 * backOutLocal(e), '#f6c35a', 1 - 0.6 * clamp((a - 2.6) / 0.6)); h += `<text x="${ax + 560}" y="${150 - 6 * ease(e)}" text-anchor="middle" font-family="ZCOOL KuaiLe" font-size="${48 * ease(e / 0.6)}" fill="#d9624f">ERROR</text>`; }
+    h += '</g>'; }
+  if (a > 2.1) for (let i = 0; i < 3; i++) { const t = a * 4 + i * 2.09, sx = ax + 40 + Math.cos(t) * 62, sy = 316 + Math.sin(t) * 12;
+    h += `<path d="M0 -10 L3 -3 L10 -3 L4 2 L6 10 L0 5 L-6 10 L-4 2 L-10 -3 L-3 -3Z" transform="translate(${sx} ${sy}) scale(1.4)" fill="#f6d36b" stroke="#c9902a" opacity="${b > 0 ? 0.5 : 1}"/>`; }
+  // 9 月
+  const bx = 900;
+  WH.sb.setAttribute('opacity', ease(b / 0.3));
+  WH.sb.setAttribute('transform', `translate(${bx + 40} 400) rotate(${-6 * ease(b / 0.4)}) scale(${b > 0 ? backOutLocal(b / 0.45) : 0})`);
+  if (b > 0.9) {
+    const drop = ease((b - 0.9) / 0.25), slide = inout((b - 2.2) / 0.9);
+    const x = bx + 140 + 240 * slide, y = 230;
+    if (b > 1.9 && b < 3.4) h += `<path d="M${bx + 150} 140 H${bx + 370}" stroke="#d9772b" stroke-width="5" marker-end="url(#ah3)"/><text x="${bx + 260}" y="128" text-anchor="middle" class="lbl" font-size="26" fill="#d9772b">往东 12 格</text>`;
+    h += pin(x, y - 60 * (1 - drop), '#3a8a4a');
+  }
+  if (b > 3.3) { const e = clamp((b - 3.3) / 0.4); h += `<g transform="translate(${bx + 300} 120) rotate(-8) scale(${backOutLocal(e)})"><rect x="-130" y="-38" width="260" height="70" rx="12" fill="rgba(255,253,248,.9)" stroke="#d9a62b" stroke-width="5"/><text x="0" y="18" text-anchor="middle" font-family="ZCOOL KuaiLe" font-size="50" fill="#d9a62b">PERFECT</text></g>`;
+    for (let i = 0; i < 4; i++) { const t = b * 2 + i * 1.6; h += `<path d="M0 -12 L3 -3 L12 0 L3 3 L0 12 L-3 3 L-12 0 L-3 -3Z" transform="translate(${bx + 300 + Math.cos(t) * 170} ${120 + Math.sin(t) * 50}) scale(${0.8 + 0.3 * Math.sin(b * 6 + i)})" fill="#f6d36b"/>`; } }
+  WH.dyn.innerHTML = '<defs><marker id="ah3" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8z" fill="#d9772b"/></marker></defs>' + h;
+}
+function backOutLocal(x) { x = clamp(x); const c = 1.9; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); }
+
 window.drawBoard = function (time) {
   // 段落标题卡"回顾"和艾尔大陆（与 elle.html 一致）
   show('titlecard', ease(time / 0.4) * (1 - ease((time - 2.6) / 0.5)));
@@ -409,7 +497,6 @@ window.drawBoard = function (time) {
   show('tag', ease((since('aier', time) - 0.4) / 0.5) * (1 - ease((since('erase', time) - 1.6) / 0.5)));
   const worldOut = 1 - ease((since('tl', time) - 0.2) / 0.5);
   show('world', ease((since('erase', time) - 1.4) / 0.9) * worldOut);
-  show('worldcap', ease((since('erase', time) - 2.0) / 0.6) * worldOut);
 
   // 时间线
   const tlOp = between('tl', 'end', time, 0.6, 1.2, 0.4, 1.0);
@@ -429,38 +516,16 @@ window.drawBoard = function (time) {
 
   // 主画面
   show('copy', between('tl', 'n2601', time, 0.5, 0.4, 0.5));
-  const cp = since('tl', time);
-  ['w1', 'w2', 'w3'].forEach((w, i) => { const a = ease((cp - 0.6 - i * 0.5) / 0.4); $(w).style.opacity = a; $(w).style.transform = `translateY(${(1 - a) * 30}px)`; });
-  const kb = (cp - 1.2) % 2.4;
-  const kp = (el, x, y, op, sc) => Object.assign($(el).style, { left: x + 'px', top: y + 'px', opacity: op, transform: `scale(${sc})` });
-  kp('kc', 130 + (kb < 1.2 ? 0 : 330), kb < 1.2 ? 0 : 80, cp > 1.2 ? 1 : 0, 1 + 0.15 * Math.max(0, 1 - (kb % 1.2) / 0.2));
-  kp('kv', 700 - (kb < 1.2 ? 0 : 280), 200 + (kb < 1.2 ? 0 : 60), cp > 1.8 ? 1 : 0, 1 + 0.15 * Math.max(0, 1 - ((kb + 0.6) % 1.2) / 0.2));
+  drawCopy(since('tl', time));
 
   show('astra', between('n2601', 'methods', time, 0.6, 0.4));
-  show('v52', ease((since('v52', time)) / 0.5));
   show('methods', between('methods', 'n0409', time, 0.6, 0.4));
   [...$('methods').children].forEach((c, i) => {
     const a = ease((since('methods', time) - i * 0.6) / 0.5); c.style.opacity = a; c.style.transform = `translateY(${(1 - a) * 30}px) rotate(${(i - 1) * 1.5}deg)`;
     c.querySelector('.x').style.opacity = ease((since('methods', time) - 3 - i * 0.5) / 0.2);
   });
 
-  show('when', between('n0409', 'poly', time, 0.5, 0.4));
-  $('when-arrow').setAttribute('stroke-dashoffset', 1 - inout((since('n0409', time) - 0.6) / 0.8));
-  $('when-early').setAttribute('opacity', between('early', 'fix', time, 0.6, 0.3));
-  $('when-why').setAttribute('opacity', ease((since('n0409', time) - 3.5) / 0.6) * (1 - ease(since('fix', time) / 0.3)));
-  $('when-q').setAttribute('opacity', ease(since('fix', time) / 0.3) * (1 - ease((since('fix', time) - 2.2) / 0.3)));
-  const mv = inout((since('fix', time) - 2.2) / 0.6);
-  $('when-sep').setAttribute('opacity', 1 - mv);
-  $('when-oct').setAttribute('opacity', mv);
-  $('when-oct').setAttribute('transform', `translate(${(1 - mv) * 40} 0)`);
-  $('when-fix').setAttribute('opacity', ease((since('fix', time) - 2.6) / 0.5));
-  $('when-ok').setAttribute('opacity', 1 - ease(since('fix', time) / 0.3) + ease((since('fix', time) - 3) / 0.5));
-
-  // 便签"啪"地贴上
-  const st = since('note', time);
-  show('sticky', ease(st / 0.08) * (1 - ease(since('poly', time) / 0.4)));
-  const slap = st < 0 ? 1.6 : st < 0.12 ? 1.6 - 0.65 * (st / 0.12) : 0.95 + 0.05 * ease((st - 0.12) / 0.2);
-  $('sticky').style.transform = `rotate(4deg) scale(${slap})`;
+  drawWhen(time);
 
   // 切多边形
   show('poly', between('poly', 'jigsaw', time, 0.5, 0.4));
@@ -490,8 +555,16 @@ window.drawBoard = function (time) {
     if (j.link) j.link.setAttribute('opacity', ease((js - 0.4 - i * 1.1) / 0.3));
   });
   const hard = since('jigsaw', time) - 17;
-  $('jig-hard').setAttribute('opacity', ease(hard / 0.6));
-  JIG_RING.setAttribute('opacity', ease(hard / 0.6) * (0.6 + 0.4 * Math.sin(time * 4)));
+  JIG_RING.setAttribute('opacity', ease(hard / 0.6) * (0.6 + 0.4 * Math.sin(time * 4)) * (1 - ease(since('slow', time) / 0.4)));
+  // 3-19b：一个一个放太慢（沙漏转），改用阵列，一下落下一整排
+  const sl = since('slow', time), ar = since('array', time);
+  $('hourglass').setAttribute('opacity', ease(sl / 0.4) * (1 - ease((ar - 1) / 0.4)));
+  $('hourglass').setAttribute('transform', `translate(1500 120) rotate(${180 * inout(((sl % 2.5) - 2) / 0.5)})`);
+  $('sand-top').setAttribute('transform', `scale(1 ${1 - clamp((sl % 2.5) / 2)})`);
+  $('sand-bot').setAttribute('transform', `scale(1 ${clamp((sl % 2.5) / 2)})`);
+  JIG.forEach(j => j.grp.style.filter = sl > 0 && ar < 0 ? `saturate(${0.6})` : '');
+  ARRAY.forEach((h, i) => { const a = ease((ar - 0.2) / 0.25); h.setAttribute('opacity', a); h.setAttribute('transform', `translate(0 ${-(1 - a) * 90})`); });
+  $('array-lbl').setAttribute('opacity', ease((ar - 0.6) / 0.4));
 
   // 画图 → 五十二块
   show('paint', between('paint', 'n2606', time, 0.5, 0.4));

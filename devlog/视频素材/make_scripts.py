@@ -17,14 +17,13 @@ MARKS = {
         '3-1': {0: 'sea', 1: 'aier'},
         '3-2': {0: 'others', 1: 'fill', 3: 'erase'},
         '3-4': {0: 'tl', 1: 'n2601'},
-        '3-5': {0: 'v52', 1: 'methods'},
-        '3-9': {1: 'n0409'},
-        '3-10': {1: 'early'},
+        '3-5': {1: 'methods'},
+        '3-9': {1: 'n0409', 2: 'n09'},
         '3-12': {1: 'fix'},
-        '3-13': {0: 'note'},
         '3-15': {0: 'poly'},
         '3-16': {0: 'polyfill', 2: 'polyfail'},
         '3-19': {0: 'jigsaw'},
+        '3-19b': {0: 'slow', 2: 'array'},
         '3-20': {0: 'paint', 2: 'shatter'},
         '3-21': {2: 'three'},
         '3-22': {0: 'n2606', 1: 'n1020'},
@@ -43,8 +42,7 @@ MARKS = {
         '4-1': {0: 'title'},
         '4-3': {0: 'harbor'},
         '4-4': {0: 'fields'},
-        '4-10': {0: 'stamps'},
-        '4-13': {0: 'day'},
+                '4-13': {0: 'day'},
         '4-14': {0: 'caravan'},
         '4-15': {0: 'dayback', 1: 'courtyard'},
         '4-19': {0: 'night'},
@@ -54,7 +52,9 @@ MARKS = {
         '4-24': {0: 'ladder', 1: 'notice', 2: 'race'},
         '4-25': {0: 'another'},
         '4-27': {0: 'valley', 2: 'mods'},
+        '4-29': {0: 'enc1'},
         '4-30': {0: 'sketch'},
+        '4-31': {0: 'enc3'},
         '4-33': {0: 'clues'},
         '4-35': {1: 'rings', 2: 'merchant'},
         '4-36': {0: 'traveler'},
@@ -64,6 +64,35 @@ MARKS = {
         '5-1': {0: 'cover'},
         '5-7': {0: 'bye'},
     },
+}
+# 说话人身上的小特效：行号 → {第几屏: 特效}。flowers 小红花、sweat 汗滴、shy 害羞、stars 冒星星
+FX = {
+    '3-13': {0: 'flowers'},
+    '3-26': {0: 'sweat'},
+    '4-22': {1: 'sweat'},
+}
+# 不说话的人的反应：行号 → {第几屏: {谁: '表情' 或 '表情+特效'}}，表情用立绘文件名
+REACT = {
+    '3-5': {0: {'astra': 'moved'}},
+    '3-9': {1: {'gemini': 'd4', 'deepseek': 'd4'}},
+    '3-12': {0: {'rin': 'wry+sweat'}},
+    '3-13': {0: {'rin': 'talk_smile', 'astra': 'talk_smile'}},
+    '3-14': {0: {'claude': 'talk_smile+flowers'}},
+    '3-26': {1: {'claude': 'think'}},
+    '3-27': {2: {'rin': 'wry+sweat'}},
+    '3-28': {1: {'deepseek': 'wry+sweat'}},
+    '3-29': {2: {'deepseek': 'd4'}},
+    '3-32': {0: {'rin': 'moved', 'astra': 'moved'}},
+    '4-8': {0: {'claude': 'talk_smile', 'deepseek': 'talk_smile'}},
+    '4-10': {0: {'rin': 'wry+shy'}, 1: {'rin': 'wry+shy'}},
+    '4-11': {0: {'rin': 'talk_smile'}},
+    '4-17': {1: {'gemini': 'd4', 'deepseek': 'd4', 'rin': 'talk_smile'}},
+    '4-18': {1: {'glm': 'talk_smile'}},
+    '4-19': {1: {'astra': 'wry', 'glm': 'd4'}},
+    '4-22': {1: {'claude': 'talk_smile'}},
+    '4-25': {0: {'rin': 'moved'}},
+    '4-29': {0: {'gemini': 'd4'}},
+    '5-4': {1: {'glm': 'd4'}},
 }
 SECTION = {3: ('## 第三段', '## 第四段'), 4: ('## 第四段', '## 第五段'), 5: ('## 第五段', None)}
 
@@ -85,9 +114,18 @@ def build(act):
         marks = MARKS.get(act, {}).get(num, {})
         out = []
         for k, c in enumerate(cards):
-            card = {'text': c, 'face': faces[-1] if (len(faces) > 1 and k == len(cards) - 1) else faces[0]}
+            # 表情个数和屏数一样时一屏一个；否则最后一屏用最后一个，其余用第一个
+            if len(faces) == len(cards):
+                f = faces[k]
+            else:
+                f = faces[-1] if (len(faces) > 1 and k == len(cards) - 1) else faces[0]
+            card = {'text': c, 'face': f}
             if k in marks:
                 card['mark'] = marks[k]
+            if k in FX.get(num, {}):
+                card['fx'] = FX[num][k]
+            if k in REACT.get(num, {}):
+                card['react'] = REACT[num][k]
             out.append(card)
         lines.append({'id': num, 'who': WHO[who], 'cards': out})
     return lines
