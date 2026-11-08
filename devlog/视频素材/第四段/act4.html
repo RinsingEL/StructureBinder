@@ -328,7 +328,7 @@ window.drawBoard = function (time) {
   show('clock', showClock);
   $('hh').setAttribute('transform', `rotate(${hour * 30} 75 75)`);
   $('mh').setAttribute('transform', `rotate(${hour * 360} 75 75)`);
-  $('clocktxt').textContent = hour < 10 ? '早上' : hour < 13.5 ? '中午' : hour < 18 ? '傍晚' : '夜里';
+  $('clocktxt').textContent = hour < 10 ? '早上' : hour < 13.5 ? '中午' : hour < 18.5 ? '傍晚' : '夜里';
   $('dusk').setAttribute('opacity', 0.35 * clamp((hour - 14) / 3) * (1 - clamp((hour - 19) / 2)));
   $('dark').setAttribute('opacity', 0.78 * ease(nt / 1.2));
   $('moon').setAttribute('opacity', ease((nt - 0.8) / 0.6));
