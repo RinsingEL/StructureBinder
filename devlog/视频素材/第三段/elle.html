@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>第三段 · 艾尔大陆的三个圆圈</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Noto+Sans+SC:wght@500;700&display=block">
+<style>
+  :root { --ink: #3a3631; --soft: #8c8274; --red: #d9624f; }
+  html, body { margin: 0; background: #1e1d1b; }
+  #stage { position: relative; width: 1920px; height: 1080px; overflow: hidden; font-family: "Noto Sans SC", "WenQuanYi Zen Hei", sans-serif; }
+  #room { position: absolute; inset: 0; width: 1920px; height: 1080px; }
+
+  /* 白板（内侧 x 122–1799，y 41–697）上的地图，1600×626 */
+  #titlecard { position: absolute; left: 122px; top: 41px; width: 1677px; height: 656px; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; font-family: "ZCOOL KuaiLe", sans-serif; color: var(--ink); }
+  #titlecard .big { font-size: 150px; letter-spacing: 30px; }
+  #titlecard .small { font-size: 34px; color: var(--soft); margin-top: 10px; letter-spacing: 4px; }
+  #map { position: absolute; left: 160px; top: 56px; width: 1600px; height: 626px; overflow: hidden; border-radius: 4px; opacity: 0; }
+  #map img, #map svg { position: absolute; left: 0; top: 0; width: 1600px; height: 626px; }
+  .fill { opacity: 1; }
+  .lbl { font-family: "ZCOOL KuaiLe", sans-serif; fill: var(--ink); }
+  .note { font-family: "Noto Sans SC", sans-serif; font-weight: 500; fill: #5d6b6b; font-size: 17px; }
+  #world { position: absolute; left: 380px; top: 70px; width: 540px; height: 540px; padding: 12px; background: #fffdf8; opacity: 0;
+    box-shadow: 0 6px 16px rgba(60,40,20,.18); transform: rotate(-2deg); }
+  #worldcap { position: absolute; left: 1010px; width: 700px; top: 250px; font-family: "ZCOOL KuaiLe", sans-serif;
+    font-size: 52px; line-height: 1.5; color: var(--ink); opacity: 0; }
+  #worldcap small { display: block; font-size: 28px; color: var(--soft); margin-top: 12px; }
+  #tag { position: absolute; left: 180px; top: 650px; font-size: 18px; color: var(--soft); opacity: 0; }
+
+  /* 二头身小人 */
+  .member { position: absolute; width: 420px; height: 420px; bottom: -64px; transform-origin: 50% 100%; }
+  .member img { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0;
+    filter: drop-shadow(3px 0 0 #fff) drop-shadow(-3px 0 0 #fff) drop-shadow(0 3px 0 #fff) drop-shadow(0 -3px 0 #fff) drop-shadow(0 6px 8px rgba(60,40,20,.25)); }
+
+  /* 字幕 */
+  #sub { position: absolute; left: 600px; right: 600px; top: 740px; height: 300px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  #name { font-size: 26px; font-weight: 700; color: #fff; padding: 4px 18px; border-radius: 999px; margin-bottom: 14px; letter-spacing: 2px; }
+  #line { font-size: 30px; line-height: 1.5; color: var(--ink); text-align: center; background: rgba(255,253,247,.94); padding: 16px 30px;
+    border-radius: 14px; box-shadow: 0 4px 14px rgba(60,40,20,.12); max-width: 660px; text-wrap: balance; white-space: pre-line; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <img id="room" src="../开放日插画/clubroom_v2.png" alt="">
+  <div id="titlecard"><div class="big">回顾</div><div class="small">2025.11 → 2026.10</div></div>
+  <!-- 地图：elle_sea.png 是无尽之海，elle_biomes.png 是按当时代码算出的三块大陆群系 -->
+  <div id="map">
+    <img src="elle_sea.png" alt="">
+    <svg viewBox="0 0 1600 626">
+      <defs>
+        <pattern id="grid" width="54.35" height="54.35" patternUnits="userSpaceOnUse">
+          <path d="M54.35 0H0V54.35" fill="none" stroke="rgba(43,42,38,.10)" stroke-width="1"/>
+        </pattern>
+        <clipPath id="c-aier"><circle id="cc-aier" cx="637" cy="152.2" r="0"/></clipPath>
+        <clipPath id="c-east"><circle id="cc-east" cx="963" cy="532.6" r="0"/></clipPath>
+        <clipPath id="c-spawn"><circle id="cc-spawn" cx="637" cy="423.9" r="0"/></clipPath>
+      </defs>
+      <rect width="1600" height="626" fill="url(#grid)"/>
+      <text class="lbl" x="1300" y="110" font-size="44" id="sea-lbl" opacity="0">无尽之海</text>
+      <image href="elle_biomes.png" width="1600" height="626" clip-path="url(#c-aier)"/>
+      <image href="elle_biomes.png" width="1600" height="626" clip-path="url(#c-east)"/>
+      <image href="elle_biomes.png" width="1600" height="626" clip-path="url(#c-spawn)"/>
+      <g fill="none" stroke="#2b2a26" stroke-width="3">
+        <circle id="o-aier"  cx="637" cy="152.2" r="135.9" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" transform="rotate(-90 637 152.2)"/>
+        <circle id="o-east"  cx="963" cy="532.6" r="81.5"  pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" transform="rotate(-90 963 532.6)"/>
+        <circle id="o-spawn" cx="637" cy="423.9" r="54.3"  pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" transform="rotate(-90 637 423.9)"/>
+      </g>
+      <g id="l-aier" opacity="0"><text class="lbl" x="800" y="110" font-size="40">北方艾尔大陆</text><text class="note" x="802" y="140">中心 (0, −5000) · 半径 2500 · 雪原、冰刺、冻河</text></g>
+      <g id="l-east" opacity="0"><text class="lbl" x="1068" y="520" font-size="40">东方荒野</text><text class="note" x="1070" y="550">中心 (6000, 2000) · 半径 1500 · 丛林</text></g>
+      <g id="l-spawn" opacity="0"><text class="lbl" x="250" y="420" font-size="40">出生点平原</text><text class="note" x="252" y="450">中心 (0, 0) · 半径 1000 · 平原</text></g>
+    </svg>
+  </div>
+  <img id="world" src="../开场/world_map.jpg" alt="">
+  <div id="worldcap">先生成世界，<br>再顺着原本的山海安排国家<small>2025 年 12 月 · 第一次转向</small></div>
+  <div id="tag">据 2025-11-21 提交 6d3560e4 · FixedBiomeSource.java 重绘 · 坐标单位为区块</div>
+  <div id="members"></div>
+  <div id="sub"><div id="name"></div><div id="line"></div></div>
+</div>
+<script>
+const SPRITES = '../../act2/assets/avatars/sprites/compact/';
+const members = [
+  { id: 'rin',      name: 'Rin',      color: '#8a6a4f', x: -40,  z: 1 },
+  { id: 'gemini',   name: 'Gemini',   color: '#8a63d2', x: 125,  z: 2 },
+  { id: 'claude',   name: 'Claude',   color: '#d9772b', x: 290,  z: 3 },
+  { id: 'astra',    name: 'Astra',    color: '#7f8db5', x: 1225, z: 3 },
+  { id: 'deepseek', name: 'DeepSeek', color: '#3a6fc4', x: 1380, z: 2 },
+  { id: 'glm',      name: 'GLM',      color: '#3d3d46', x: 1520, z: 1 },
+];
+const states = ['listen', 'greet', 'd4', 'talk_smile', 'think', 'moved', 'wry'];
+const FALLBACK = { think: ['d4', 'talk_smile'], talk_smile: ['d4'], d4: ['talk_smile'], greet: ['listen'], moved: ['talk_smile'], wry: ['d4'] };
+
+// 逐句配画面表第三段 3-0 至 3-3。mark：这一屏开始时触发的画面事件
+const script = [
+  { who: 'rin', face: 'talk_smile', cards: [
+    { text: '对对对，说起来那会儿\n我们是真想自己捏一整片大陆的，', mark: 'sea' },
+    { text: '还起了名字，什么北方艾尔大陆、无尽之海……\nGemini 你还记得吗？', face: 'think', mark: 'aier' }] },
+  { who: 'gemini', face: 'wry', cards: [
+    { text: '当然记得！除了北方艾尔大陆，\n我们还写了东方荒野和出生点平原，', face: 'talk_smile', mark: 'others' },
+    { text: '其实就是按坐标在无尽之海里画了三个大圆圈，\n往里硬塞雪原和丛林。', mark: 'fill' },
+    '结果光改群系根本管不住地形起伏，\n自己捏地形又太复杂，',
+    { text: '到了十二月，我们就干脆把那套全删了，\n改成先生成世界、再顺着原本的山海安排国家。', mark: 'erase' }] },
+  { who: 'rin', face: 'wry', cards: [
+    '是啊，当时还试过直接改原版噪声，\n按国度设定把海洋改成大陆、大陆改成海洋，',
+    { text: '结果连做个平滑都头疼。\n现在看来因地制宜也挺美的，还有惊喜感。', face: 'talk_smile' }] },
+];
+
+const INTRO = 2.6, OUTRO = 2.4;
+const timeline = [], marks = {};
+let t = INTRO;
+for (const line of script) {
+  const start = t;
+  for (const card of line.cards) {
+    const c = typeof card === 'string' ? { text: card } : card;
+    const dur = Math.max(1.8, c.text.replace(/\n/g, '').length / 6 + 0.7);
+    if (c.mark) marks[c.mark] = t + 0.2;
+    timeline.push({ who: line.who, face: c.face || line.face, text: c.text, start: t, end: t + dur, lineStart: start });
+    t += dur;
+  }
+  t += 0.25;
+}
+window.DURATION = t + OUTRO;
+
+const box = document.getElementById('members');
+for (const m of members) {
+  const el = document.createElement('div');
+  el.className = 'member'; el.style.left = m.x + 'px'; el.id = 'm-' + m.id;
+  for (const s of states) {
+    const img = document.createElement('img');
+    img.dataset.state = s; img.src = SPRITES + m.id + '/' + s + '.png';
+    img.onerror = () => img.remove();
+    el.appendChild(img);
+  }
+  box.appendChild(el);
+}
+
+const $ = id => document.getElementById(id);
+const clamp = x => Math.max(0, Math.min(1, x));
+const ease = x => 1 - Math.pow(1 - clamp(x), 3);
+const inout = x => { x = clamp(x); return x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; };
+const since = (name, time) => time - marks[name];
+
+// 说完话后表情留 HOLD 秒的余韵
+const SWAP = 0.15, HOLD = 2.0, HOLD_UNTIL_NEXT = false;
+const cueAt = time => timeline.find(c => time >= c.start && time < c.end);
+function available(id, state) {
+  const el = $('m-' + id);
+  if (el.querySelector(`img[data-state="${state}"]`)) return state;
+  for (const alt of FALLBACK[state] || []) if (el.querySelector(`img[data-state="${alt}"]`)) return alt;
+  return 'listen';
+}
+function faceAt(id, time) {
+  const c = cueAt(time);
+  if (c && c.who === id) return available(id, c.face);
+  let last = null;
+  for (const x of timeline) if (x.who === id && x.end <= time) last = x;
+  if (last && (HOLD_UNTIL_NEXT || time - last.end < HOLD)) return available(id, last.face);
+  return 'listen';
+}
+function dimAt(id, time) { const c = cueAt(time); return !!c && c.who !== id; }
+const boundaries = [...new Set(timeline.flatMap(c => [c.start, c.end, c.end + HOLD]))].sort((a, b) => a - b);
+function lastChange(fn, time, dur) {
+  for (let i = boundaries.length - 1; i >= 0; i--) {
+    const b = boundaries[i];
+    if (b > time) continue;
+    if (time - b >= dur) return null;
+    if (fn(b - 0.001) !== fn(b)) return b;
+  }
+  return null;
+}
+
+const R = { aier: 135.9, east: 81.5, spawn: 54.3 };
+window.render = function (time) {
+  // 段落标题卡"回顾"，随后淡出成地图
+  const tc = $('titlecard');
+  tc.style.opacity = ease(time / 0.5) * (1 - ease((time - 1.9) / 0.5));
+  $('map').style.opacity = ease(since('sea', time) / 0.6) * (1 - ease((since('erase', time) - 1.6) / 0.6));
+  $('sea-lbl').setAttribute('opacity', ease((since('sea', time) - 0.4) / 0.5));
+  // 先画圈，再填群系
+  const draw = { aier: since('aier', time), east: since('others', time), spawn: since('others', time) - 0.7 };
+  for (const k of ['aier', 'east', 'spawn']) {
+    $('o-' + k).setAttribute('stroke-dashoffset', 1 - inout(draw[k] / 0.9));
+    const lab = ease((draw[k] - 0.7) / 0.4);
+    const f = since('fill', time) - (k === 'aier' ? 0 : k === 'east' ? 0.5 : 1.0);
+    // 十二月：橡皮擦掉，圆圈缩回去
+    const er = 1 - inout((since('erase', time) - (k === 'aier' ? 0.2 : k === 'east' ? 0.5 : 0.8)) / 0.7);
+    $('cc-' + k).setAttribute('r', R[k] * inout(f / 0.8) * er);
+    $('o-' + k).style.opacity = er;
+    $('l-' + k).style.opacity = lab * er;
+  }
+  $('tag').style.opacity = ease((since('aier', time) - 0.4) / 0.5) * (1 - ease((since('erase', time) - 1.6) / 0.5));
+  // 换成真实的世界地图
+  $('world').style.opacity = ease((since('erase', time) - 1.4) / 0.9);
+  $('worldcap').style.opacity = ease((since('erase', time) - 2.0) / 0.6);
+
+  // 小人与字幕
+  const cue = cueAt(time);
+  members.forEach(m => {
+    const el = $('m-' + m.id);
+    const speaking = cue && cue.who === m.id;
+    const face = faceAt(m.id, time);
+    const changedAt = lastChange(x => faceAt(m.id, x), time, SWAP);
+    const k = changedAt === null ? 1 : (time - changedAt) / SWAP;
+    const prev = changedAt === null ? face : faceAt(m.id, changedAt - 0.001);
+    for (const img of el.querySelectorAll('img')) {
+      const s = img.dataset.state;
+      img.style.opacity = s === face ? k : (s === prev && k < 1 ? 1 - k : 0);
+    }
+    const squash = k < 1 ? 1 - 0.04 * Math.sin(k * Math.PI) : 1;
+    const dimNow = dimAt(m.id, time), dimChanged = lastChange(x => dimAt(m.id, x), time, 0.25);
+    let d = dimNow ? 1 : 0;
+    if (dimChanged !== null) { const q = (time - dimChanged) / 0.25; d = dimNow ? q : 1 - q; }
+    el.style.filter = `brightness(${1 - 0.28 * d}) saturate(${1 - 0.2 * d})`;
+    let lift = 0, scale = 1;
+    if (speaking) {
+      const s = time - cue.lineStart;
+      lift = 26 * Math.sin(Math.min(s / 0.35, 1) * Math.PI) * (s < 0.35 ? 1 : 0) + 10 + 3 * Math.sin(time * 6);
+      scale = 1.08;
+    }
+    el.style.transform = `translateY(${-lift}px) scale(${scale * (2 - squash)}, ${scale * squash})`;
+    el.style.zIndex = speaking ? 10 : m.z;
+  });
+  const name = $('name'), line = $('line');
+  if (cue) {
+    const who = members.find(m => m.id === cue.who);
+    name.textContent = who.name; name.style.background = who.color; line.textContent = cue.text;
+    const fade = ease((time - cue.start) / 0.2);
+    name.style.opacity = fade; line.style.opacity = fade;
+  } else { name.style.opacity = 0; line.style.opacity = 0; }
+};
+
+if (!location.search.includes('static')) {
+  const t0 = performance.now();
+  (function loop() { window.render(((performance.now() - t0) / 1000) % window.DURATION); requestAnimationFrame(loop); })();
+}
+</script>
+</body>
+</html>
