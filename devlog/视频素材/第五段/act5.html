@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>第五段 · 再见</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Noto+Sans+SC:wght@500;700&display=block">
+<style>
+  :root { --ink: #3a3631; --soft: #8c8274; }
+  html, body { margin: 0; background: #1e1d1b; }
+  #stage { position: relative; width: 1920px; height: 1080px; overflow: hidden; font-family: "Noto Sans SC", "WenQuanYi Zen Hei", sans-serif; }
+  #room { position: absolute; inset: 0; width: 1920px; height: 1080px; }
+  /* 白板内侧 x 122–1799，y 41–697 */
+  #board { position: absolute; left: 122px; top: 41px; width: 1677px; height: 656px; overflow: hidden; color: var(--ink); }
+  #board > * { position: absolute; }
+  #cover { left: 0; top: 0; width: 1677px; height: 656px; opacity: 0; }
+  .thx { position: absolute; left: 1505px; font-family: "ZCOOL KuaiLe"; font-size: 30px; color: #d9624f; border: 3px solid #d9624f; border-radius: 8px; padding: 0 8px; opacity: 0; background: rgba(255,253,248,.8); }
+  #bye { left: 560px; top: 470px; width: 640px; text-align: center; font-family: "ZCOOL KuaiLe"; font-size: 84px; color: #d9772b; opacity: 0; }
+  #frame { position: absolute; inset: 0; z-index: 40; pointer-events: none; box-sizing: border-box; border: 0 solid #fffdf8; opacity: 0; }
+  #flash { position: absolute; inset: 0; z-index: 41; background: #fff; opacity: 0; pointer-events: none; }
+  #framecap { position: absolute; left: 0; right: 0; bottom: 6px; z-index: 42; text-align: center; font-family: "ZCOOL KuaiLe"; font-size: 30px; color: var(--soft); opacity: 0; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <img id="room" src="../开放日插画/clubroom_v2.png" alt="">
+  <div id="board">
+    <img id="cover" src="../第二段/cover_board.jpg" alt="">
+    <!-- 签到表上，谁道过谢就盖一个小章 -->
+    <div class="thx" id="thx-rin" style="top:140px">谢谢！</div>
+    <div class="thx" id="thx-gemini" style="top:217px">谢谢！</div>
+    <div class="thx" id="thx-claude" style="top:294px">谢谢！</div>
+    <div class="thx" id="thx-astra" style="top:369px">谢谢！</div>
+    <div class="thx" id="thx-deepseek" style="top:446px">谢谢！</div>
+    <div class="thx" id="thx-glm" style="top:522px">谢谢！</div>
+    <div id="bye">下次再来玩！</div>
+  </div>
+  <div id="flash"></div>
+  <div id="frame"></div>
+  <div id="framecap">Geomantia 社团开放日 · 2026 年 11 月</div>
+</div>
+<script>window.STAGE_CONFIG = { INTRO: 1.2, OUTRO: 4.5, RISE: 0.2, HOLD_LAST: true };</script>
+<script src="act5_script.js"></script>
+<script src="../common/stage.js"></script>
+<script>
+const WHO_LINE = { rin: '5-1', claude: '5-2', gemini: '5-3', deepseek: '5-4', glm: '5-5', astra: '5-6' };
+window.drawBoard = function (time) {
+  $('cover').style.opacity = ease(time / 0.8);
+  for (const [who, id] of Object.entries(WHO_LINE)) {
+    const s = sinceLine(id, time) - 1.0, el = $('thx-' + who);
+    el.style.opacity = ease(s / 0.08);
+    el.style.transform = `rotate(-8deg) scale(${s < 0.15 ? 1.6 - 0.6 * clamp(s / 0.15) : 1})`;
+  }
+  const b = since('bye', time);
+  $('bye').style.opacity = ease(b / 0.4);
+  $('bye').style.transform = `scale(${0.7 + 0.3 * ease(b / 0.4)}) rotate(-3deg)`;
+};
+// 定格：一下快门白光，画面停住，再收成一张照片
+const baseRender = window.render;
+window.render = function (time) {
+  const freeze = MARKS.bye + 1.4;
+  baseRender(Math.min(time, freeze));
+  const f = time - freeze;
+  $('flash').style.opacity = f > 0 ? 0.85 * (1 - ease(f / 0.5)) : 0;
+  $('frame').style.opacity = f > 0 ? 1 : 0;
+  $('frame').style.borderWidth = (f > 0 ? 34 * ease(f / 0.6) : 0) + 'px';
+  $('frame').style.borderBottomWidth = (f > 0 ? 56 * ease(f / 0.6) : 0) + 'px';
+  $('framecap').style.opacity = ease((f - 0.5) / 0.6);
+};
+</script>
+</body>
+</html>

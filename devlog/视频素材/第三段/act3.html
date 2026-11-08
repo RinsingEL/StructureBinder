@@ -1,0 +1,548 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>第三段 · 回顾</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Noto+Sans+SC:wght@500;700&display=block">
+<style>
+  :root { --ink: #3a3631; --soft: #8c8274; --red: #d9624f; --orange: #d9772b; --paper: #fffdf8; }
+  html, body { margin: 0; background: #1e1d1b; }
+  #stage { position: relative; width: 1920px; height: 1080px; overflow: hidden; font-family: "Noto Sans SC", "WenQuanYi Zen Hei", sans-serif; }
+  #room { position: absolute; inset: 0; width: 1920px; height: 1080px; }
+  /* 白板内侧 x 122–1799，y 41–697；下面的坐标都相对白板 */
+  #board { position: absolute; left: 122px; top: 41px; width: 1677px; height: 656px; overflow: hidden; color: var(--ink); }
+  #board > * { position: absolute; opacity: 0; }
+  .hand { font-family: "ZCOOL KuaiLe", sans-serif; }
+  .lbl { font-family: "ZCOOL KuaiLe", sans-serif; fill: var(--ink); }
+  .note { font-family: "Noto Sans SC", sans-serif; font-weight: 500; fill: #5d6b6b; }
+  .card { background: var(--paper); border-radius: 12px; box-shadow: 0 5px 14px rgba(60,40,20,.16); }
+  .cap { font-family: "ZCOOL KuaiLe", sans-serif; font-size: 40px; }
+  .cap small { display: block; font-family: "Noto Sans SC", sans-serif; font-size: 22px; color: var(--soft); margin-top: 6px; font-weight: 500; }
+  .sticker { width: 190px; height: 190px; border-radius: 50%; background: #fff; box-shadow: 0 4px 12px rgba(60,40,20,.18); }
+  .stamp { font-family: "ZCOOL KuaiLe", sans-serif; color: var(--red); border: 5px solid var(--red); border-radius: 12px; padding: 4px 18px; }
+
+  /* 回顾标题卡与艾尔大陆 */
+  #titlecard { inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  #titlecard .big { font-size: 150px; letter-spacing: 30px; }
+  #titlecard .small { font-size: 34px; color: var(--soft); margin-top: 10px; letter-spacing: 4px; }
+  #map { left: 38px; top: 15px; width: 1600px; height: 626px; overflow: hidden; border-radius: 4px; }
+  #map img, #map svg { position: absolute; left: 0; top: 0; width: 1600px; height: 626px; }
+  #world { left: 258px; top: 29px; width: 540px; height: 540px; padding: 12px; background: var(--paper); box-shadow: 0 6px 16px rgba(60,40,20,.18); transform: rotate(-2deg); }
+  #worldcap { left: 888px; width: 700px; top: 209px; font-size: 52px; line-height: 1.5; }
+  #worldcap small { display: block; font-size: 28px; color: var(--soft); margin-top: 12px; }
+  #tag { left: 58px; top: 609px; font-size: 18px; color: var(--soft); }
+
+  /* 时间线 */
+  #tl { left: 0; top: 0; width: 1677px; height: 130px; }
+  .node { position: absolute; top: 18px; width: 170px; margin-left: -85px; text-align: center; transform-origin: 50% 40px; }
+  .node .dot { width: 22px; height: 22px; border-radius: 50%; background: #fff; border: 4px solid #b9ae9e; margin: 18px auto 8px; box-sizing: border-box; }
+  .node .d { font-family: "ZCOOL KuaiLe"; font-size: 28px; color: var(--soft); }
+  .node .w { font-size: 20px; color: var(--soft); font-weight: 500; }
+  .node.on .dot { background: var(--orange); border-color: var(--orange); }
+  .node.on .d { color: var(--ink); }
+  .node.on .w { color: var(--ink); }
+
+  #copy { left: 300px; top: 170px; width: 1080px; height: 440px; }
+  .win { position: absolute; width: 420px; height: 260px; background: #fff; border-radius: 10px; box-shadow: 0 4px 12px rgba(60,40,20,.18); overflow: hidden; }
+  .win::before { content: ''; display: block; height: 30px; background: #ece5d8; }
+  .win i { display: block; height: 12px; margin: 14px 24px 0; border-radius: 6px; background: #d9d1c3; }
+  .kbd { position: absolute; font-family: "ZCOOL KuaiLe"; font-size: 34px; color: #fff; background: var(--ink); border-radius: 10px; padding: 4px 16px; }
+
+  #astra { left: 330px; top: 220px; display: flex; align-items: center; gap: 50px; }
+  #methods { left: 150px; top: 190px; width: 1380px; display: flex; gap: 60px; }
+  #methods .card { width: 420px; height: 360px; position: relative; text-align: center; }
+  #methods .card svg { margin-top: 26px; }
+  #methods .card div { font-family: "ZCOOL KuaiLe"; font-size: 36px; margin-top: 10px; }
+  #methods .x { position: absolute; right: 20px; top: 14px; font-size: 64px; color: var(--red); font-family: "ZCOOL KuaiLe"; }
+
+  #when { left: 0; top: 160px; width: 1677px; height: 470px; }
+  #sticky { left: 1270px; top: 380px; width: 300px; padding: 22px 24px; background: #fbe79a; box-shadow: 0 6px 14px rgba(60,40,20,.22); font-family: "ZCOOL KuaiLe"; }
+
+  #poly { left: 0; top: 140px; width: 1677px; height: 500px; }
+  #jig { left: 0; top: 140px; width: 1677px; height: 500px; }
+  #paint { left: 0; top: 140px; width: 1677px; height: 500px; }
+  #flow { left: 0; top: 150px; width: 1677px; height: 490px; }
+  #test { left: 0; top: 150px; width: 1677px; height: 490px; }
+  #join { left: 0; top: 150px; width: 1677px; height: 490px; }
+  #d4 { left: 0; top: 140px; width: 1677px; height: 516px; }
+  #life { left: 0; top: 150px; width: 1677px; height: 490px; }
+  #year { left: 0; top: 150px; width: 1677px; height: 490px; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <img id="room" src="../开放日插画/clubroom_v2.png" alt="">
+  <div id="board">
+    <div id="titlecard" class="hand"><div class="big">回顾</div><div class="small">2025.11 → 2026.10</div></div>
+
+    <!-- 艾尔大陆：据 2025-11-21 提交 6d3560e4 的 FixedBiomeSource.java 重绘 -->
+    <div id="map">
+      <img src="elle_sea.png" alt="">
+      <svg viewBox="0 0 1600 626">
+        <defs>
+          <pattern id="grid" width="54.35" height="54.35" patternUnits="userSpaceOnUse"><path d="M54.35 0H0V54.35" fill="none" stroke="rgba(43,42,38,.10)" stroke-width="1"/></pattern>
+          <clipPath id="c-aier"><circle id="cc-aier" cx="637" cy="152.2" r="0"/></clipPath>
+          <clipPath id="c-east"><circle id="cc-east" cx="963" cy="532.6" r="0"/></clipPath>
+          <clipPath id="c-spawn"><circle id="cc-spawn" cx="637" cy="423.9" r="0"/></clipPath>
+        </defs>
+        <rect width="1600" height="626" fill="url(#grid)"/>
+        <text class="lbl" x="1300" y="110" font-size="44" id="sea-lbl" opacity="0">无尽之海</text>
+        <image href="elle_biomes.png" width="1600" height="626" clip-path="url(#c-aier)"/>
+        <image href="elle_biomes.png" width="1600" height="626" clip-path="url(#c-east)"/>
+        <image href="elle_biomes.png" width="1600" height="626" clip-path="url(#c-spawn)"/>
+        <g fill="none" stroke="#2b2a26" stroke-width="3">
+          <circle id="o-aier"  cx="637" cy="152.2" r="135.9" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" transform="rotate(-90 637 152.2)"/>
+          <circle id="o-east"  cx="963" cy="532.6" r="81.5"  pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" transform="rotate(-90 963 532.6)"/>
+          <circle id="o-spawn" cx="637" cy="423.9" r="54.3"  pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" transform="rotate(-90 637 423.9)"/>
+        </g>
+        <g id="l-aier" opacity="0"><text class="lbl" x="800" y="110" font-size="40">北方艾尔大陆</text><text class="note" x="802" y="140" font-size="17">中心 (0, −5000) · 半径 2500 · 雪原、冰刺、冻河</text></g>
+        <g id="l-east" opacity="0"><text class="lbl" x="1068" y="520" font-size="40">东方荒野</text><text class="note" x="1070" y="550" font-size="17">中心 (6000, 2000) · 半径 1500 · 丛林</text></g>
+        <g id="l-spawn" opacity="0"><text class="lbl" x="250" y="420" font-size="40">出生点平原</text><text class="note" x="252" y="450" font-size="17">中心 (0, 0) · 半径 1000 · 平原</text></g>
+      </svg>
+    </div>
+    <img id="world" src="../开场/world_map.jpg" alt="">
+    <div id="worldcap" class="hand">先生成世界，<br>再顺着原本的山海安排国家<small>2025 年 12 月 · 第一次转向</small></div>
+    <div id="tag">据 2025-11-21 提交 6d3560e4 · FixedBiomeSource.java 重绘 · 坐标单位为区块</div>
+
+    <div id="tl"><svg width="1677" height="130" style="position:absolute;left:0;top:0"><line id="tl-line" x1="90" y1="72" x2="90" y2="72" stroke="#cfc5b5" stroke-width="4" stroke-linecap="round"/></svg></div>
+
+    <!-- 网页上复制粘贴 -->
+    <div id="copy">
+      <div class="win" id="w1" style="left:0;top:40px"><i style="width:70%"></i><i style="width:50%"></i><i style="width:80%"></i><i style="width:40%"></i><i style="width:65%"></i></div>
+      <div class="win" id="w2" style="left:330px;top:120px"><i style="width:60%"></i><i style="width:75%"></i><i style="width:35%"></i><i style="width:70%"></i></div>
+      <div class="win" id="w3" style="left:660px;top:30px"><i style="width:80%"></i><i style="width:45%"></i><i style="width:60%"></i><i style="width:55%"></i><i style="width:75%"></i></div>
+      <div class="kbd" id="kc">Ctrl+C</div><div class="kbd" id="kv">Ctrl+V</div>
+      <div class="cap" style="position:absolute;left:0;top:350px;width:1080px;text-align:center">在网页上一段段复制粘贴<small>2025 年 · Rin 和 Gemini 两个人</small></div>
+    </div>
+
+    <div id="astra">
+      <img class="sticker" src="../开场/stickers/astra.png" alt="">
+      <div class="cap" style="font-size:54px">2026 年 1 月 · Astra 用桌面端加入<small style="font-size:28px">地形扫描 · 国度扩张，进度一下快了起来</small>
+        <small id="v52" style="font-size:28px;color:#7f8db5;opacity:0">当时的代号还是 5.2</small></div>
+    </div>
+
+    <div id="methods">
+      <div class="card"><svg width="300" height="200" viewBox="0 0 300 200"><g fill="none" stroke="#3a3631" stroke-width="3"><rect x="10" y="10" width="280" height="180" rx="8"/><path d="M10 80 L110 60 L150 10 M110 60 L140 130 L10 150 M140 130 L230 120 L290 60 M230 120 L250 190 M150 10 L200 70 L290 60 M200 70 L230 120"/></g></svg><div>切多边形</div><span class="x">✗</span></div>
+      <div class="card"><svg width="300" height="200" viewBox="0 0 300 200"><rect x="10" y="10" width="280" height="180" rx="8" fill="#e9eedc" stroke="#3a3631" stroke-width="3"/><circle cx="120" cy="90" r="50" fill="#e8a87c" opacity=".7"/><circle cx="190" cy="120" r="40" fill="#9cc3d8" opacity=".7"/><path d="M60 170 L250 40" stroke="#3a3631" stroke-width="3" stroke-dasharray="8 6"/><text x="196" y="40" class="lbl" font-size="26">(x, z)</text></svg><div>画图再转坐标</div><span class="x">✗</span></div>
+      <div class="card"><svg width="300" height="200" viewBox="0 0 300 200"><g stroke="#3a3631" stroke-width="3" fill="#f2dcc0"><rect x="30" y="80" width="60" height="60" rx="6"/><rect x="120" y="50" width="60" height="60" rx="6"/><rect x="120" y="130" width="60" height="50" rx="6"/><rect x="210" y="80" width="60" height="60" rx="6" fill="none" stroke-dasharray="7 6"/></g><path d="M90 110 H120 M180 80 L210 110" stroke="#3a3631" stroke-width="3"/><text x="215" y="60" class="lbl" font-size="26">下一块？</text></svg><div>AI 一个个放</div><span class="x">✗</span></div>
+    </div>
+
+    <!-- 4 月 → 9 月，后来更正为 10.11 -->
+    <div id="when">
+      <svg width="1677" height="470">
+        <text class="lbl" x="330" y="120" font-size="76">4 月</text>
+        <text class="lbl" x="330" y="178" font-size="30" fill="#8c8274">走不通</text>
+        <text x="510" y="112" font-size="70" fill="#d9624f" font-family="ZCOOL KuaiLe">✗</text>
+        <path id="when-arrow" d="M610 95 H930" stroke="#3a3631" stroke-width="5" fill="none" marker-end="url(#ah)" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/>
+        <defs><marker id="ah" markerWidth="10" markerHeight="10" refX="6" refY="5" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="#3a3631"/></marker></defs>
+        <g id="when-sep"><text class="lbl" x="990" y="120" font-size="76">9 月</text></g>
+        <g id="when-oct" opacity="0"><text x="990" y="120" font-size="76" fill="#d9624f" font-family="ZCOOL KuaiLe">10.11</text></g>
+        <g id="when-q" opacity="0"><line x1="980" y1="100" x2="1150" y2="80" stroke="#d9624f" stroke-width="6"/><text x="1155" y="70" font-size="70" fill="#d9624f" font-family="ZCOOL KuaiLe">?</text></g>
+        <text class="lbl" x="990" y="178" font-size="30" fill="#8c8274" id="when-ok">走通了 ✓</text>
+        <text class="note" x="840" y="250" text-anchor="middle" font-size="26" id="when-why">看着带坐标的示意图选准位置 · 甚至能"往东挪十二格"</text>
+        <text class="lbl" x="840" y="360" text-anchor="middle" font-size="54" id="when-early" fill="#3a6fc4" opacity="0">有些方案不是错了，只是早了。</text>
+        <g id="when-fix" opacity="0">
+          <text class="note" x="840" y="330" text-anchor="middle" font-size="28">九月：主要在测内置自动规划</text>
+          <text class="note" x="840" y="380" text-anchor="middle" font-size="28" fill="#d9624f">10 月 11 日：把"AI 直接给世界坐标"接进城市设计</text>
+        </g>
+      </svg>
+    </div>
+    <div id="sticky"><div style="font-size:32px">时间线小便签</div><div style="font-size:24px;margin-top:10px;line-height:1.6">9 月 · 测内置自动规划<br>10.11 · AI 直接给坐标<br><span style="color:#8c8274">记岔了先翻便签！</span></div></div>
+
+    <!-- 切多边形 -->
+    <div id="poly"><svg id="poly-svg" width="1677" height="500"></svg></div>
+    <!-- 一个个拼 -->
+    <div id="jig"><svg id="jig-svg" width="1677" height="500"></svg></div>
+    <!-- 画图转坐标（示意） -->
+    <div id="paint"><svg id="paint-svg" width="1677" height="500"></svg></div>
+
+    <!-- 六月 → 10.11 → 10.20 -->
+    <div id="flow"><svg id="flow-svg" width="1677" height="490"></svg></div>
+    <!-- 九月内置测试 -->
+    <div id="test">
+      <div style="position:absolute;left:0;top:0;width:1677px;text-align:center" class="cap">2026 年 9 月 · 接入内置 Harness，请有 Flash 的来测试</div>
+      <div id="t-ds" style="position:absolute;left:250px;top:100px;width:520px;text-align:center">
+        <img class="sticker" src="../开场/stickers/deepseek.png" alt="">
+        <div id="t-ds1" class="cap" style="font-size:34px;margin-top:14px;opacity:0">一座城：23:30 → 凌晨 1 点多<small>"少个字段" "面积不对"，改完再交</small></div>
+      </div>
+      <div id="t-glm" style="position:absolute;left:900px;top:100px;width:520px;text-align:center">
+        <img class="sticker" src="../开场/stickers/glm.png" alt="">
+        <div id="t-glm1" class="cap" style="font-size:34px;margin-top:14px;opacity:0">一晚上走完整条流程<small>交接包最重十五六万 token，D3 那包被截断</small></div>
+      </div>
+    </div>
+    <!-- 十月小克加入 -->
+    <div id="join" style="display:flex;align-items:center;justify-content:center;gap:50px">
+      <img class="sticker" src="../开场/stickers/claude.png" alt="">
+      <div class="cap" style="font-size:54px">2026 年 10 月 12 日 · 小克加入<small style="font-size:28px">先把工具说明和设计手册理了一遍</small></div>
+    </div>
+
+    <!-- 镜潮第一次设计 → 重写手册 → 八十六个单元 -->
+    <div id="d4">
+      <div id="d4-a" style="position:absolute;left:120px;top:0;width:540px;height:512px">
+        <img src="img/first_design.jpg" style="position:absolute;left:0;top:0;width:540px;height:512px;border-radius:8px" alt="">
+        <img id="d4-mk" src="img/first_design_marked.jpg" style="position:absolute;left:0;top:0;width:540px;height:512px;border-radius:8px;opacity:0;object-fit:cover" alt="">
+        <div id="d4-stamp" class="stamp" style="position:absolute;left:250px;top:30px;font-size:46px;transform:rotate(-8deg);opacity:0;background:rgba(255,253,248,.85)">严重不合格</div>
+      </div>
+      <div id="d4-cap" class="cap" style="position:absolute;left:720px;top:40px;width:820px">10 月 20 日 · 照手册第一次设计镜潮<small>整座城只有十几栋楼，全挤在岛中间</small></div>
+      <div id="d4-manual" class="card" style="position:absolute;left:760px;top:190px;width:760px;height:290px;opacity:0;padding:26px 34px;box-sizing:border-box">
+        <div class="hand" style="font-size:30px;color:#8c8274">旧手册里反复写的</div>
+        <div class="hand" style="font-size:46px;margin-top:16px;position:relative">
+          <span>"紧凑"</span>　<span>"连续"</span>　<span>"六十人的例子"</span>
+          <svg id="d4-strike" width="700" height="70" style="position:absolute;left:-10px;top:0;opacity:0"><path d="M0 40 Q350 20 690 38" stroke="#d9624f" stroke-width="6" fill="none"/></svg>
+        </div>
+        <div id="d4-new" class="hand" style="font-size:44px;color:#d9772b;margin-top:26px;opacity:0">扛的事越多，越要展开，不要收缩<div style="font-size:28px;color:#8c8274;margin-top:8px">职责 → 片区 → 街坊 · 每块大空地都说清楚做什么</div></div>
+      </div>
+      <div id="d4-b" style="position:absolute;left:1000px;top:0;width:540px;height:512px;opacity:0">
+        <img src="img/astra_86.jpg" style="width:540px;height:512px;border-radius:8px" alt="">
+      </div>
+      <div id="d4-cmp" style="opacity:0">
+        <div class="cap" style="position:absolute;left:120px;top:448px;width:540px;text-align:center;font-size:34px;background:rgba(255,253,248,.9);border-radius:8px">第一次 · 十几栋</div>
+        <div class="cap" style="position:absolute;left:1000px;top:448px;width:540px;text-align:center;font-size:34px;background:rgba(255,253,248,.9);border-radius:8px">照新手册重做 · 86 个单元</div>
+        <svg style="position:absolute;left:690px;top:200px" width="290" height="100"><path d="M10 50 H260" stroke="#d9772b" stroke-width="8" marker-end="url(#ah2)"/><defs><marker id="ah2" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8z" fill="#d9772b"/></marker></defs></svg>
+      </div>
+    </div>
+
+    <!-- 学生生活往下问 -->
+    <div id="life">
+      <div class="cap" style="position:absolute;left:0;top:0;width:1677px;text-align:center">把"学生生活"继续往下问</div>
+      <div id="life-rows" style="position:absolute;left:330px;top:100px;width:1020px"></div>
+    </div>
+
+    <div id="year" style="display:flex;flex-direction:column;align-items:center;justify-content:center">
+      <div class="hand" style="font-size:96px;letter-spacing:6px">2025.11 → 2026.10</div>
+      <div class="hand" style="font-size:40px;color:#8c8274;margin-top:20px">从画圆圈捏大陆，到连学生去哪儿洗衣看病都排得明明白白</div>
+    </div>
+  </div>
+</div>
+<script>window.STAGE_CONFIG = { INTRO: 0.5 };</script>
+<script src="act3_script.js"></script>
+<script src="../common/stage.js"></script>
+<script>
+const NS = 'http://www.w3.org/2000/svg';
+function svg(tag, attrs, parent) { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; }
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+// 半平面裁剪求泰森多边形
+function voronoi(pts, x0, y0, x1, y1) {
+  return pts.map((p, i) => {
+    let poly = [[x0, y0], [x1, y0], [x1, y1], [x0, y1]];
+    pts.forEach((q, j) => {
+      if (i === j) return;
+      const mx = (p[0] + q[0]) / 2, my = (p[1] + q[1]) / 2, nx = q[0] - p[0], ny = q[1] - p[1];
+      const side = v => (v[0] - mx) * nx + (v[1] - my) * ny;
+      const out = [];
+      for (let k = 0; k < poly.length; k++) {
+        const a = poly[k], b = poly[(k + 1) % poly.length], sa = side(a), sb = side(b);
+        if (sa <= 0) out.push(a);
+        if ((sa <= 0) !== (sb <= 0)) { const r = sa / (sa - sb); out.push([a[0] + (b[0] - a[0]) * r, a[1] + (b[1] - a[1]) * r]); }
+      }
+      poly = out;
+    });
+    return poly;
+  });
+}
+const pathOf = poly => 'M' + poly.map(v => v[0].toFixed(1) + ' ' + v[1].toFixed(1)).join('L') + 'Z';
+
+// 时间线节点
+const NODES = [
+  { date: '2025.11', w: '捏大陆', on: 'tl', x: 110 },
+  { date: '2025.12', w: '顺着山海', on: 'tl', x: 290, d: 0.3 },
+  { date: '2026.01', w: 'Astra 加入', on: 'n2601', x: 470 },
+  { date: '01–05', w: '三条路', on: 'methods', x: 650 },
+  { date: '2026.06', w: '成组排布', on: 'n2606', x: 830 },
+  { date: '2026.09', w: '内置测试', on: 'n2609', x: 1010 },
+  { date: '10.11', w: '直接给坐标', on: 'fix', x: 1190 },
+  { date: '10.12', w: '小克加入', on: 'n2610', x: 1370 },
+  { date: '10.20', w: '镜潮', on: 'n1020', x: 1550 },
+];
+// 节点在什么时候成为"当前"
+const FOCUS = [['tl', 1], ['n2601', 2], ['methods', 3], ['poly', 3], ['fix', 6], ['n2606', 4], ['flow1011', 6], ['n1020', 8], ['n2609', 5], ['n2610', 7], ['d4old', 8]];
+for (const n of NODES) {
+  const el = document.createElement('div'); el.className = 'node'; el.style.left = n.x + 'px';
+  el.innerHTML = `<div class="d">${n.date}</div><div class="dot"></div><div class="w">${n.w}</div>`;
+  el.style.top = '6px'; n.el = el; $('tl').appendChild(el);
+}
+
+// 多边形：城市范围里撒点
+(function () {
+  const g = $('poly-svg'), r = rng(7);
+  const X0 = 520, Y0 = 40, X1 = 1300, Y1 = 470;
+  const pts = []; for (let i = 0; i < 15; i++) pts.push([X0 + 50 + r() * (X1 - X0 - 100), Y0 + 40 + r() * (Y1 - Y0 - 80)]);
+  const cells = voronoi(pts, X0, Y0, X1, Y1);
+  const uses = ['住人', '市场', '住人', '工坊', '学堂', '住人', '广场', '仓库', '住人', '食堂', '住人', '庙宇', '住人', '马厩', '住人'];
+  const colors = { 住人: '#f0c9a0', 市场: '#f3dc8a', 工坊: '#c9b8a3', 学堂: '#b9cde6', 广场: '#e7e0cf', 仓库: '#d5c7b0', 食堂: '#f2b8a2', 庙宇: '#d4c3e6', 马厩: '#cbd9b0' };
+  svg('rect', { x: X0, y: Y0, width: X1 - X0, height: Y1 - Y0, fill: '#fbf8f1', stroke: '#3a3631', 'stroke-width': 3, rx: 6 }, g);
+  window.POLY = cells.map((c, i) => {
+    const cx = c.reduce((s, v) => s + v[0], 0) / c.length, cy = c.reduce((s, v) => s + v[1], 0) / c.length;
+    return {
+      fill: svg('path', { d: pathOf(c), fill: colors[uses[i]], opacity: 0 }, g),
+      edge: svg('path', { d: pathOf(c), fill: 'none', stroke: '#3a3631', 'stroke-width': 2.5, pathLength: 1, 'stroke-dasharray': 1, 'stroke-dashoffset': 1 }, g),
+      seed: pts[i], label: [cx, cy, uses[i]],
+    };
+  });
+  POLY.forEach(p => { p.dot = svg('circle', { cx: p.seed[0], cy: p.seed[1], r: 0, fill: '#d9772b' }, g); });
+  POLY.forEach(p => { p.text = svg('text', { x: p.label[0], y: p.label[1] + 8, 'text-anchor': 'middle', class: 'lbl', 'font-size': 24, opacity: 0 }, g); p.text.textContent = p.label[2]; });
+  // 宿舍、院子和出入口要的是另一种形状
+  const fail = svg('g', { opacity: 0, id: 'poly-fail' }, g);
+  svg('path', { d: 'M760 150 h280 v220 h-90 v-130 h-100 v130 h-90 z', fill: 'rgba(217,98,79,.18)', stroke: '#d9624f', 'stroke-width': 5, 'stroke-dasharray': '14 9' }, fail);
+  const cap = svg('g', { id: 'poly-cap' }, g);
+  const c1 = svg('text', { x: 90, y: 110, class: 'lbl', 'font-size': 46 }, cap); c1.textContent = '切多边形';
+  const c2 = svg('text', { x: 90, y: 160, class: 'note', 'font-size': 24 }, cap); c2.textContent = '1 月 16 日 · 第一版';
+  const c3 = svg('text', { x: 90, y: 230, class: 'note', 'font-size': 24, opacity: 0, id: 'poly-c3' }, cap); c3.textContent = '撒点 → 每块地归最近的点';
+  const c4 = svg('text', { x: 90, y: 270, class: 'note', 'font-size': 24, opacity: 0, id: 'poly-c4' }, cap); c4.textContent = '再给地块安排用途';
+  const c5 = svg('text', { x: 90, y: 340, class: 'lbl', 'font-size': 32, fill: '#d9624f', opacity: 0, id: 'poly-c5' }, cap); c5.textContent = '分得出来 ≠ 适合过日子';
+  const c6 = svg('text', { x: 90, y: 400, class: 'note', 'font-size': 24, fill: '#d9624f', id: 'poly-c6', opacity: 0 }, cap); c6.textContent = '红框：宿舍 + 院子 + 出入口';
+})();
+
+// 拼图：工头带施工队，一块块接上去
+(function () {
+  const g = $('jig-svg');
+  const P = [
+    [760, 220, '起点', -1], [900, 220, '主路', 0], [900, 90, '学堂', 1], [1040, 220, '广场', 1], [1040, 350, '住屋', 3],
+    [1180, 220, '市场', 3], [760, 350, '住屋', 0], [620, 220, '城门', 0], [1180, 90, '钟楼', 5], [1320, 220, '码头', 5], [900, 350, '院子', 1],
+  ];
+  window.JIG = P.map(([x, y, name, parent]) => {
+    const grp = svg('g', { opacity: 0 }, g);
+    let link = null;
+    if (parent >= 0) { const [px, py] = P[parent]; link = svg('line', { x1: px, y1: py, x2: x, y2: y, stroke: '#3a3631', 'stroke-width': 4, opacity: 0 }, g); }
+    svg('rect', { x: x - 52, y: y - 40, width: 104, height: 80, rx: 10, fill: name === '起点' ? '#f6c79a' : '#f2e6d0', stroke: '#3a3631', 'stroke-width': 3 }, grp);
+    const t = svg('text', { x, y: y + 10, 'text-anchor': 'middle', class: 'lbl', 'font-size': 28 }, grp); t.textContent = name;
+    return { grp, link, x, y };
+  });
+  JIG.forEach(j => g.appendChild(j.grp));
+  const cap = svg('g', {}, g);
+  const a = svg('text', { x: 90, y: 110, class: 'lbl', 'font-size': 46 }, cap); a.textContent = '一块块拼上去';
+  const b = svg('text', { x: 90, y: 160, class: 'note', 'font-size': 24 }, cap); b.textContent = '4 月 2 日 · 工头带施工队';
+  const c = svg('text', { x: 90, y: 230, class: 'note', 'font-size': 24 }, cap); c.textContent = 'AI 选建筑、选拼接方向';
+  const d = svg('text', { x: 90, y: 270, class: 'note', 'font-size': 24 }, cap); d.textContent = '程序负责检查和推进';
+  const e = svg('text', { x: 90, y: 340, class: 'lbl', 'font-size': 30, fill: '#d9624f', id: 'jig-hard', opacity: 0 }, cap); e.textContent = '一直记着总体安排，很费劲';
+  window.JIG_RING = svg('rect', { x: 560, y: 40, width: 860, height: 380, rx: 30, fill: 'none', stroke: '#d9624f', 'stroke-width': 4, 'stroke-dasharray': '12 10', opacity: 0 }, g);
+})();
+
+// 画图转坐标：一片柔和的色块，程序读成五十二块碎片（示意）
+(function () {
+  const g = $('paint-svg');
+  const X0 = 560, Y0 = 30, X1 = 1320, Y1 = 470;
+  svg('rect', { x: X0, y: Y0, width: X1 - X0, height: Y1 - Y0, fill: '#e3ead2', stroke: '#3a3631', 'stroke-width': 3, rx: 6 }, g);
+  const defs = svg('defs', {}, g);
+  const f = svg('filter', { id: 'soft', x: '-30%', y: '-30%', width: '160%', height: '160%' }, defs); svg('feGaussianBlur', { stdDeviation: 22 }, f);
+  const blobs = [[760, 160, 110, '#e8a87c'], [990, 200, 130, '#9cc3d8'], [860, 340, 120, '#f0d27a'], [1120, 360, 100, '#c7a6d8'], [700, 330, 70, '#b5d39c']];
+  const soft = svg('g', { filter: 'url(#soft)', id: 'paint-soft' }, g);
+  window.BLOBS = blobs.map(([cx, cy, r, c]) => svg('circle', { cx, cy, r: 0, fill: c, opacity: .9 }, soft));
+  const road = svg('path', { d: 'M600 250 C 760 220, 900 290, 1280 230', stroke: '#8c7a62', 'stroke-width': 10, fill: 'none', 'stroke-linecap': 'round', opacity: .55, filter: 'url(#soft)', id: 'paint-road' }, g);
+  // 碎片
+  const r = rng(52), pts = [];
+  while (pts.length < 52) {
+    const x = X0 + 30 + r() * (X1 - X0 - 60), y = Y0 + 30 + r() * (Y1 - Y0 - 60);
+    if (blobs.some(([cx, cy, rr]) => Math.hypot(x - cx, y - cy) < rr * 1.15)) pts.push([x, y]);
+  }
+  const cells = voronoi(pts, X0, Y0, X1, Y1);
+  const shard = svg('g', { id: 'paint-shards' }, g);
+  window.SHARDS = cells.map((c, i) => {
+    const [x, y] = pts[i];
+    let best = blobs[0], bd = 1e9; for (const b of blobs) { const d = Math.hypot(x - b[0], y - b[1]) / b[2]; if (d < bd) { bd = d; best = b; } }
+    const cl = svg('clipPath', { id: 'sh' + i }, defs); svg('circle', { cx: best[0], cy: best[1], r: best[2] * 1.25 }, cl);
+    return svg('path', { d: pathOf(c), fill: best[3], stroke: '#3a3631', 'stroke-width': 1.5, opacity: 0, 'clip-path': `url(#sh${i})` }, shard);
+  });
+  const cap = svg('g', {}, g);
+  const a = svg('text', { x: 90, y: 110, class: 'lbl', 'font-size': 46 }, cap); a.textContent = '画图再转坐标';
+  const b = svg('text', { x: 90, y: 160, class: 'note', 'font-size': 24 }, cap); b.textContent = '4 月 25 日试 · 5 月 12 日真跑起来';
+  const c = svg('text', { x: 90, y: 230, class: 'note', 'font-size': 24 }, cap); c.textContent = '人眼：一片区域';
+  const d = svg('text', { x: 90, y: 270, class: 'note', 'font-size': 24, id: 'paint-prog', opacity: 0 }, cap); d.textContent = '程序：渐变和细碎颜色拆成很多小块';
+  const e = svg('text', { x: 1360, y: 140, class: 'lbl', 'font-size': 30, id: 'paint-n', opacity: 0 }, g);
+  const s = svg('text', { x: 1360, y: 450, class: 'lbl', 'font-size': 26, fill: '#d9624f', id: 'paint-demo', opacity: 0 }, g); s.textContent = '（示意图）';
+  const three = svg('g', { id: 'paint-three', opacity: 0 }, g);
+  ['画得好看', '读得准确', '建得出来'].forEach((w, i) => {
+    const gg = svg('g', { id: 'three' + i }, three);
+    svg('rect', { x: 70 + i * 0, y: 300 + i * 56, width: 250, height: 46, rx: 23, fill: '#fffdf8', stroke: '#d9772b', 'stroke-width': 3 }, gg);
+    const t = svg('text', { x: 195, y: 333 + i * 56, 'text-anchor': 'middle', class: 'lbl', 'font-size': 28 }, gg); t.textContent = w;
+  });
+})();
+
+// 六月 → 10.11 → 10.20 的工作方式
+(function () {
+  const g = $('flow-svg');
+  const items = [['flow-a', 'n2606', 2026, '6 月 · 整条流程重做', '建筑开始成组排布'], ['flow-b', 'n2606', 0, '10 月 11 日', 'AI 直接给世界坐标']];
+  items.forEach(([id, , , t1, t2], i) => {
+    const gg = svg('g', { id, opacity: 0 }, g);
+    svg('rect', { x: 240 + i * 640, y: 20, width: 560, height: 130, rx: 14, fill: '#fffdf8', stroke: '#cfc5b5', 'stroke-width': 2 }, gg);
+    const a = svg('text', { x: 520 + i * 640, y: 75, 'text-anchor': 'middle', class: 'lbl', 'font-size': 40 }, gg); a.textContent = t1;
+    const b = svg('text', { x: 520 + i * 640, y: 120, 'text-anchor': 'middle', class: 'note', 'font-size': 26 }, gg); b.textContent = t2;
+  });
+  const loop = svg('g', { id: 'flow-loop', opacity: 0 }, g);
+  const t = svg('text', { x: 838, y: 210, 'text-anchor': 'middle', class: 'lbl', 'font-size': 38 }, loop); t.textContent = '10 月 20 日 · 设计镜潮';
+  const steps = [['Astra 定位置和排法', 438], ['程序算出结果', 838], ['看着结果调整', 1238]];
+  steps.forEach(([w, x], i) => {
+    svg('rect', { x: x - 170, y: 290, width: 340, height: 90, rx: 45, fill: ['#e3e8f4', '#efe7d8', '#fbe2cc'][i], stroke: '#3a3631', 'stroke-width': 3 }, loop);
+    const tt = svg('text', { x, y: 346, 'text-anchor': 'middle', class: 'lbl', 'font-size': 32 }, loop); tt.textContent = w;
+  });
+  svg('path', { d: 'M610 335 H660 M1010 335 H1060', stroke: '#3a3631', 'stroke-width': 5, 'marker-end': 'url(#ah)' }, loop);
+  svg('path', { id: 'flow-back', d: 'M1238 385 C 1238 470, 438 470, 438 390', stroke: '#d9772b', 'stroke-width': 5, fill: 'none', 'stroke-dasharray': '14 10', 'marker-end': 'url(#ah)' }, loop);
+})();
+
+// 学生生活
+const LIFE = [['住哪儿', '宿院'], ['在哪儿吃饭', '食堂'], ['洗衣洗浴怎么办', '日常补给'], ['生病了去哪儿', '医护'], ['空地', '庭院 · 通道 · 种植地']];
+LIFE.forEach(([q, a], i) => {
+  const row = document.createElement('div'); row.className = 'hand';
+  row.style.cssText = 'font-size:40px;display:flex;align-items:center;height:68px;opacity:0';
+  row.innerHTML = `<span style="width:400px;text-align:right">${q}</span><span style="width:120px;text-align:center;color:#d9772b">→</span><span>${a}</span>`;
+  $('life-rows').appendChild(row);
+});
+
+function show(id, op) { const e = typeof id === 'string' ? $(id) : id; e.style.opacity = op; e.style.visibility = op > 0.001 ? 'visible' : 'hidden'; }
+const R = { aier: 135.9, east: 81.5, spawn: 54.3 };
+
+window.drawBoard = function (time) {
+  // 段落标题卡"回顾"和艾尔大陆（与 elle.html 一致）
+  show('titlecard', ease(time / 0.4) * (1 - ease((time - 2.6) / 0.5)));
+  show('map', ease((since('sea', time) - 2.6) / 0.6) * (1 - ease((since('erase', time) - 1.6) / 0.6)));
+  $('sea-lbl').setAttribute('opacity', ease((since('sea', time) - 3.0) / 0.5));
+  const draw = { aier: since('aier', time), east: since('others', time), spawn: since('others', time) - 0.7 };
+  for (const k of ['aier', 'east', 'spawn']) {
+    $('o-' + k).setAttribute('stroke-dashoffset', 1 - inout(draw[k] / 0.9));
+    const f = since('fill', time) - (k === 'aier' ? 0 : k === 'east' ? 0.5 : 1.0);
+    const er = 1 - inout((since('erase', time) - (k === 'aier' ? 0.2 : k === 'east' ? 0.5 : 0.8)) / 0.7);
+    $('cc-' + k).setAttribute('r', R[k] * inout(f / 0.8) * er);
+    $('o-' + k).style.opacity = er;
+    $('l-' + k).style.opacity = ease((draw[k] - 0.7) / 0.4) * er;
+  }
+  show('tag', ease((since('aier', time) - 0.4) / 0.5) * (1 - ease((since('erase', time) - 1.6) / 0.5)));
+  const worldOut = 1 - ease((since('tl', time) - 0.2) / 0.5);
+  show('world', ease((since('erase', time) - 1.4) / 0.9) * worldOut);
+  show('worldcap', ease((since('erase', time) - 2.0) / 0.6) * worldOut);
+
+  // 时间线
+  const tlOp = between('tl', 'end', time, 0.6, 1.2, 0.4, 1.0);
+  show('tl', tlOp);
+  $('tl-line').setAttribute('x2', 90 + 1490 * inout((since('tl', time) - 0.4) / 1.2));
+  let focus = -1, best = -1e9;
+  for (const [m, i] of FOCUS) { const s = since(m, time); if (s >= 0 && s < 1e8 && -s > best) { best = -s; focus = i; } }
+  const all = since('tlall', time) >= 0;
+  NODES.forEach((n, i) => {
+    const s = since(n.on, time) - (n.d || 0) - (n.on === 'tl' ? 0.6 : 0);
+    const appear = ease(s / 0.4);
+    n.el.style.opacity = appear * (i === focus || all ? 1 : 0.75);
+    const pop = i === focus && !all ? 1.18 : 1;
+    n.el.style.transform = `translateY(${(1 - appear) * 12}px) scale(${pop})`;
+    n.el.classList.toggle('on', all ? since('tlall', time) > i * 0.15 : i === focus);
+  });
+
+  // 主画面
+  show('copy', between('tl', 'n2601', time, 0.5, 0.4, 0.5));
+  const cp = since('tl', time);
+  ['w1', 'w2', 'w3'].forEach((w, i) => { const a = ease((cp - 0.6 - i * 0.5) / 0.4); $(w).style.opacity = a; $(w).style.transform = `translateY(${(1 - a) * 30}px)`; });
+  const kb = (cp - 1.2) % 2.4;
+  const kp = (el, x, y, op, sc) => Object.assign($(el).style, { left: x + 'px', top: y + 'px', opacity: op, transform: `scale(${sc})` });
+  kp('kc', 130 + (kb < 1.2 ? 0 : 330), kb < 1.2 ? 0 : 80, cp > 1.2 ? 1 : 0, 1 + 0.15 * Math.max(0, 1 - (kb % 1.2) / 0.2));
+  kp('kv', 700 - (kb < 1.2 ? 0 : 280), 200 + (kb < 1.2 ? 0 : 60), cp > 1.8 ? 1 : 0, 1 + 0.15 * Math.max(0, 1 - ((kb + 0.6) % 1.2) / 0.2));
+
+  show('astra', between('n2601', 'methods', time, 0.6, 0.4));
+  show('v52', ease((since('v52', time)) / 0.5));
+  show('methods', between('methods', 'n0409', time, 0.6, 0.4));
+  [...$('methods').children].forEach((c, i) => {
+    const a = ease((since('methods', time) - i * 0.6) / 0.5); c.style.opacity = a; c.style.transform = `translateY(${(1 - a) * 30}px) rotate(${(i - 1) * 1.5}deg)`;
+    c.querySelector('.x').style.opacity = ease((since('methods', time) - 3 - i * 0.5) / 0.2);
+  });
+
+  show('when', between('n0409', 'poly', time, 0.5, 0.4));
+  $('when-arrow').setAttribute('stroke-dashoffset', 1 - inout((since('n0409', time) - 0.6) / 0.8));
+  $('when-early').setAttribute('opacity', between('early', 'fix', time, 0.6, 0.3));
+  $('when-why').setAttribute('opacity', ease((since('n0409', time) - 3.5) / 0.6) * (1 - ease(since('fix', time) / 0.3)));
+  $('when-q').setAttribute('opacity', ease(since('fix', time) / 0.3) * (1 - ease((since('fix', time) - 2.2) / 0.3)));
+  const mv = inout((since('fix', time) - 2.2) / 0.6);
+  $('when-sep').setAttribute('opacity', 1 - mv);
+  $('when-oct').setAttribute('opacity', mv);
+  $('when-oct').setAttribute('transform', `translate(${(1 - mv) * 40} 0)`);
+  $('when-fix').setAttribute('opacity', ease((since('fix', time) - 2.6) / 0.5));
+  $('when-ok').setAttribute('opacity', 1 - ease(since('fix', time) / 0.3) + ease((since('fix', time) - 3) / 0.5));
+
+  // 便签"啪"地贴上
+  const st = since('note', time);
+  show('sticky', ease(st / 0.08) * (1 - ease(since('poly', time) / 0.4)));
+  const slap = st < 0 ? 1.6 : st < 0.12 ? 1.6 - 0.65 * (st / 0.12) : 0.95 + 0.05 * ease((st - 0.12) / 0.2);
+  $('sticky').style.transform = `rotate(4deg) scale(${slap})`;
+
+  // 切多边形
+  show('poly', between('poly', 'jigsaw', time, 0.5, 0.4));
+  const ps = since('poly', time);
+  POLY.forEach((p, i) => {
+    p.dot.setAttribute('r', 7 * ease((ps - 0.6 - i * 0.1) / 0.25));
+    p.edge.setAttribute('stroke-dashoffset', 1 - inout((ps - 2.8 - i * 0.12) / 0.8));
+    const f = ease((since('polyfill', time) - i * 0.18) / 0.4);
+    p.fill.setAttribute('opacity', f * 0.95);
+    p.text.setAttribute('opacity', f);
+  });
+  $('poly-c3').setAttribute('opacity', ease((ps - 2.5) / 0.5));
+  $('poly-c4').setAttribute('opacity', ease(since('polyfill', time) / 0.5));
+  const pf = since('polyfail', time);
+  $('poly-fail').setAttribute('opacity', ease(pf / 0.3));
+  $('poly-fail').setAttribute('transform', `translate(${pf > 0 && pf < 1.2 ? 8 * Math.sin(pf * 30) * (1 - pf / 1.2) : 0} ${-(1 - ease(pf / 0.4)) * 60})`);
+  $('poly-c5').setAttribute('opacity', ease((pf - 2) / 0.6));
+  $('poly-c6').setAttribute('opacity', ease((pf - 0.4) / 0.5));
+
+  // 拼图
+  show('jig', between('jigsaw', 'paint', time, 0.5, 0.4));
+  const js = since('jigsaw', time);
+  JIG.forEach((j, i) => {
+    const a = ease((js - 0.6 - i * 1.1) / 0.45);
+    j.grp.setAttribute('opacity', a);
+    j.grp.setAttribute('transform', `translate(0 ${(1 - a) * -40})`);
+    if (j.link) j.link.setAttribute('opacity', ease((js - 0.4 - i * 1.1) / 0.3));
+  });
+  const hard = since('jigsaw', time) - 17;
+  $('jig-hard').setAttribute('opacity', ease(hard / 0.6));
+  JIG_RING.setAttribute('opacity', ease(hard / 0.6) * (0.6 + 0.4 * Math.sin(time * 4)));
+
+  // 画图 → 五十二块
+  show('paint', between('paint', 'n2606', time, 0.5, 0.4));
+  const pa = since('paint', time);
+  BLOBS.forEach((b, i) => b.setAttribute('r', [110, 130, 120, 100, 70][i] * ease((pa - 0.8 - i * 0.5) / 1.0)));
+  const sh = since('shatter', time);
+  $('paint-prog').setAttribute('opacity', ease((sh + 2) / 0.5));
+  const n = Math.max(1, Math.min(52, Math.floor(1 + 51 * clamp(sh / 2.2))));
+  SHARDS.forEach((s, i) => s.setAttribute('opacity', i < n && sh > 0 ? 0.92 : 0));
+  $('paint-soft').setAttribute('opacity', 1 - 0.7 * ease(sh / 2));
+  $('paint-n').textContent = `读出分区：${n}`;
+  $('paint-n').setAttribute('opacity', ease(sh / 0.3));
+  $('paint-demo').setAttribute('opacity', ease(sh / 0.3));
+  const th = since('three', time);
+  $('paint-three').setAttribute('opacity', ease(th / 0.3));
+  [0, 1, 2].forEach(i => { const a = ease((th - i * 0.8) / 0.4); $('three' + i).setAttribute('opacity', a); });
+  $('paint-n').setAttribute('font-size', 30 + 14 * clamp(1 - Math.abs(sh - 2.4) / 0.6));
+
+  // 六月、10.11、10.20
+  show('flow', between('n2606', 'n2609', time, 0.5, 0.4));
+  $('flow-a').setAttribute('opacity', ease(since('n2606', time) / 0.5));
+  $('flow-b').setAttribute('opacity', ease((since('n2606', time) - 4) / 0.5));
+  $('flow-loop').setAttribute('opacity', ease(since('n1020', time) / 0.5));
+  $('flow-back').setAttribute('stroke-dashoffset', -time * 40);
+
+  show('test', between('n2609', 'n2610', time, 0.5, 0.4));
+  show('t-ds1', ease(since('ds', time) / 0.5));
+  show('t-glm1', ease(since('glmtest', time) / 0.5));
+  $('t-ds').style.opacity = 0.55 + 0.45 * (since('glmtest', time) < 0 ? 1 : 0.6);
+  show('join', between('n2610', 'd4old', time, 0.5, 0.4));
+
+  // 镜潮
+  show('d4', between('d4old', 'life', time, 0.5, 0.5));
+  show('d4-mk', ease(since('d4marked', time) / 0.6));
+  const sp = since('d4marked', time) - 0.8;
+  show('d4-stamp', ease(sp / 0.08));
+  $('d4-stamp').style.transform = `rotate(-8deg) scale(${sp < 0.12 ? 1.8 - 0.8 * clamp(sp / 0.12) : 1})`;
+  const cmp = since('compare', time);
+  show('d4-cap', 1 - ease(cmp / 0.4));
+  show('d4-manual', between('manual', 'compare', time, 0.5, 0.4));
+  show('d4-strike', ease((since('rewrite', time)) / 0.4));
+  show('d4-new', ease((since('rewrite', time) - 0.6) / 0.5));
+  show('d4-b', ease((cmp - 0.3) / 0.6));
+  show('d4-cmp', ease((cmp - 0.8) / 0.5));
+  $('d4-a').style.left = (120 + 0 * cmp) + 'px';
+
+  show('life', between('life', 'tlall', time, 0.5, 0.4));
+  [...$('life-rows').children].forEach((r, i) => { const a = ease((since('life', time) - 1 - i * 1.6) / 0.5); r.style.opacity = a; r.style.transform = `translateX(${(1 - a) * -30}px)`; });
+
+  show('year', between('tlall', 'end', time, 0.8, 1.0, 1.0, 1.5));
+};
+</script>
+</body>
+</html>
