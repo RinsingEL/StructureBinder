@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>第二段 · 看流程</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@500;700&display=block">
+<style>
+  :root { --ink: #3a3631; }
+  html, body { margin: 0; background: #1e1d1b; }
+  #stage { position: relative; width: 1920px; height: 1080px; overflow: hidden; font-family: "Noto Sans SC", "WenQuanYi Zen Hei", sans-serif; }
+  #room { position: absolute; inset: 0; width: 1920px; height: 1080px; }
+  /* 白板内侧 x 122–1799，y 41–697 */
+  #cover { position: absolute; left: 122px; top: 41px; width: 1677px; height: 656px; }
+  #board { position: absolute; left: 136px; top: 49px; width: 1649px; height: 640px; display: flex; align-items: center; justify-content: center; }
+  #ppt { max-width: 100%; max-height: 100%; display: block; mix-blend-mode: multiply; }
+  .member { position: absolute; width: 420px; height: 420px; bottom: -64px; transform-origin: 50% 100%; }
+  .member img { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0;
+    filter: drop-shadow(3px 0 0 #fff) drop-shadow(-3px 0 0 #fff) drop-shadow(0 3px 0 #fff) drop-shadow(0 -3px 0 #fff) drop-shadow(0 6px 8px rgba(60,40,20,.25)); }
+  #sub { position: absolute; left: 600px; right: 600px; top: 740px; height: 300px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  #name { font-size: 26px; font-weight: 700; color: #fff; padding: 4px 18px; border-radius: 999px; margin-bottom: 14px; letter-spacing: 2px; }
+  #line { font-size: 30px; line-height: 1.5; color: var(--ink); text-align: center; background: rgba(255,253,247,.94); padding: 16px 30px;
+    border-radius: 14px; box-shadow: 0 4px 14px rgba(60,40,20,.12); max-width: 660px; text-wrap: balance; white-space: pre-line; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <img id="room" src="../开放日插画/clubroom_v2.png" alt="">
+  <img id="cover" src="cover_board.jpg" alt="">
+  <div id="board"><img id="ppt" alt=""></div>
+  <div id="members"></div>
+  <div id="sub"><div id="name"></div><div id="line"></div></div>
+</div>
+<script src="act2_script.js"></script>
+<script>
+const SPRITES = '../../act2/assets/avatars/sprites/compact/';
+const PAGES = '../../act2/分页图/';
+const members = [
+  { id: 'rin',      name: 'Rin',      color: '#8a6a4f', x: -40,  z: 1 },
+  { id: 'gemini',   name: 'Gemini',   color: '#8a63d2', x: 125,  z: 2 },
+  { id: 'claude',   name: 'Claude',   color: '#d9772b', x: 290,  z: 3 },
+  { id: 'astra',    name: 'Astra',    color: '#7f8db5', x: 1225, z: 3 },
+  { id: 'deepseek', name: 'DeepSeek', color: '#3a6fc4', x: 1380, z: 2 },
+  { id: 'glm',      name: 'GLM',      color: '#3d3d46', x: 1520, z: 1 },
+];
+const states = ['listen', 'greet', 'd4', 'talk_smile', 'think', 'moved', 'wry'];
+const FALLBACK = { think: ['d4', 'talk_smile'], talk_smile: ['d4'], d4: ['talk_smile'], greet: ['listen'], moved: ['talk_smile'], wry: ['d4'] };
+const { beats: BEATS, durations: DUR, lines: SCRIPT } = window.ACT2;
+
+// 时间线：每屏字幕按每秒约 6 字计时。要翻页时，如果上一拍的动画还没播完，就先停在那里等它播完（例如 D7 全城快放）
+const INTRO = 0.8, OUTRO = 2.4, GAP = 0.25;
+const timeline = [], beatStarts = [];
+let t = INTRO, curBeat = -1;
+for (const line of SCRIPT) {
+  let lineStart = null;
+  for (const c of line.cards) {
+    const b = c.beat ? BEATS.indexOf(c.beat) : -1;
+    if (b >= 0 && b !== curBeat) {
+      if (curBeat >= 0) {
+        const last = beatStarts[beatStarts.length - 1];
+        t = Math.max(t, last.t + DUR[curBeat] + 0.4);
+      }
+      beatStarts.push({ beat: b, t: t + 0.2 });
+      curBeat = b;
+    }
+    if (lineStart === null) lineStart = t;
+    const dur = Math.max(1.8, c.text.replace(/\n/g, '').length / 6 + 0.7);
+    timeline.push({ who: line.who, face: c.face, text: c.text, start: t, end: t + dur, lineStart });
+    t += dur;
+  }
+  t += GAP;
+}
+window.DURATION = t + OUTRO;
+
+// 当前该显示第几拍、播到几成，录制脚本用它去驱动第二幕 PPT
+window.beatAt = function (time) {
+  let cur = null;
+  for (const s of beatStarts) if (s.t <= time) cur = s;
+  if (!cur) return null;
+  const d = DUR[cur.beat];
+  return { index: cur.beat, id: BEATS[cur.beat], progress: d ? Math.min(1, (time - cur.t) / d) : 1, since: time - cur.t };
+};
+
+const box = document.getElementById('members');
+for (const m of members) {
+  const el = document.createElement('div');
+  el.className = 'member'; el.style.left = m.x + 'px'; el.id = 'm-' + m.id;
+  for (const s of states) {
+    const img = document.createElement('img');
+    img.dataset.state = s; img.src = SPRITES + m.id + '/' + s + '.png';
+    img.onerror = () => img.remove();
+    el.appendChild(img);
+  }
+  box.appendChild(el);
+}
+
+const $ = id => document.getElementById(id);
+const clamp = x => Math.max(0, Math.min(1, x));
+const ease = x => 1 - Math.pow(1 - clamp(x), 3);
+const SWAP = 0.15, HOLD = 2.0, HOLD_UNTIL_NEXT = false;
+const cueAt = time => timeline.find(c => time >= c.start && time < c.end);
+function available(id, state) {
+  const el = $('m-' + id);
+  if (el.querySelector(`img[data-state="${state}"]`)) return state;
+  for (const alt of FALLBACK[state] || []) if (el.querySelector(`img[data-state="${alt}"]`)) return alt;
+  return 'listen';
+}
+function faceAt(id, time) {
+  const c = cueAt(time);
+  if (c && c.who === id) return available(id, c.face);
+  let last = null;
+  for (const x of timeline) { if (x.start > time) break; if (x.who === id && x.end <= time) last = x; }
+  if (last && (HOLD_UNTIL_NEXT || time - last.end < HOLD)) return available(id, last.face);
+  return 'listen';
+}
+function dimAt(id, time) { const c = cueAt(time); return !!c && c.who !== id; }
+const boundaries = [...new Set(timeline.flatMap(c => [c.start, c.end, c.end + HOLD]))].sort((a, b) => a - b);
+function lastChange(fn, time, dur) {
+  for (let i = boundaries.length - 1; i >= 0; i--) {
+    const b = boundaries[i];
+    if (b > time) continue;
+    if (time - b >= dur) return null;
+    if (fn(b - 0.001) !== fn(b)) return b;
+  }
+  return null;
+}
+
+// 录制时由脚本传入当前 PPT 画面；直接打开预览时用分页图代替
+window.externalPpt = false;
+const PAGE_FILE = { W1: '01_W1', W2: '02_W2', W3a: '03_W3a', W3b: '04_W3b', W3c: '05_W3c', T1: '06_T1', T2: '07_T2', T3: '08_T3', 'T3-end': '09_T3-end',
+  T4: '10_T4', D1: '11_D1', D1b: '12_D1b', D1c: '13_D1c', D1d: '14_D1d', D1e: '15_D1e', D2: '16_D2', D3: '17_D3', D4: '18_D4', D5a: '19_D5a', D5b: '20_D5b',
+  D6: '21_D6', D7: '22_D7', 'D-photos': '23_D-photos' };
+
+window.render = function (time) {
+  const b = window.beatAt(time);
+  const first = beatStarts[0].t;
+  $('cover').style.opacity = 1 - ease((time - first + 0.4) / 0.6);
+  $('board').style.opacity = ease((time - first) / 0.5);
+  if (!window.externalPpt && b) { const src = PAGES + PAGE_FILE[b.id] + '.jpg'; if (!$('ppt').src.endsWith(encodeURI(src).split('/').pop())) $('ppt').src = src; }
+
+  const cue = cueAt(time);
+  members.forEach(m => {
+    const el = $('m-' + m.id);
+    const speaking = cue && cue.who === m.id;
+    const face = faceAt(m.id, time);
+    const changedAt = lastChange(x => faceAt(m.id, x), time, SWAP);
+    const k = changedAt === null ? 1 : (time - changedAt) / SWAP;
+    const prev = changedAt === null ? face : faceAt(m.id, changedAt - 0.001);
+    for (const img of el.querySelectorAll('img')) {
+      const s = img.dataset.state;
+      img.style.opacity = s === face ? k : (s === prev && k < 1 ? 1 - k : 0);
+    }
+    const squash = k < 1 ? 1 - 0.04 * Math.sin(k * Math.PI) : 1;
+    const dimNow = dimAt(m.id, time), dimChanged = lastChange(x => dimAt(m.id, x), time, 0.25);
+    let d = dimNow ? 1 : 0;
+    if (dimChanged !== null) { const q = (time - dimChanged) / 0.25; d = dimNow ? q : 1 - q; }
+    el.style.filter = `brightness(${1 - 0.28 * d}) saturate(${1 - 0.2 * d})`;
+    let lift = 0, scale = 1;
+    if (speaking) {
+      const s = time - cue.lineStart;
+      lift = 26 * Math.sin(Math.min(s / 0.35, 1) * Math.PI) * (s < 0.35 ? 1 : 0) + 10 + 3 * Math.sin(time * 6);
+      scale = 1.08;
+    }
+    el.style.transform = `translateY(${-lift}px) scale(${scale * (2 - squash)}, ${scale * squash})`;
+    el.style.zIndex = speaking ? 10 : m.z;
+  });
+  const name = $('name'), line = $('line');
+  if (cue) {
+    const who = members.find(m => m.id === cue.who);
+    name.textContent = who.name; name.style.background = who.color; line.textContent = cue.text;
+    const fade = ease((time - cue.start) / 0.2);
+    name.style.opacity = fade; line.style.opacity = fade;
+  } else { name.style.opacity = 0; line.style.opacity = 0; }
+};
+
+if (!location.search.includes('static')) {
+  const t0 = performance.now();
+  (function loop() { window.render(((performance.now() - t0) / 1000) % window.DURATION); requestAnimationFrame(loop); })();
+}
+</script>
+</body>
+</html>

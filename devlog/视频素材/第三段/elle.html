@@ -106,7 +106,8 @@ const script = [
     { text: '结果连做个平滑都头疼。\n现在看来因地制宜也挺美的，还有惊喜感。', face: 'talk_smile' }] },
 ];
 
-const INTRO = 2.6, OUTRO = 2.4;
+// 衔接第二段结尾：Rin 一开口就接 Gemini 的话，标题卡和第一句同时出现，不单独停顿
+const INTRO = 0.5, OUTRO = 2.4;
 const timeline = [], marks = {};
 let t = INTRO;
 for (const line of script) {
@@ -174,9 +175,9 @@ const R = { aier: 135.9, east: 81.5, spawn: 54.3 };
 window.render = function (time) {
   // 段落标题卡"回顾"，随后淡出成地图
   const tc = $('titlecard');
-  tc.style.opacity = ease(time / 0.5) * (1 - ease((time - 1.9) / 0.5));
-  $('map').style.opacity = ease(since('sea', time) / 0.6) * (1 - ease((since('erase', time) - 1.6) / 0.6));
-  $('sea-lbl').setAttribute('opacity', ease((since('sea', time) - 0.4) / 0.5));
+  tc.style.opacity = ease(time / 0.4) * (1 - ease((time - 2.6) / 0.5));
+  $('map').style.opacity = ease((since('sea', time) - 2.6) / 0.6) * (1 - ease((since('erase', time) - 1.6) / 0.6));
+  $('sea-lbl').setAttribute('opacity', ease((since('sea', time) - 3.0) / 0.5));
   // 先画圈，再填群系
   const draw = { aier: since('aier', time), east: since('others', time), spawn: since('others', time) - 0.7 };
   for (const k of ['aier', 'east', 'spawn']) {
