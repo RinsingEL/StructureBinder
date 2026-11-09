@@ -22,6 +22,22 @@ canvas{position:absolute;inset:0;width:1600px;height:702px}#safe{position:absolu
 #explain.declarations{width:610px}#explain.declarations h2{line-height:24px;margin:0 0 12px}#explain.declarations .district-row{height:24px;line-height:24px;padding:0;white-space:nowrap}#explain.declarations .direction{display:inline-block;margin-left:10px;padding:0 7px;background:#e0d4b9;color:#684823;font-size:13px;font-weight:700;line-height:20px}#explain.declarations .intent{min-height:48px;font-size:13px;margin-top:10px;padding-top:8px}
 #roster .realm.reason-active{background:#e6e1cc}#roster .reason{grid-column:2/4;font-size:14px;line-height:1.6;color:#684823}#explain.style-note{width:380px}#params .mini-layout{height:100px;position:relative;margin:12px 0;background:#e6e1cc}#params .mini-layout i{position:absolute;width:35px;height:22px;background:#c4b594;border:1px solid #2b2a26}#params .mini-layout span{position:absolute;left:130px;top:42px;font-size:12px}#params .mini-layout .mini-arrow{position:absolute;font-size:20px;color:#684823}#explain .strong{color:#684823;font-weight:700}#params b{overflow-wrap:anywhere}#params .param{padding:9px 0}
 #params.demo .param{padding:5px 0;font-size:13px;line-height:1.3}#params.demo b{font-size:13px;line-height:1.3;margin-top:2px}#params.demo .purpose{margin:8px 0;line-height:1.4}#params.demo .mini-layout{margin:10px 0}
+
+/* 视频版大字号：PPT 放在视频上半部、手机上再缩一次，原来 11～16px 的字几乎看不见。默认用大字号，地址加 ?small 看原版 */
+#sheet.big #stage{font-size:20px}#sheet.big #caption{font-size:26px;top:652px}#sheet.big #source{font-size:17px;top:664px;color:#2b2a2699}
+#sheet.big #legend{font-size:18px;gap:24px}#sheet.big #legend i{width:22px;height:7px}#sheet.big #scan-count,#sheet.big #stats{font-size:18px;top:620px}
+#sheet.big #paper{left:1060px;width:490px}#sheet.big #paper p{font-size:22px;margin-bottom:22px}#sheet.big #paper small{font-size:16px}
+#sheet.big #log{width:400px;top:80px}#sheet.big #log li{font-size:19px;padding-bottom:8px;margin-bottom:8px}#sheet.big #log .tool{font-size:16px}#sheet.big #log .ok{font-size:15px}#sheet.big #log .line{width:46px}
+#sheet.big #districts{font-size:19px;left:470px;width:560px}#sheet.big #case{font-size:16px}
+#sheet.big #roster{width:440px;top:100px}#sheet.big #roster header{font-size:18px}#sheet.big #roster .realm{font-size:19px;grid-template-columns:14px 100px 1fr;padding:11px 0}#sheet.big #roster small{font-size:15px}
+#sheet.big #roster.compact{width:390px}#sheet.big #roster.compact .realm{font-size:17px;grid-template-columns:12px 92px 1fr;padding:9px 0}#sheet.big #roster .reason{font-size:17px}
+#sheet.big #explain{width:450px;top:96px;font-size:21px}#sheet.big #explain h2,#sheet.big #params h2{font-size:25px}#sheet.big #explain small{font-size:16px}#sheet.big #explain .intent{font-size:18px}#sheet.big #explain .tag-grid p{font-size:19px}#sheet.big #explain .current-duty{font-size:18px}
+#sheet.big #explain.declarations{width:720px;padding:16px 20px}#sheet.big #explain.declarations h2{line-height:30px;margin-bottom:8px}#sheet.big #explain.declarations .district-row{height:26px;line-height:26px;font-size:17px}#sheet.big #explain.declarations .direction{font-size:16px;line-height:24px}#sheet.big #explain.declarations .intent{font-size:17px;min-height:0}#sheet.big #explain.declarations small{display:none}#sheet.big #explain.declarations{top:88px}
+#sheet.big #explain.style-note{width:470px}
+#sheet.big #params{left:1070px;width:480px;top:100px}#sheet.big #params .param{font-size:20px}#sheet.big #params b{font-size:18px}#sheet.big #params small{font-size:14px}#sheet.big #params .purpose{font-size:18px}#sheet.big #params .mini-layout span{font-size:16px}
+#sheet.big #params.fast{width:430px;left:44px}#sheet.big #params.fast .param{font-size:17px}#sheet.big #params.fast b{font-size:16px}#sheet.big #params.fast .purpose{font-size:16px;max-height:64px}
+#sheet.big #params.demo .param{font-size:17px}#sheet.big #params.demo b{font-size:16px}
+#sheet.big #stack{width:350px;top:84px}#sheet.big #stack .slip{font-size:16px;height:33px;padding:5px 12px}#sheet.big #stack .slip.active{height:118px}#sheet.big #stack small{font-size:14px}
 </style></head>
 <body><main id="sheet" tabindex="0" aria-label="W T D 地图演示；右箭头下一拍，左箭头上一拍，F 全屏">
 <canvas id="map" width="1600" height="702" aria-label="存档地图"></canvas>
@@ -81,7 +97,8 @@ const beats=[
 let scene=0,index=0,frame=0,current={...base},from={...base},start=0;
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 function xy(x,z,s){const k=580/s.range;return [s.screenX+(x-s.cx)*k,354+(z-s.cz)*k]}
-function text(t,x,y,size=13,alpha=1,font=serif){ctx.globalAlpha=alpha;ctx.fillStyle=INK;ctx.font=`${size}px ${font}`;ctx.fillText(t,x,y);ctx.globalAlpha=1}
+const BIG=!new URLSearchParams(location.search).has('small'),TS=BIG?1.4:1;if(BIG)document.getElementById('sheet').classList.add('big');
+function text(t,x,y,size=13,alpha=1,font=serif){ctx.globalAlpha=alpha;ctx.fillStyle=INK;ctx.font=`${size*TS}px ${font}`;ctx.fillText(t,x,y);ctx.globalAlpha=1}
 function line(x,y,x2,y2,color=INK,width=1){ctx.strokeStyle=color;ctx.lineWidth=width;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x2,y2);ctx.stroke()}
 function dot(x,y,r=3,color=INK){ctx.fillStyle=color;ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill()}
 function mapImage(img,x,z,w,h,s,alpha){if(alpha<=0)return;const [px,py]=xy(x,z,s);ctx.globalAlpha=alpha;ctx.imageSmoothingEnabled=false;ctx.drawImage(img,px,py,w*580/s.range,h*580/s.range);ctx.globalAlpha=1}
@@ -299,10 +316,10 @@ function introMap(s,p){
   if(i>0&&rowFlip(i,flip)<1)return;
   if(selected){ctx.save();ctx.globalAlpha=.13*f.t;dot(target[0],target[1],28,'#B07A4F');ctx.restore()}
   dot(f.x,f.y,selected?9:6,selected?'#B07A4F':'#5E8C9A');
-  if(f.t>.9){const label=String(i+1).padStart(2,'0')+' '+intentShortNames[i];ctx.fillStyle=PAPER;ctx.fillRect(f.x+11,f.y-12,label.length*13+8,20);text(label,f.x+15,f.y+3,13,selected?1:.8);}
+  if(f.t>.9){const label=String(i+1).padStart(2,'0')+' '+intentShortNames[i];ctx.fillStyle=PAPER;ctx.fillRect(f.x+11,f.y-12*TS,label.length*13*TS+8,20*TS);text(label,f.x+15,f.y+3*TS,13,selected?1:.8);}
  });
- text(flip>0?'16 个功能区 · 分工和相互位置':String(active+1).padStart(2,'0')+' · '+districtName(d),700,600,15);
- text('总方案：先说明用途和大致关系，具体坐标在后续组团设计时确定。',700,625,13,.85);
+ text(flip>0?'16 个功能区 · 分工和相互位置':String(active+1).padStart(2,'0')+' · '+districtName(d),BIG?790:700,600,15);
+ text('总方案：先说明用途和大致关系，具体坐标在后续组团设计时确定。',BIG?790:700,625,13,.85);
  $('sheet').dataset.activeDistrict=d.groupId;
  $('sheet').dataset.intentPresentation='approximate-map-flight';
 }
@@ -396,21 +413,21 @@ function selectionCards(p){
 function stylePiles(p){
  const selected=round2.styles.findIndex(x=>x.term==='魔法学院新制');
  round2.styles.forEach((style,i)=>{
-  const x=500+(i%4)*245,y=150+Math.floor(i/4)*150,keep=i===selected;
+  const x=(BIG?530:500)+(i%4)*245,y=150+Math.floor(i/4)*150,keep=i===selected;
   const alpha=keep?clamp(p*4):clamp(p*4)*(1-clamp((p-.5)/.4));
   ctx.save();ctx.globalAlpha=alpha;ctx.fillStyle='#E6E1CC';ctx.fillRect(x+8,y+8,210,110);ctx.fillStyle=PAPER;ctx.fillRect(x,y,210,110);ctx.strokeStyle='#2b2a2633';ctx.strokeRect(x,y,210,110);ctx.restore();
-  text(style.term,x+16,y+34,18,alpha);text(`${style.count} 种`,x+16,y+62,14,alpha);
-  if(keep){const img=materialImages.get('studio:mg-27-v02');if(img?.complete&&img.naturalWidth){ctx.save();ctx.globalAlpha=alpha;ctx.drawImage(img,x+110,y+8,90,90);ctx.restore()}}
+  text(style.term,x+16,y+34,BIG?14:18,alpha);text(`${style.count} 种`,x+16,y+62,14,alpha);
+  if(keep){const img=materialImages.get('studio:mg-27-v02');if(img?.complete&&img.naturalWidth){ctx.save();ctx.globalAlpha=alpha;BIG?ctx.drawImage(img,x+140,y+30,72,72):ctx.drawImage(img,x+110,y+8,90,90);ctx.restore()}}
  });
 }
 function usagePiles(p){
  round2.piles.forEach((pile,i)=>{
-  const x=500+(i%3)*340,y=145+Math.floor(i/3)*235,q=ease(clamp(p*3-i*.2));
+  const x=(BIG?525:500)+(i%3)*340,y=145+Math.floor(i/3)*235,q=ease(clamp(p*3-i*.2));
   ctx.save();ctx.globalAlpha=q;ctx.fillStyle='#E6E1CC';ctx.fillRect(x,y,310,195);ctx.restore();
   text(`${pile.label} · ${pile.count} 种`,x+15,y+27,18,q);
   pile.refs.filter(ref=>materialImages.has(ref)).slice(0,3).forEach((ref,j)=>{const img=materialImages.get(ref);if(img?.complete&&img.naturalWidth){ctx.save();ctx.globalAlpha=q;ctx.drawImage(img,x+10+j*88,y+55+(j%2)*12,110,110);ctx.restore()}});
  });
- text('按作者用途归堆 · 一栋素材可以有多种用途',500,620,13,.8);
+ text('按作者用途归堆 · 一栋素材可以有多种用途',BIG?525:500,620,13,.8);
 }
 function arrow(x,y,xx,yy,color='#B07A4F',width=1.5){line(x,y,xx,yy,color,width);const a=Math.atan2(yy-y,xx-x);line(xx,yy,xx-8*Math.cos(a-.5),yy-8*Math.sin(a-.5),color,width);line(xx,yy,xx-8*Math.cos(a+.5),yy-8*Math.sin(a+.5),color,width)}
 function layoutDemo(s,p){

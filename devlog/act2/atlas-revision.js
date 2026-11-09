@@ -109,10 +109,10 @@ function introMap(s,p){
   if(i>0&&rowFlip(i,flip)<1)return;
   if(selected){ctx.save();ctx.globalAlpha=.13*f.t;dot(target[0],target[1],28,'#B07A4F');ctx.restore()}
   dot(f.x,f.y,selected?9:6,selected?'#B07A4F':'#5E8C9A');
-  if(f.t>.9){const label=String(i+1).padStart(2,'0')+' '+intentShortNames[i];ctx.fillStyle=PAPER;ctx.fillRect(f.x+11,f.y-12,label.length*13+8,20);text(label,f.x+15,f.y+3,13,selected?1:.8);}
+  if(f.t>.9){const label=String(i+1).padStart(2,'0')+' '+intentShortNames[i];ctx.fillStyle=PAPER;ctx.fillRect(f.x+11,f.y-12*TS,label.length*13*TS+8,20*TS);text(label,f.x+15,f.y+3*TS,13,selected?1:.8);}
  });
- text(flip>0?'16 个功能区 · 分工和相互位置':String(active+1).padStart(2,'0')+' · '+districtName(d),700,600,15);
- text('总方案：先说明用途和大致关系，具体坐标在后续组团设计时确定。',700,625,13,.85);
+ text(flip>0?'16 个功能区 · 分工和相互位置':String(active+1).padStart(2,'0')+' · '+districtName(d),BIG?790:700,600,15);
+ text('总方案：先说明用途和大致关系，具体坐标在后续组团设计时确定。',BIG?790:700,625,13,.85);
  $('sheet').dataset.activeDistrict=d.groupId;
  $('sheet').dataset.intentPresentation='approximate-map-flight';
 }
