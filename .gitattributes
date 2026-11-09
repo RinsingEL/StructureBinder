@@ -62,3 +62,4 @@ asset_catalogs/original_civilizations/R02_arcane_reborn/models/MG-43-v02/**/*.js
 asset_catalogs/original_civilizations/R02_arcane_reborn/models/MG-44-v02/**/*.json text eol=lf
 asset_catalogs/original_civilizations/R02_arcane_reborn/models/MG-45-v02/**/*.json text eol=lf
 asset_catalogs/original_civilizations/R02_arcane_reborn/内饰与照明验收.json text eol=lf
+devlog/视频素材/第二版完整版/*.mp4 filter=lfs diff=lfs merge=lfs -text
