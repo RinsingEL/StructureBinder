@@ -60,6 +60,7 @@
 <script src="act2_script.js"></script>
 <script>
 const SPRITES = '../../act2/assets/avatars/sprites/compact/';
+const HEADS = '../../act2/assets/avatars/heads/';
 const PAGES = '../../act2/分页图/';
 const members = [
   { id: 'rin',      name: 'Rin',      color: '#8a6a4f', x: -40,  z: 1 },
@@ -75,9 +76,15 @@ const { beats: BEATS, durations: DUR, lines: SCRIPT } = window.ACT2;
 
 // 时间线：每屏字幕按每秒约 6 字计时。要翻页时，如果上一拍的动画还没播完，就先停在那里等它播完（例如 D7 全城快放）
 const INTRO = 0.8, OUTRO = 2.4, GAP = 0.25;
+// 镜头只在两句话之间推近、拉回：第一拍那句话之前、最后一句（Gemini 接第三段）之前各停 CAM 秒，镜头在停顿里动完
+const CAM = 1.4, ZD = 1.2;
+const CAM_IN_LINE = SCRIPT.findIndex(l => l.cards.some(c => c.beat)), CAM_OUT_LINE = SCRIPT.length - 1;
+let Z0 = 0, Z1 = 0;
 const timeline = [], beatStarts = [];
 let t = INTRO, curBeat = -1;
-for (const line of SCRIPT) {
+for (const [li, line] of SCRIPT.entries()) {
+  if (li === CAM_IN_LINE) { Z0 = t + 0.05; t += CAM; }
+  if (li === CAM_OUT_LINE) { Z1 = t + 0.05; t += CAM; }
   let lineStart = null;
   for (const c of line.cards) {
     const b = c.beat ? BEATS.indexOf(c.beat) : -1;
@@ -163,8 +170,8 @@ const HEAD = { rin: [125, 95], gemini: [130, 100], claude: [130, 100], astra: [1
 const SLOT = { rin: 120, gemini: 290, claude: 460, astra: 1460, deepseek: 1630, glm: 1800 };
 const LEFT = new Set(['rin', 'gemini', 'claude']);
 const K = 1800 / 1438.2, TX = 60 - 241.4 * K, TY = 26 - 49 * K;
-const ZD = 1.2, Z0 = beatStarts[0].t - 0.3, Z1 = timeline[timeline.length - 1].end + 0.3;
-const STAY = 10; // 说完话后头像留多久
+// 头像在说完话、表情余韵（HOLD）结束前消失，消失动画结束时正好切回站立
+const STAY = HOLD - 0.35;
 const inout = x => { x = clamp(x); return x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; };
 const backOut = x => { x = clamp(x); const c = 1.9; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
 for (const m of members) {
@@ -174,8 +181,9 @@ for (const m of members) {
   const faceBox = document.createElement('div'); faceBox.className = 'face'; av.appendChild(faceBox);
   for (const s of states) {
     const img = document.createElement('img');
-    img.dataset.state = s; img.src = SPRITES + m.id + '/' + s + '.png';
-    img.style.left = (85 - hx * 340 / 300) + 'px'; img.style.top = (85 - hy * 340 / 300) + 'px';
+    // 头像用单独的头像图（../../act2/assets/avatars/heads/），以后换成新画的头像也不用改这里
+    img.dataset.state = s; img.src = HEADS + m.id + '/' + s + '.webp';
+    Object.assign(img.style, { left: 0, top: 0, width: '100%', height: '100%' });
     img.onerror = () => img.remove();
     faceBox.appendChild(img);
   }
@@ -215,6 +223,7 @@ function drawBand(time, op) {
     } else {
       const e = lastEndOf(m.id, time);
       if (e !== null && e > Z0 && time - e < STAY + 0.35) sc = 1 - ease((time - e - STAY) / 0.35);
+      else if (e === null || time - e >= STAY + 0.35) sc = 0;
     }
     const spk = speakingAt(m.id, time), ch = lastChange(x => speakingAt(m.id, x), time, 0.25);
     let big = spk ? 1 : 0;
@@ -259,13 +268,16 @@ window.render = function (time) {
       const s = img.dataset.state;
       img.style.opacity = s === face ? k : (s === prev && k < 1 ? 1 - k : 0);
     }
-    const squash = k < 1 ? 1 - 0.04 * Math.sin(k * Math.PI) : 1;
+    // 只在开口换表情时"弹"一下；说完话回到站立时只是淡淡换过去，免得安静的时候突然一弹
+    const squash = k < 1 && speaking ? 1 - 0.04 * Math.sin(k * Math.PI) : 1;
     const dimNow = dimAt(m.id, time), dimChanged = lastChange(x => dimAt(m.id, x), time, 0.25);
     let d = dimNow ? 1 : 0;
     if (dimChanged !== null) { const q = (time - dimChanged) / 0.25; d = dimNow ? q : 1 - q; }
     el.style.filter = `brightness(${1 - 0.28 * d}) saturate(${1 - 0.2 * d})`;
     let lift = 0, scale = 1;
-    if (speaking) {
+    // 推近以后底下的立绘直接隐藏，也不再弹跳和浮动，免得头顶从 PPT 下沿露出来
+    el.style.opacity = 1 - clamp(c / 0.6);
+    if (speaking && c < 0.01) {
       const s = time - cue.lineStart;
       lift = 26 * Math.sin(Math.min(s / 0.35, 1) * Math.PI) * (s < 0.35 ? 1 : 0) + 10 + 3 * Math.sin(time * 6);
       scale = 1.08;
@@ -281,7 +293,9 @@ window.render = function (time) {
       line.style.width = ''; line.textContent = cue.text;
       const r = document.createRange(); r.selectNodeContents(line);
       // 多留几像素，免得标点挤到下一行
-      line.style.width = Math.ceil(Math.max(...[...r.getClientRects()].map(x => x.width))) + 8 + 'px';
+      // 草稿模式整页缩小时，量出来的宽度也跟着缩小，要换算回页面上的像素
+      const zoom = line.getBoundingClientRect().width / line.offsetWidth || 1;
+      line.style.width = Math.ceil(Math.max(...[...r.getClientRects()].map(x => x.width)) / zoom) + 8 + 'px';
     }
     const fade = ease((time - cue.start) / 0.2);
     name.style.opacity = fade; line.style.opacity = fade;

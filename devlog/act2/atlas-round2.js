@@ -40,21 +40,21 @@ function selectionCards(p){
 function stylePiles(p){
  const selected=round2.styles.findIndex(x=>x.term==='魔法学院新制');
  round2.styles.forEach((style,i)=>{
-  const x=500+(i%4)*245,y=150+Math.floor(i/4)*150,keep=i===selected;
+  const x=(BIG?530:500)+(i%4)*245,y=150+Math.floor(i/4)*150,keep=i===selected;
   const alpha=keep?clamp(p*4):clamp(p*4)*(1-clamp((p-.5)/.4));
   ctx.save();ctx.globalAlpha=alpha;ctx.fillStyle='#E6E1CC';ctx.fillRect(x+8,y+8,210,110);ctx.fillStyle=PAPER;ctx.fillRect(x,y,210,110);ctx.strokeStyle='#2b2a2633';ctx.strokeRect(x,y,210,110);ctx.restore();
-  text(style.term,x+16,y+34,18,alpha);text(`${style.count} 种`,x+16,y+62,14,alpha);
-  if(keep){const img=materialImages.get('studio:mg-27-v02');if(img?.complete&&img.naturalWidth){ctx.save();ctx.globalAlpha=alpha;ctx.drawImage(img,x+110,y+8,90,90);ctx.restore()}}
+  text(style.term,x+16,y+34,BIG?14:18,alpha);text(`${style.count} 种`,x+16,y+62,14,alpha);
+  if(keep){const img=materialImages.get('studio:mg-27-v02');if(img?.complete&&img.naturalWidth){ctx.save();ctx.globalAlpha=alpha;BIG?ctx.drawImage(img,x+140,y+30,72,72):ctx.drawImage(img,x+110,y+8,90,90);ctx.restore()}}
  });
 }
 function usagePiles(p){
  round2.piles.forEach((pile,i)=>{
-  const x=500+(i%3)*340,y=145+Math.floor(i/3)*235,q=ease(clamp(p*3-i*.2));
+  const x=(BIG?525:500)+(i%3)*340,y=145+Math.floor(i/3)*235,q=ease(clamp(p*3-i*.2));
   ctx.save();ctx.globalAlpha=q;ctx.fillStyle='#E6E1CC';ctx.fillRect(x,y,310,195);ctx.restore();
   text(`${pile.label} · ${pile.count} 种`,x+15,y+27,18,q);
   pile.refs.filter(ref=>materialImages.has(ref)).slice(0,3).forEach((ref,j)=>{const img=materialImages.get(ref);if(img?.complete&&img.naturalWidth){ctx.save();ctx.globalAlpha=q;ctx.drawImage(img,x+10+j*88,y+55+(j%2)*12,110,110);ctx.restore()}});
  });
- text('按作者用途归堆 · 一栋素材可以有多种用途',500,620,13,.8);
+ text('按作者用途归堆 · 一栋素材可以有多种用途',BIG?525:500,620,13,.8);
 }
 function arrow(x,y,xx,yy,color='#B07A4F',width=1.5){line(x,y,xx,yy,color,width);const a=Math.atan2(yy-y,xx-x);line(xx,yy,xx-8*Math.cos(a-.5),yy-8*Math.sin(a-.5),color,width);line(xx,yy,xx-8*Math.cos(a+.5),yy-8*Math.sin(a+.5),color,width)}
 function layoutDemo(s,p){

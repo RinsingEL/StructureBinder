@@ -11,6 +11,7 @@
 // 白板铺满画面，小人换成底下的泡泡头像（和第二段一样）。
 (function () {
   const SPRITES = '../../act2/assets/avatars/sprites/compact/';
+  const HEADS = '../../act2/assets/avatars/heads/';
   const members = [
     { id: 'rin',      name: 'Rin',      color: '#8a6a4f', x: -40,  z: 1 },
     { id: 'gemini',   name: 'Gemini',   color: '#8a63d2', x: 125,  z: 2 },
@@ -71,8 +72,10 @@
     for (const s of states) {
       for (const [parent, size] of [[el, 0], [av.firstChild, 340]]) {
         const img = document.createElement('img');
-        img.dataset.state = s; img.src = SPRITES + m.id + '/' + s + '.png';
-        if (size) { img.style.left = (85 - hx * size / 300) + 'px'; img.style.top = (85 - hy * size / 300) + 'px'; }
+        img.dataset.state = s;
+        // 泡泡头像用单独的头像图（act2/assets/avatars/heads/），立绘用 compact
+        if (size) { img.src = HEADS + m.id + '/' + s + '.webp'; Object.assign(img.style, { left: 0, top: 0, width: '100%', height: '100%' }); }
+        else img.src = SPRITES + m.id + '/' + s + '.png';
         img.onerror = () => img.remove();
         parent.appendChild(img);
       }
@@ -82,9 +85,22 @@
   }
 
   // 时间线：每屏字幕按每秒约 6 字计时；mark 记下这一屏开始时触发的画面事件
+  // 推近、拉回只在两句话之间：镜头要动的那句话之前停 CAM 秒，镜头在停顿里动完
+  const CAM = 1.4, ZD = 1.2;
+  const lineOf = name => name.startsWith('@') ? window.SCRIPT.lines.findIndex(l => l.id === name.slice(1))
+    : window.SCRIPT.lines.findIndex(l => l.cards.some(c => c.mark === name));
+  const shotLines = [];
+  for (const [a, b] of cfg.SHOTS) {
+    const ia = lineOf(a), ib = lineOf(b);
+    if (ia < 0 || ib < 0) continue;
+    const prev = shotLines[shotLines.length - 1];
+    if (prev && prev[1] === ia) prev[1] = ib; else shotLines.push([ia, ib]); // 一段拉回的地方正好是下一段推近的地方，就一直推近着
+  }
+  const pauseAt = new Set(shotLines.flat()), pauseTime = {};
   const timeline = [], marks = {}, lines = {};
   let t = cfg.INTRO;
-  for (const line of window.SCRIPT.lines) {
+  for (const [li, line] of window.SCRIPT.lines.entries()) {
+    if (pauseAt.has(li)) { pauseTime[li] = t + 0.05; t += CAM; }
     const start = t; lines[line.id] = t;
     for (const c of line.cards) {
       const dur = Math.max(1.8, c.text.replace(/\n/g, '').length / 6 + 0.7) + (c.hold || 0);
@@ -111,7 +127,7 @@
     ease((since(a, time) - delayIn) / fin) * (b ? 1 - ease((since(b, time) - delayOut) / fout) : 1);
   Object.assign(window, { $, clamp, ease, inout, since, sinceLine, between });
 
-  const SWAP = 0.15, HOLD = 2.0, STAY = 10, ZD = 1.1;
+  const SWAP = 0.15, HOLD = 2.0, STAY = HOLD - 0.35; // 头像在表情余韵结束前消失，消失完正好切回站立
   const cueAt = time => timeline.find(c => time >= c.start && time < c.end);
   const speaks = (c, id) => c.who === id || c.who === 'all';
   function available(id, state) {
@@ -156,11 +172,10 @@
   const B = { x: 122, y: 41, w: 1677, h: 656 }, K = 1840 / B.w, W = { x: 40, y: 20, w: 1840, h: B.h * K };
   Object.assign($('win').style, { left: W.x + 'px', top: W.y + 'px', width: W.w + 'px', height: W.h + 'px' });
   Object.assign($('winline').style, { left: W.x + 'px', top: W.y + 'px', width: W.w + 'px', height: W.h + 'px' });
-  const at = name => name.startsWith('@') ? lines[name.slice(1)] : marks[name];
-  const shots = cfg.SHOTS.map(([a, b]) => [at(a), at(b)]).filter(([a, b]) => a !== undefined && b !== undefined);
+  const shots = shotLines.map(([a, b]) => [pauseTime[a], pauseTime[b]]);
   function camAt(time) {
     let c = 0;
-    for (const [a, b] of shots) c = Math.max(c, inout((time - a + 0.3) / ZD) * (1 - inout((time - b + 0.3) / ZD)));
+    for (const [a, b] of shots) c = Math.max(c, inout((time - a) / ZD) * (1 - inout((time - b) / ZD)));
     return c;
   }
   function shownAt(id, time, fullFrom) {
@@ -217,24 +232,25 @@
     $('mat').style.opacity = full; $('band').style.opacity = full;
     $('members').style.opacity = 1 - clamp(c / 0.6); // 推近时活动室里的小人退出画面，免得头顶露在白板边上
     let fullFrom = -1e9;
-    for (const [a] of shots) if (a - 0.3 <= time) fullFrom = Math.max(fullFrom, a - 0.3);
+    for (const [a] of shots) if (a <= time) fullFrom = Math.max(fullFrom, a);
     const lifts = {};
     members.forEach((m, i) => {
       const el = $('m-' + m.id);
       const speaking = cue && speaks(cue, m.id);
       const k = faceImages(el, m.id, time);
-      const squash = k < 1 ? 1 - 0.04 * Math.sin(k * Math.PI) : 1;
+      // 只在开口或做反应时"弹"一下；回到站立时只是淡淡换过去
+      const squash = k < 1 && (speaking || (cue && cue.react[m.id])) ? 1 - 0.04 * Math.sin(k * Math.PI) : 1;
       const dimNow = dimAt(m.id, time), dimChanged = lastChange(x => dimAt(m.id, x), time, 0.25);
       let d = dimNow;
       if (dimChanged !== null) { const q = (time - dimChanged) / 0.25, before = dimAt(m.id, dimChanged - 0.001); d = before + (dimNow - before) * q; }
       el.style.filter = `brightness(${1 - 0.28 * d}) saturate(${1 - 0.2 * d})`;
       let lift = 0, scale = 1;
-      if (speaking) {
+      if (speaking && c < 0.01) {
         // 全员一起说时错开一点点，像一起跳起来
         const s = time - cue.lineStart - (cue.who === 'all' ? i * 0.06 : 0);
         lift = 26 * Math.sin(clamp(s / 0.35) * Math.PI) * (s < 0.35 ? 1 : 0) + 10 + 3 * Math.sin(time * 6 + i);
         scale = 1.08;
-      } else if (cue && cue.react[m.id]) {
+      } else if (cue && cue.react[m.id] && c < 0.01) {
         // 有反应的人轻轻跳一下
         const s = time - cue.start;
         lift = 14 * Math.sin(clamp(s / 0.3) * Math.PI) * (s < 0.3 ? 1 : 0);
@@ -253,6 +269,10 @@
           sc = 1;
           if (speaking && !shownAt(m.id, cue.lineStart - 0.001, fullFrom)) { sc = backOut((time - cue.lineStart) / 0.4); burst = (time - cue.lineStart) / 0.5; }
         } else if (cue && cue.react[m.id]) sc = backOut((time - cue.start) / 0.4);
+        else {
+          let e = null; for (const x of timeline) { if (x.start > time) break; if (speaks(x, m.id) && x.end <= time) e = x.end; }
+          if (e !== null && e > fullFrom && time - e < STAY + 0.35) sc = 1 - ease((time - e - STAY) / 0.35);
+        }
         const big = speaking ? 1 : cue && cue.react[m.id] ? 0.5 : 0;
         const hop = speaking ? 18 * Math.sin(Math.PI * clamp((time - cue.lineStart) / 0.35)) : 0;
         const float = (1 - big) * 5 * Math.sin(time * 2.2 + SLOT[m.id]);
@@ -290,7 +310,9 @@
         // 字幕框收紧到文字的实际宽度，多留几像素免得标点挤到下一行
         line.style.width = ''; line.textContent = cue.text;
         const r = document.createRange(); r.selectNodeContents(line);
-        line.style.width = Math.ceil(Math.max(...[...r.getClientRects()].map(x => x.width))) + 8 + 'px';
+        // 草稿模式整页缩小时，量出来的宽度也跟着缩小，要换算回页面上的像素
+        const zoom = line.getBoundingClientRect().width / line.offsetWidth || 1;
+        line.style.width = Math.ceil(Math.max(...[...r.getClientRects()].map(x => x.width)) / zoom) + 8 + 'px';
       }
       const fade = ease((time - cue.start) / 0.2);
       name.style.opacity = fade; line.style.opacity = fade;
