@@ -113,7 +113,7 @@
     t += cfg.GAP;
   }
   window.DURATION = t + cfg.OUTRO;
-  window.MARKS = marks; window.LINES = lines;
+  window.MARKS = marks; window.LINES = lines; window.TIMELINE = timeline; // TIMELINE 给配音、提示音脚本对时间用
 
   const $ = id => document.getElementById(id);
   const clamp = x => Math.max(0, Math.min(1, x));
