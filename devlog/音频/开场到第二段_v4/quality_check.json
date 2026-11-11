@@ -1,0 +1,23 @@
+{
+  "audio": {
+    "duration": 302.0833333333333,
+    "finite": true,
+    "peak": 0.6035854816436768,
+    "clipped_samples": 0
+  },
+  "video": {
+    "frames": 7250,
+    "fps": 24,
+    "duration": 302.0833333333333,
+    "first_pts": "0",
+    "last_pts": "7249"
+  },
+  "keyframes_extracted": 18,
+  "max_individual_part_onset_error_ms": 5.0,
+  "midi": {
+    "tracks": 11,
+    "tempo_events": 19,
+    "notes": 1280
+  },
+  "auditory_acceptance": "Awaiting user; envelope timing is a technical proxy."
+}
