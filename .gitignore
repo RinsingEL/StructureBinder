@@ -69,3 +69,6 @@ geomantia_mcp_log.jsonl
 
 # Local branch-review builds and machine-specific launch wrappers; probe sources are archived in dev_docs.
 /runtime/campus-branch-review/
+
+# 配乐试作的大音频文件，mp4 里已经带着
+devlog/音频/claude_trial/*.wav
