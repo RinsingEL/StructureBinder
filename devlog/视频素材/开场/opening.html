@@ -85,6 +85,7 @@
   <div id="members"></div>
   <div id="sub"><div id="name"></div><div id="line"></div></div>
 </div>
+<script src="../common/beatgrid.js"></script>
 <script>
 const SPRITES = '../../act2/assets/avatars/sprites/compact/';
 const members = [
@@ -130,21 +131,25 @@ const script = [
     { text: '所以看到我头上这个眼罩了吧，\n它不只是装饰。', face: 'd4' }] },
 ];
 
+// 画面卡在音乐的拍子上（108 BPM，见 ../common/beatgrid.js）：每屏字幕从拍上开始，盖章那一屏从重拍开始
+const G = BeatGrid(108);
 const INTRO = 3.2, OUTRO = 2.4;
 const timeline = [], stamps = {};
-let t = INTRO;
+let t = G.next(INTRO, 2);
 for (const line of script) {
   const start = t;
   for (const card of line.cards) {
     const c = typeof card === 'string' ? { text: card } : card;
+    if (c.stamp) t = G.next(t, 2);
     const dur = Math.max(1.8, c.text.replace(/\n/g, '').length / 6 + 0.7);
-    if (c.stamp) stamps[line.who] = t + 0.35;
-    timeline.push({ who: line.who, face: c.face || line.face, text: c.text, start: t, end: t + dur, lineStart: start });
-    t += dur;
+    if (c.stamp) stamps[line.who] = t;
+    const end = G.endAfter(t, dur);
+    timeline.push({ who: line.who, face: c.face || line.face, text: c.text, start: t, end, lineStart: start });
+    t = end;
   }
-  t += 0.25;
+  t = G.next(t + 0.05);
 }
-window.DURATION = t + OUTRO;
+window.DURATION = G.next(t + OUTRO, 4);
 window.TIMELINE = timeline; window.STAMPS = stamps; // 给配乐、配音脚本对时间用
 
 // 签到表

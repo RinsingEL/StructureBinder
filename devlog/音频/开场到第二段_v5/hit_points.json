@@ -1,0 +1,202 @@
+{
+ "bpm": 108,
+ "duration": 314.44444444444446,
+ "events": [
+  {
+   "id": "intro_rin",
+   "who": "rin",
+   "speech": 3.3333333333333335,
+   "hit": 3.3333333333333335,
+   "beat": 6.0,
+   "kind": "intro"
+  },
+  {
+   "id": "intro_gemini",
+   "who": "gemini",
+   "speech": 28.88888888888889,
+   "hit": 28.88888888888889,
+   "beat": 52.0,
+   "kind": "intro"
+  },
+  {
+   "id": "intro_claude",
+   "who": "claude",
+   "speech": 48.88888888888889,
+   "hit": 48.88888888888889,
+   "beat": 88.0,
+   "kind": "intro"
+  },
+  {
+   "id": "intro_astra",
+   "who": "astra",
+   "speech": 66.66666666666667,
+   "hit": 66.66666666666667,
+   "beat": 120.0,
+   "kind": "intro"
+  },
+  {
+   "id": "intro_deepseek",
+   "who": "deepseek",
+   "speech": 85.55555555555556,
+   "hit": 85.55555555555556,
+   "beat": 154.0,
+   "kind": "intro"
+  },
+  {
+   "id": "intro_glm",
+   "who": "glm",
+   "speech": 103.33333333333334,
+   "hit": 103.33333333333334,
+   "beat": 186.0,
+   "kind": "intro"
+  },
+  {
+   "id": "2-1",
+   "who": "rin",
+   "speech": 127.77777777777779,
+   "hit": 127.77777777777779,
+   "beat": 230.0,
+   "kind": "speaker"
+  },
+  {
+   "id": "2-2",
+   "who": "claude",
+   "speech": 146.66666666666669,
+   "hit": 146.66666666666669,
+   "beat": 264.0,
+   "kind": "blank"
+  },
+  {
+   "id": "2-4",
+   "who": "claude",
+   "speech": 157.77777777777777,
+   "hit": 157.77777777777777,
+   "beat": 284.0,
+   "kind": "scan"
+  },
+  {
+   "id": "2-5",
+   "who": "astra",
+   "speech": 173.88888888888889,
+   "hit": 173.88888888888889,
+   "beat": 313.0,
+   "kind": "speaker"
+  },
+  {
+   "id": "2-6",
+   "who": "claude",
+   "speech": 191.11111111111111,
+   "hit": 191.11111111111111,
+   "beat": 344.0,
+   "kind": "speaker"
+  },
+  {
+   "id": "2-7",
+   "who": "claude",
+   "speech": 196.66666666666669,
+   "hit": 196.66666666666669,
+   "beat": 354.0,
+   "kind": "terrain"
+  },
+  {
+   "id": "2-8",
+   "who": "astra",
+   "speech": 212.77777777777777,
+   "hit": 212.77777777777777,
+   "beat": 383.0,
+   "kind": "speaker"
+  },
+  {
+   "id": "2-9",
+   "who": "claude",
+   "speech": 224.44444444444446,
+   "hit": 224.44444444444446,
+   "beat": 404.0,
+   "kind": "nations"
+  },
+  {
+   "id": "2-10",
+   "who": "astra",
+   "speech": 240.55555555555557,
+   "hit": 240.55555555555557,
+   "beat": 433.0,
+   "kind": "speaker"
+  },
+  {
+   "id": "2-11",
+   "who": "glm",
+   "speech": 252.22222222222223,
+   "hit": 252.22222222222223,
+   "beat": 454.0,
+   "kind": "speaker"
+  },
+  {
+   "id": "2-12",
+   "who": "claude",
+   "speech": 264.44444444444446,
+   "hit": 264.44444444444446,
+   "beat": 476.0,
+   "kind": "sites"
+  },
+  {
+   "id": "2-14",
+   "who": "astra",
+   "speech": 301.6666666666667,
+   "hit": 301.6666666666667,
+   "beat": 543.0,
+   "kind": "speaker"
+  }
+ ],
+ "anchors": [
+  [
+   0,
+   0
+  ],
+  [
+   566,
+   314.44444444444446
+  ]
+ ],
+ "sections": [
+  [
+   "title",
+   0
+  ],
+  [
+   "welcome",
+   6.0
+  ],
+  [
+   "intros_warm",
+   88.0
+  ],
+  [
+   "intros_playful",
+   154.0
+  ],
+  [
+   "handoff",
+   230.0
+  ],
+  [
+   "blank",
+   264.0
+  ],
+  [
+   "scan",
+   284.0
+  ],
+  [
+   "terrain",
+   354.0
+  ],
+  [
+   "nations",
+   404.0
+  ],
+  [
+   "sites",
+   476.0
+  ]
+ ]
+}

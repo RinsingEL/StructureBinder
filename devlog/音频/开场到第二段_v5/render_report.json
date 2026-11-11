@@ -1,0 +1,344 @@
+{
+  "duration": 314.44444444444446,
+  "source_frames": [
+    0,
+    7547
+  ],
+  "instruments": {
+    "rin_piano": [
+      0,
+      0,
+      -0.12,
+      -26.0,
+      0.14
+    ],
+    "gemini_flute": [
+      73,
+      1,
+      -0.23,
+      -27.0,
+      0.16
+    ],
+    "claude_clarinet": [
+      71,
+      2,
+      -0.08,
+      -26.3,
+      0.16
+    ],
+    "astra_epiano": [
+      4,
+      3,
+      0.12,
+      -26.0,
+      0.12
+    ],
+    "deepseek_pizz": [
+      45,
+      4,
+      0.23,
+      -27.0,
+      0.11
+    ],
+    "glm_vibes": [
+      11,
+      5,
+      0.08,
+      -28.0,
+      0.12
+    ],
+    "shared_guitar": [
+      24,
+      6,
+      -0.24,
+      -30.8,
+      0.1
+    ],
+    "shared_bass": [
+      32,
+      7,
+      0,
+      -29.0,
+      0.025
+    ],
+    "quiet_percussion": [
+      40,
+      9,
+      0.1,
+      -35.0,
+      0.03
+    ],
+    "soft_pad": [
+      89,
+      8,
+      0.1,
+      -39.0,
+      0.09
+    ]
+  },
+  "character_instruments": {
+    "rin": "rin_piano",
+    "gemini": "gemini_flute",
+    "claude": "claude_clarinet",
+    "astra": "astra_epiano",
+    "deepseek": "deepseek_pizz",
+    "glm": "glm_vibes"
+  },
+  "tempo_min_max": [
+    108.0,
+    108.0
+  ],
+  "latency_compensation_s": {
+    "rin_piano": 0.0,
+    "gemini_flute": 0.025,
+    "claude_clarinet": 0.025,
+    "astra_epiano": 0.0,
+    "deepseek_pizz": 0.015,
+    "glm_vibes": 0.0
+  },
+  "sync_audit": [
+    {
+      "id": "intro_rin",
+      "who": "rin",
+      "visual_hit_s": 3.3333333333333335,
+      "note_on_s": 3.3333333333333335,
+      "detected_dry_onset_s": 3.333333333333333,
+      "offset_ms": -0.0,
+      "method": "5 ms RMS >25% of local 0.33 s peak, dry individual part; proxy, not perceptual acceptance"
+    },
+    {
+      "id": "intro_gemini",
+      "who": "gemini",
+      "visual_hit_s": 28.88888888888889,
+      "note_on_s": 28.86388888888889,
+      "detected_dry_onset_s": 28.898895833333334,
+      "offset_ms": 10.01,
+      "method": "5 ms RMS >25% of local 0.33 s peak, dry individual part; proxy, not perceptual acceptance"
+    },
+    {
+      "id": "intro_claude",
+      "who": "claude",
+      "visual_hit_s": 48.88888888888889,
+      "note_on_s": 48.863888888888894,
+      "detected_dry_onset_s": 48.888895833333336,
+      "offset_ms": 0.01,
+      "method": "5 ms RMS >25% of local 0.33 s peak, dry individual part; proxy, not perceptual acceptance"
+    },
+    {
+      "id": "intro_astra",
+      "who": "astra",
+      "visual_hit_s": 66.66666666666667,
+      "note_on_s": 66.66666666666667,
+      "detected_dry_onset_s": 66.66666666666667,
+      "offset_ms": 0.0,
+      "method": "5 ms RMS >25% of local 0.33 s peak, dry individual part; proxy, not perceptual acceptance"
+    },
+    {
+      "id": "intro_deepseek",
+      "who": "deepseek",
+      "visual_hit_s": 85.55555555555556,
+      "note_on_s": 85.54055555555556,
+      "detected_dry_onset_s": 85.55556250000001,
+      "offset_ms": 0.01,
+      "method": "5 ms RMS >25% of local 0.33 s peak, dry individual part; proxy, not perceptual acceptance"
+    },
+    {
+      "id": "intro_glm",
+      "who": "glm",
+      "visual_hit_s": 103.33333333333334,
+      "note_on_s": 103.33333333333334,
+      "detected_dry_onset_s": 103.33333333333334,
+      "offset_ms": 0.0,
+      "method": "5 ms RMS >25% of local 0.33 s peak, dry individual part; proxy, not perceptual acceptance"
+    },
+    {
+      "id": "2-1",
+      "who": "rin",
+      "visual_hit_s": 127.77777777777779,
+      "note_on_s": 127.77777777777779,
+      "detected_dry_onset_s": 127.77777083333334,
+      "offset_ms": -0.01,
+      "method": "5 ms RMS >25% of local 0.33 s peak, dry individual part; proxy, not perceptual acceptance"
+    },
+    {
+      "id": "2-2",
+      "who": "claude",
+      "visual_hit_s": 146.66666666666669,
+      "note_on_s": 146.64166666666668,
+      "detected_dry_onset_s": 146.67666666666665,
+      "offset_ms": 10.0,
+      "method": "5 ms RMS >25% of local 0.33 s peak, dry individual part; proxy, not perceptual acceptance"
+    },
+    {
+      "id": "2-4",
+      "who": "claude",
+      "visual_hit_s": 157.77777777777777,
+      "note_on_s": 157.75277777777777,
+      "detected_dry_onset_s": 157.78777083333333,
+      "offset_ms": 9.99,
+      "method": "5 ms RMS >25% of local 0.33 s peak, dry individual part; proxy, not perceptual acceptance"
+    },
+    {
+      "id": "2-5",
+      "who": "astra",
+      "visual_hit_s": 173.88888888888889,
+      "note_on_s": 173.88888888888889,
+      "detected_dry_onset_s": 173.88889583333335,
+      "offset_ms": 0.01,
+      "method": "5 ms RMS >25% of local 0.33 s peak, dry individual part; proxy, not perceptual acceptance"
+    },
+    {
+      "id": "2-6",
+      "who": "claude",
+      "visual_hit_s": 191.11111111111111,
+      "note_on_s": 191.0861111111111,
+      "detected_dry_onset_s": 191.12110416666667,
+      "offset_ms": 9.99,
+      "method": "5 ms RMS >25% of local 0.33 s peak, dry individual part; proxy, not perceptual acceptance"
+    },
+    {
+      "id": "2-7",
+      "who": "claude",
+      "visual_hit_s": 196.66666666666669,
+      "note_on_s": 196.64166666666668,
+      "detected_dry_onset_s": 196.67666666666665,
+      "offset_ms": 10.0,
+      "method": "5 ms RMS >25% of local 0.33 s peak, dry individual part; proxy, not perceptual acceptance"
+    },
+    {
+      "id": "2-8",
+      "who": "astra",
+      "visual_hit_s": 212.77777777777777,
+      "note_on_s": 212.77777777777777,
+      "detected_dry_onset_s": 212.77777083333334,
+      "offset_ms": -0.01,
+      "method": "5 ms RMS >25% of local 0.33 s peak, dry individual part; proxy, not perceptual acceptance"
+    },
+    {
+      "id": "2-9",
+      "who": "claude",
+      "visual_hit_s": 224.44444444444446,
+      "note_on_s": 224.41944444444445,
+      "detected_dry_onset_s": 224.45443749999998,
+      "offset_ms": 9.99,
+      "method": "5 ms RMS >25% of local 0.33 s peak, dry individual part; proxy, not perceptual acceptance"
+    },
+    {
+      "id": "2-10",
+      "who": "astra",
+      "visual_hit_s": 240.55555555555557,
+      "note_on_s": 240.55555555555557,
+      "detected_dry_onset_s": 240.5555625,
+      "offset_ms": 0.01,
+      "method": "5 ms RMS >25% of local 0.33 s peak, dry individual part; proxy, not perceptual acceptance"
+    },
+    {
+      "id": "2-11",
+      "who": "glm",
+      "visual_hit_s": 252.22222222222223,
+      "note_on_s": 252.22222222222223,
+      "detected_dry_onset_s": 252.22222916666666,
+      "offset_ms": 0.01,
+      "method": "5 ms RMS >25% of local 0.33 s peak, dry individual part; proxy, not perceptual acceptance"
+    },
+    {
+      "id": "2-12",
+      "who": "claude",
+      "visual_hit_s": 264.44444444444446,
+      "note_on_s": 264.4194444444445,
+      "detected_dry_onset_s": 264.45443750000004,
+      "offset_ms": 9.99,
+      "method": "5 ms RMS >25% of local 0.33 s peak, dry individual part; proxy, not perceptual acceptance"
+    },
+    {
+      "id": "2-14",
+      "who": "astra",
+      "visual_hit_s": 301.6666666666667,
+      "note_on_s": 301.6666666666667,
+      "detected_dry_onset_s": 301.66666666666663,
+      "offset_ms": -0.0,
+      "method": "5 ms RMS >25% of local 0.33 s peak, dry individual part; proxy, not perceptual acceptance"
+    }
+  ],
+  "rhythm_sections": [
+    {
+      "beat": 0,
+      "time": 0.0,
+      "kind": "title"
+    },
+    {
+      "beat": 6.0,
+      "time": 3.3333333333333335,
+      "kind": "welcome"
+    },
+    {
+      "beat": 88.0,
+      "time": 48.88888888888889,
+      "kind": "intros_warm"
+    },
+    {
+      "beat": 154.0,
+      "time": 85.55555555555556,
+      "kind": "intros_playful"
+    },
+    {
+      "beat": 230.0,
+      "time": 127.77777777777779,
+      "kind": "handoff"
+    },
+    {
+      "beat": 264.0,
+      "time": 146.66666666666669,
+      "kind": "blank"
+    },
+    {
+      "beat": 284.0,
+      "time": 157.77777777777777,
+      "kind": "scan"
+    },
+    {
+      "beat": 354.0,
+      "time": 196.66666666666669,
+      "kind": "terrain"
+    },
+    {
+      "beat": 404.0,
+      "time": 224.44444444444446,
+      "kind": "nations"
+    },
+    {
+      "beat": 476.0,
+      "time": 264.44444444444446,
+      "kind": "sites"
+    }
+  ],
+  "loudness": {
+    "input_i": -21.0,
+    "input_tp": -5.2,
+    "input_lra": 6.4
+  },
+  "compression_max_db": {
+    "rin_piano": 0,
+    "gemini_flute": 0,
+    "claude_clarinet": 0,
+    "astra_epiano": 1.2786059379577637,
+    "deepseek_pizz": 0,
+    "glm_vibes": 0,
+    "shared_guitar": 2.7577579021453857,
+    "shared_bass": 2.647939682006836,
+    "quiet_percussion": 0,
+    "soft_pad": 0
+  },
+  "note_counts": {
+    "rin_piano": 30,
+    "gemini_flute": 14,
+    "claude_clarinet": 64,
+    "astra_epiano": 53,
+    "deepseek_pizz": 15,
+    "glm_vibes": 24,
+    "shared_guitar": 491,
+    "shared_bass": 264,
+    "quiet_percussion": 276,
+    "soft_pad": 87
+  }
+}

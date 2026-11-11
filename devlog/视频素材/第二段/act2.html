@@ -57,6 +57,7 @@
   <div id="obs"><div class="ph"><img src="../../../dev_docs/systems/city/reports/20261031_学院功能区实景报告/evidence/observatory.jpg" alt=""></div><div class="cap">天象台<span> · 原版地形 + 道路遇水自动搭桥</span></div></div>
   <div id="band"></div>
 </div>
+<script src="../common/beatgrid.js"></script>
 <script src="act2_script.js"></script>
 <script>
 const SPRITES = '../../act2/assets/avatars/sprites/compact/';
@@ -75,16 +76,18 @@ const FALLBACK = { think: ['d4', 'talk_smile'], talk_smile: ['d4'], d4: ['talk_s
 const { beats: BEATS, durations: DUR, lines: SCRIPT } = window.ACT2;
 
 // 时间线：每屏字幕按每秒约 6 字计时。要翻页时，如果上一拍的动画还没播完，就先停在那里等它播完（例如 D7 全城快放）
-const INTRO = 0.8, OUTRO = 2.4, GAP = 0.25;
-// 镜头只在两句话之间推近、拉回：第一拍那句话之前、最后一句（Gemini 接第三段）之前各停 CAM 秒，镜头在停顿里动完
-const CAM = 1.4, ZD = 1.2;
+// 画面卡在音乐的拍子上（108 BPM，见 ../common/beatgrid.js）：每屏字幕从拍上开始；PPT 翻页那一屏从重拍开始，翻页正好落在重拍上
+const G = BeatGrid(108);
+const INTRO = 0.8, OUTRO = 2.4;
+// 镜头只在两句话之间推近、拉回：第一拍那句话之前、最后一句（Gemini 接第三段）之前各停三拍，镜头在停顿里动完
+const CAM = 3 * G.beat, ZD = 2 * G.beat;
 const CAM_IN_LINE = SCRIPT.findIndex(l => l.cards.some(c => c.beat)), CAM_OUT_LINE = SCRIPT.length - 1;
 let Z0 = 0, Z1 = 0;
 const timeline = [], beatStarts = [];
-let t = INTRO, curBeat = -1;
+let t = G.next(INTRO), curBeat = -1;
 for (const [li, line] of SCRIPT.entries()) {
-  if (li === CAM_IN_LINE) { Z0 = t + 0.05; t += CAM; }
-  if (li === CAM_OUT_LINE) { Z1 = t + 0.05; t += CAM; }
+  if (li === CAM_IN_LINE) { t = G.next(t, 2); Z0 = t; t += CAM; }
+  if (li === CAM_OUT_LINE) { t = G.next(t, 2); Z1 = t; t += CAM; }
   let lineStart = null;
   for (const c of line.cards) {
     const b = c.beat ? BEATS.indexOf(c.beat) : -1;
@@ -93,17 +96,20 @@ for (const [li, line] of SCRIPT.entries()) {
         const last = beatStarts[beatStarts.length - 1];
         t = Math.max(t, last.t + DUR[curBeat] + 0.4);
       }
-      beatStarts.push({ beat: b, t: t + 0.2 });
+      t = G.next(t, 2);
+      beatStarts.push({ beat: b, t });
       curBeat = b;
     }
     if (lineStart === null) lineStart = t;
     const dur = Math.max(1.8, c.text.replace(/\n/g, '').length / 6 + 0.7);
-    timeline.push({ id: line.id, who: line.who, face: c.face, text: c.text, start: t, end: t + dur, lineStart });
-    t += dur;
+    const end = G.endAfter(t, dur);
+    timeline.push({ id: line.id, who: line.who, face: c.face, text: c.text, start: t, end, lineStart, beat: b >= 0 && beatStarts[beatStarts.length - 1].t === t ? BEATS[b] : undefined });
+    t = end;
   }
-  t += GAP;
+  t = G.next(t + 0.05);
 }
-window.DURATION = t + OUTRO;
+window.DURATION = G.next(t + OUTRO, 4);
+window.TIMELINE = timeline; window.BEATSTARTS = beatStarts; window.GRID = G; // 给配乐脚本对时间用
 
 // 当前该显示第几拍、播到几成，录制脚本用它去驱动第二幕 PPT
 window.beatAt = function (time) {
@@ -192,7 +198,7 @@ for (const m of members) {
 }
 // 天象台：Rin 说"我最喜欢那张天象台"时放大，GLM 说完"明信片"再缩回照片墙
 const OBS_FROM = { x: 1366, y: 113, w: 382, h: 199 }, OBS_TO = { x: 150, y: 40, w: 1620, h: 774 };
-const OBS0 = timeline.find(c => c.id === '2-60').start + 0.5, OBS1 = timeline.filter(c => c.id === '2-62').pop().end + 0.2, OBS_D = 0.8;
+const OBS0 = timeline.find(c => c.id === '2-60').start, OBS1 = timeline.filter(c => c.id === '2-62').pop().end, OBS_D = 2 * G.beat;
 function drawObservatory(time, op) {
   const k = inout((time - OBS0) / OBS_D) * (1 - inout((time - OBS1) / OBS_D));
   const box = $('obs');
