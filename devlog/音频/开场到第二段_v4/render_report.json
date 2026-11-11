@@ -1,0 +1,344 @@
+{
+  "duration": 302.0833333333333,
+  "source_frames": [
+    0,
+    7250
+  ],
+  "instruments": {
+    "rin_piano": [
+      0,
+      0,
+      -0.12,
+      -26.0,
+      0.14
+    ],
+    "gemini_flute": [
+      73,
+      1,
+      -0.23,
+      -27.0,
+      0.16
+    ],
+    "claude_clarinet": [
+      71,
+      2,
+      -0.08,
+      -26.3,
+      0.16
+    ],
+    "astra_epiano": [
+      4,
+      3,
+      0.12,
+      -26.0,
+      0.12
+    ],
+    "deepseek_pizz": [
+      45,
+      4,
+      0.23,
+      -27.0,
+      0.11
+    ],
+    "glm_vibes": [
+      11,
+      5,
+      0.08,
+      -28.0,
+      0.12
+    ],
+    "shared_guitar": [
+      24,
+      6,
+      -0.24,
+      -30.8,
+      0.1
+    ],
+    "shared_bass": [
+      32,
+      7,
+      0,
+      -29.0,
+      0.025
+    ],
+    "quiet_percussion": [
+      40,
+      9,
+      0.1,
+      -35.0,
+      0.03
+    ],
+    "soft_pad": [
+      89,
+      8,
+      0.1,
+      -39.0,
+      0.09
+    ]
+  },
+  "character_instruments": {
+    "rin": "rin_piano",
+    "gemini": "gemini_flute",
+    "claude": "claude_clarinet",
+    "astra": "astra_epiano",
+    "deepseek": "deepseek_pizz",
+    "glm": "glm_vibes"
+  },
+  "tempo_min_max": [
+    104.93927125506083,
+    113.6842105263158
+  ],
+  "latency_compensation_s": {
+    "rin_piano": 0.0,
+    "gemini_flute": 0.025,
+    "claude_clarinet": 0.015,
+    "astra_epiano": 0.0,
+    "deepseek_pizz": 0.015,
+    "glm_vibes": 0.005
+  },
+  "sync_audit": [
+    {
+      "id": "intro_rin",
+      "who": "rin",
+      "visual_hit_s": 3.375,
+      "note_on_s": 3.375,
+      "detected_dry_onset_s": 3.375,
+      "offset_ms": 0.0,
+      "method": "5 ms RMS >25% of local 0.33 s peak, dry individual part; proxy, not perceptual acceptance"
+    },
+    {
+      "id": "intro_gemini",
+      "who": "gemini",
+      "visual_hit_s": 28.125,
+      "note_on_s": 28.1,
+      "detected_dry_onset_s": 28.13,
+      "offset_ms": 5.0,
+      "method": "5 ms RMS >25% of local 0.33 s peak, dry individual part; proxy, not perceptual acceptance"
+    },
+    {
+      "id": "intro_claude",
+      "who": "claude",
+      "visual_hit_s": 47.666666666666664,
+      "note_on_s": 47.651666666666664,
+      "detected_dry_onset_s": 47.67166666666667,
+      "offset_ms": 5.0,
+      "method": "5 ms RMS >25% of local 0.33 s peak, dry individual part; proxy, not perceptual acceptance"
+    },
+    {
+      "id": "intro_astra",
+      "who": "astra",
+      "visual_hit_s": 65.20833333333333,
+      "note_on_s": 65.20833333333333,
+      "detected_dry_onset_s": 65.20833333333334,
+      "offset_ms": 0.0,
+      "method": "5 ms RMS >25% of local 0.33 s peak, dry individual part; proxy, not perceptual acceptance"
+    },
+    {
+      "id": "intro_deepseek",
+      "who": "deepseek",
+      "visual_hit_s": 83.875,
+      "note_on_s": 83.86,
+      "detected_dry_onset_s": 83.875,
+      "offset_ms": 0.0,
+      "method": "5 ms RMS >25% of local 0.33 s peak, dry individual part; proxy, not perceptual acceptance"
+    },
+    {
+      "id": "intro_glm",
+      "who": "glm",
+      "visual_hit_s": 101.25,
+      "note_on_s": 101.245,
+      "detected_dry_onset_s": 101.25,
+      "offset_ms": 0.0,
+      "method": "5 ms RMS >25% of local 0.33 s peak, dry individual part; proxy, not perceptual acceptance"
+    },
+    {
+      "id": "2-1",
+      "who": "rin",
+      "visual_hit_s": 122.79166666666667,
+      "note_on_s": 122.79166666666667,
+      "detected_dry_onset_s": 122.79166666666667,
+      "offset_ms": 0.0,
+      "method": "5 ms RMS >25% of local 0.33 s peak, dry individual part; proxy, not perceptual acceptance"
+    },
+    {
+      "id": "2-2",
+      "who": "claude",
+      "visual_hit_s": 139.875,
+      "note_on_s": 139.86,
+      "detected_dry_onset_s": 139.88,
+      "offset_ms": 5.0,
+      "method": "5 ms RMS >25% of local 0.33 s peak, dry individual part; proxy, not perceptual acceptance"
+    },
+    {
+      "id": "2-4",
+      "who": "claude",
+      "visual_hit_s": 150.16666666666666,
+      "note_on_s": 150.15166666666667,
+      "detected_dry_onset_s": 150.17166666666665,
+      "offset_ms": 5.0,
+      "method": "5 ms RMS >25% of local 0.33 s peak, dry individual part; proxy, not perceptual acceptance"
+    },
+    {
+      "id": "2-5",
+      "who": "astra",
+      "visual_hit_s": 165.5,
+      "note_on_s": 165.5,
+      "detected_dry_onset_s": 165.5,
+      "offset_ms": 0.0,
+      "method": "5 ms RMS >25% of local 0.33 s peak, dry individual part; proxy, not perceptual acceptance"
+    },
+    {
+      "id": "2-6",
+      "who": "claude",
+      "visual_hit_s": 182.20833333333334,
+      "note_on_s": 182.19333333333336,
+      "detected_dry_onset_s": 182.21333333333334,
+      "offset_ms": 5.0,
+      "method": "5 ms RMS >25% of local 0.33 s peak, dry individual part; proxy, not perceptual acceptance"
+    },
+    {
+      "id": "2-7",
+      "who": "claude",
+      "visual_hit_s": 186.95833333333334,
+      "note_on_s": 186.94333333333336,
+      "detected_dry_onset_s": 186.96333333333334,
+      "offset_ms": 5.0,
+      "method": "5 ms RMS >25% of local 0.33 s peak, dry individual part; proxy, not perceptual acceptance"
+    },
+    {
+      "id": "2-8",
+      "who": "astra",
+      "visual_hit_s": 202.83333333333334,
+      "note_on_s": 202.83333333333334,
+      "detected_dry_onset_s": 202.83333333333334,
+      "offset_ms": 0.0,
+      "method": "5 ms RMS >25% of local 0.33 s peak, dry individual part; proxy, not perceptual acceptance"
+    },
+    {
+      "id": "2-9",
+      "who": "claude",
+      "visual_hit_s": 214.45833333333334,
+      "note_on_s": 214.44333333333336,
+      "detected_dry_onset_s": 214.46333333333334,
+      "offset_ms": 5.0,
+      "method": "5 ms RMS >25% of local 0.33 s peak, dry individual part; proxy, not perceptual acceptance"
+    },
+    {
+      "id": "2-10",
+      "who": "astra",
+      "visual_hit_s": 230.83333333333334,
+      "note_on_s": 230.83333333333334,
+      "detected_dry_onset_s": 230.83333333333334,
+      "offset_ms": 0.0,
+      "method": "5 ms RMS >25% of local 0.33 s peak, dry individual part; proxy, not perceptual acceptance"
+    },
+    {
+      "id": "2-11",
+      "who": "glm",
+      "visual_hit_s": 242.625,
+      "note_on_s": 242.62,
+      "detected_dry_onset_s": 242.625,
+      "offset_ms": 0.0,
+      "method": "5 ms RMS >25% of local 0.33 s peak, dry individual part; proxy, not perceptual acceptance"
+    },
+    {
+      "id": "2-12",
+      "who": "claude",
+      "visual_hit_s": 254.625,
+      "note_on_s": 254.61,
+      "detected_dry_onset_s": 254.63,
+      "offset_ms": 5.0,
+      "method": "5 ms RMS >25% of local 0.33 s peak, dry individual part; proxy, not perceptual acceptance"
+    },
+    {
+      "id": "2-14",
+      "who": "astra",
+      "visual_hit_s": 291.0,
+      "note_on_s": 291.0,
+      "detected_dry_onset_s": 291.0,
+      "offset_ms": 0.0,
+      "method": "5 ms RMS >25% of local 0.33 s peak, dry individual part; proxy, not perceptual acceptance"
+    }
+  ],
+  "rhythm_sections": [
+    {
+      "beat": 0,
+      "time": 0.0,
+      "kind": "title"
+    },
+    {
+      "beat": 6,
+      "time": 3.375,
+      "kind": "welcome"
+    },
+    {
+      "beat": 86,
+      "time": 47.666666666666664,
+      "kind": "intros_warm"
+    },
+    {
+      "beat": 151,
+      "time": 83.875,
+      "kind": "intros_playful"
+    },
+    {
+      "beat": 221,
+      "time": 122.79166666666667,
+      "kind": "handoff"
+    },
+    {
+      "beat": 252,
+      "time": 139.875,
+      "kind": "blank"
+    },
+    {
+      "beat": 270,
+      "time": 150.16666666666666,
+      "kind": "scan"
+    },
+    {
+      "beat": 337,
+      "time": 186.95833333333334,
+      "kind": "terrain"
+    },
+    {
+      "beat": 386,
+      "time": 214.45833333333334,
+      "kind": "nations"
+    },
+    {
+      "beat": 458,
+      "time": 254.625,
+      "kind": "sites"
+    }
+  ],
+  "loudness": {
+    "input_i": -21.0,
+    "input_tp": -4.37,
+    "input_lra": 6.0
+  },
+  "compression_max_db": {
+    "rin_piano": 0,
+    "gemini_flute": 0,
+    "claude_clarinet": 0,
+    "astra_epiano": 0.6346753835678101,
+    "deepseek_pizz": 0,
+    "glm_vibes": 0,
+    "shared_guitar": 2.6958396434783936,
+    "shared_bass": 2.6622111797332764,
+    "quiet_percussion": 0,
+    "soft_pad": 0
+  },
+  "note_counts": {
+    "rin_piano": 30,
+    "gemini_flute": 14,
+    "claude_clarinet": 66,
+    "astra_epiano": 52,
+    "deepseek_pizz": 15,
+    "glm_vibes": 24,
+    "shared_guitar": 473,
+    "shared_bass": 255,
+    "quiet_percussion": 267,
+    "soft_pad": 84
+  }
+}
