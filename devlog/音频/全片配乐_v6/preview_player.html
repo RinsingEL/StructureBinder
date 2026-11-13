@@ -26,6 +26,10 @@
   .chap.active { background: rgba(155,130,243,.34); border-color: var(--accent); color: #fff; font-weight: 600; }
   .chap.b2 { border-color: rgba(230,169,107,.28); }
   .chap.b2.active { background: rgba(230,169,107,.28); border-color: var(--warm); }
+  .chap.ap { border-color: rgba(130,204,176,.28); }
+  .chap.ap.active { background: rgba(130,204,176,.26); border-color: #82ccb0; }
+  .chap.c { border-color: rgba(240,145,168,.28); }
+  .chap.c.active { background: rgba(240,145,168,.26); border-color: #f091a8; }
   .hint { font-size: 12px; color: var(--muted); }
 </style>
 </head>
@@ -41,12 +45,15 @@
   <div class="stage-wrap" id="wrap">
     <iframe class="stage-frame" id="f1" src="../../视频素材/开场/opening.html?static"></iframe>
     <iframe class="stage-frame" id="f2" src="../../视频素材/第二段/act2.html?static" style="display:none"></iframe>
+    <iframe class="stage-frame" id="f3" src="../../视频素材/第三段/act3.html?static" style="display:none"></iframe>
+    <iframe class="stage-frame" id="f4" src="../../视频素材/第四段/act4.html?static" style="display:none"></iframe>
+    <iframe class="stage-frame" id="f5" src="../../视频素材/第五段/act5.html?static" style="display:none"></iframe>
   </div>
   <div class="controls">
     <div class="bar-row">
       <button class="play" id="btnPlay">▶ 播放</button>
-      <input type="range" id="seek" min="0" max="1006.667" step="0.05" value="0">
-      <div class="time" id="timeLabel">00:00 / 16:46</div>
+      <input type="range" id="seek" min="0" max="2260" step="0.05" value="0">
+      <div class="time" id="timeLabel">00:00 / 37:40</div>
     </div>
     <div class="chapters" id="chapters"></div>
     <div class="hint">提示：点击任意章节标签直接空降试听；空格键播放/暂停，左右方向键 ±5 秒。</div>
@@ -55,31 +62,50 @@
 <audio id="aud" preload="auto"></audio>
 <script>
 const BPM = 108, BEAT = 60 / BPM;
-const OP_DUR = 126.66666666666667;
-const TOTAL = 1006.6666666666667;
-document.getElementById('aud').src = '开场至第二段_完整_v6.mp3?t=' + Date.now();
+const TOTAL = 4068 * BEAT;
+document.getElementById('aud').src = '全片配乐_完整_v6.mp3?t=' + Date.now();
 
 const CHAPTERS = [
   { name: '0:00 开场 · 主题 A', t: 0.0, theme: '主题 A · D大调活动室' },
-  { name: '0:49 Claude & Astra 介绍', t: 48.889, theme: '主题 A · D大调活动室' },
-  { name: '1:25 DeepSeek & GLM 搞笑', t: 85.556, theme: '主题 A · D大调活动室' },
+  { name: '0:49 Claude & Astra', t: 48.889, theme: '主题 A · D大调活动室' },
+  { name: '1:26 DeepSeek & GLM', t: 85.556, theme: '主题 A · D大调活动室' },
   { name: '2:09 第二段交接 (Rin)', t: 128.889, theme: '主题 B1 · 创世与山海' },
   { name: '2:29 W1 白纸留白', t: 148.889, theme: '主题 B1 · 白纸极简留白' },
   { name: '2:40 W2 九万格扫描', t: 160.0, theme: '主题 B1 · 扫描脉冲' },
   { name: '3:20 W3 山海长线', t: 200.0, theme: '主题 B1 · 山海舒展' },
-  { name: '3:49 T1 七国 & T2-T3 扩张', t: 228.889, theme: '主题 B1 · 七国扩张' },
-  { name: '6:29 T4 进镜潮学院!', t: 388.889, theme: '主题 B2 · G大调进城安家', b2: true },
-  { name: '9:16 D1e 16区翻牌子', t: 555.556, theme: '主题 B2 · 16区翻牌', b2: true },
-  { name: '11:04 D4 只落下一栋!', t: 664.444, theme: '主题 B2 · D4戏剧转折', b2: true },
-  { name: '13:16 D6 拆开重排解开', t: 795.556, theme: '主题 B2 · 豁然开朗', b2: true },
-  { name: '14:04 D7 十六区快放', t: 844.444, theme: '主题 B2 · 全城爬坡', b2: true },
-  { name: '14:20 D-photos 实景照片', t: 860.0, theme: '主题 B2 · 实景温暖', b2: true },
-  { name: '15:29 天象台二重奏', t: 928.889, theme: '主题 B2 · Rin×吉酱天象台二重奏', b2: true },
+  { name: '3:49 T1 七国 & 扩张', t: 228.889, theme: '主题 B1 · 七国扩张' },
+  { name: '6:29 T4 进镜潮学院!', t: 388.889, theme: '主题 B2 · G大调进城安家', cls: 'b2' },
+  { name: '9:16 D1e 16区翻牌子', t: 555.556, theme: '主题 B2 · 16区翻牌', cls: 'b2' },
+  { name: '11:04 D4 只落下一栋!', t: 664.444, theme: '主题 B2 · D4戏剧转折', cls: 'b2' },
+  { name: '13:16 D6 拆开重排解开', t: 795.556, theme: '主题 B2 · 豁然开朗', cls: 'b2' },
+  { name: '14:04 D7 十六区快放', t: 844.444, theme: '主题 B2 · 全城爬坡', cls: 'b2' },
+  { name: '14:20 D-photos 实景照片', t: 860.0, theme: '主题 B2 · 实景温暖', cls: 'b2' },
+  { name: '15:29 天象台二重奏', t: 928.889, theme: '主题 B2 · Rin×吉酱天象台二重奏', cls: 'b2' },
+  { name: '16:47 第三段 · 主题 A\' 回顾', t: 1006.667, theme: '主题 A\' · D大调怀旧回顾', cls: 'ap' },
+  { name: '17:44 大事件总览', t: 1064.444, theme: '主题 A\' · 时间线总览', cls: 'ap' },
+  { name: '18:11 试错与弯路', t: 1091.111, theme: '主题 A\' · 笨功夫试错', cls: 'ap' },
+  { name: '23:16 9 月节点', t: 1395.556, theme: '主题 A\' · 9月冲刺', cls: 'ap' },
+  { name: '24:20 D4 深情改写', t: 1460.0, theme: '主题 A\' · D4推翻重写', cls: 'ap' },
+  { name: '26:16 时间轴收束', t: 1575.556, theme: '主题 A\' · 收束入夜', cls: 'ap' },
+  { name: '26:53 第四段 · 主题 C 展望', t: 1613.333, theme: '主题 C · A大调展望未来', cls: 'c' },
+  { name: '27:33 海湾与田野', t: 1653.333, theme: '主题 C · 明媚海岸田野', cls: 'c' },
+  { name: '29:38 日与夜 (F#m)', t: 1777.778, theme: '主题 C · F#m 提灯夜巡', cls: 'c' },
+  { name: '31:27 心愿与齿轮', t: 1886.667, theme: '主题 C · 齿轮微光', cls: 'c' },
+  { name: '33:11 山谷冒险远征', t: 1991.111, theme: '主题 C · 并肩冒险合奏', cls: 'c' },
+  { name: '36:22 第五段 · 温暖致谢', t: 2182.222, theme: '主题 C · 尾声轻语再见', cls: 'c' },
+  { name: '37:32 再见 & 拍立得定格', t: 2252.222, theme: '主题 C · 拍立得 Aadd9 定格', cls: 'c' },
 ];
 
 const wrap = document.getElementById('wrap');
-const f1 = document.getElementById('f1');
-const f2 = document.getElementById('f2');
+const frames = [1, 2, 3, 4, 5].map(n => document.getElementById('f' + n));
+const [f1, f2, f3, f4, f5] = frames;
+const ACTS = [
+  { frame: f1, start: 0, end: 228 * BEAT, isAct2: false },
+  { frame: f2, start: 228 * BEAT, end: 1812 * BEAT, isAct2: true },
+  { frame: f3, start: 1812 * BEAT, end: 2904 * BEAT, isAct2: false },
+  { frame: f4, start: 2904 * BEAT, end: 3928 * BEAT, isAct2: false },
+  { frame: f5, start: 3928 * BEAT, end: 4068 * BEAT, isAct2: false },
+];
 const aud = document.getElementById('aud');
 const seek = document.getElementById('seek');
 const btnPlay = document.getElementById('btnPlay');
@@ -90,8 +116,7 @@ const chapBox = document.getElementById('chapters');
 
 function fit() {
   const s = wrap.clientWidth / 1920;
-  f1.style.transform = `scale(${s})`;
-  f2.style.transform = `scale(${s})`;
+  frames.forEach(fr => { fr.style.transform = `scale(${s})`; });
 }
 window.addEventListener('resize', fit);
 fit();
@@ -102,15 +127,11 @@ function fmt(sec) {
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
-CHAPTERS.forEach((ch, idx) => {
+CHAPTERS.forEach((ch) => {
   const b = document.createElement('button');
-  b.className = 'chap' + (ch.b2 ? ' b2' : '');
+  b.className = 'chap' + (ch.cls ? ' ' + ch.cls : '');
   b.textContent = ch.name;
-  b.onclick = () => {
-    aud.currentTime = ch.t;
-    renderAt(ch.t);
-    if (aud.paused) togglePlay();
-  };
+  b.onclick = () => seekTo(ch.t, true);
   ch.btn = b;
   chapBox.appendChild(b);
 });
@@ -137,10 +158,6 @@ function seekTo(t, autoPlay = false) {
   renderAt(clamped);
   if (autoPlay && aud.paused) togglePlay();
 }
-
-CHAPTERS.forEach((ch) => {
-  ch.btn.onclick = () => seekTo(ch.t, true);
-});
 
 seek.oninput = () => {
   dragging = true;
@@ -223,16 +240,15 @@ function setupAct2Atlas() {
 }
 
 function renderAt(t) {
-  const inAct1 = t < OP_DUR;
-  f1.style.display = inAct1 ? 'block' : 'none';
-  f2.style.display = inAct1 ? 'none' : 'block';
-  const target = inAct1 ? f1 : f2;
-  const localT = inAct1 ? t : t - OP_DUR;
+  const act = ACTS.find(a => t < a.end) || ACTS[ACTS.length - 1];
+  ACTS.forEach(a => { a.frame.style.display = a === act ? 'block' : 'none'; });
+  const target = act.frame;
+  const localT = Math.max(0, t - act.start);
   try {
     if (target.contentWindow && typeof target.contentWindow.render === 'function') {
       target.contentWindow.render(localT);
     }
-    if (inAct1) {
+    if (!act.isAct2) {
       lastAtlasKey = '';
     } else if (target.contentWindow && typeof target.contentWindow.beatAt === 'function') {
       const bt = target.contentWindow.beatAt(localT);
@@ -267,10 +283,11 @@ function tick() {
   if (!dragging) renderAt(aud.currentTime || 0);
   requestAnimationFrame(tick);
 }
-f1.onload = () => renderAt(dragging ? parseFloat(seek.value) : (aud.currentTime || 0));
+const reRenderNow = () => renderAt(dragging ? parseFloat(seek.value) : (aud.currentTime || 0));
+[f1, f3, f4, f5].forEach(fr => { fr.onload = reRenderNow; });
 f2.onload = () => {
   setupAct2Atlas();
-  renderAt(dragging ? parseFloat(seek.value) : (aud.currentTime || 0));
+  reRenderNow();
 };
 requestAnimationFrame(tick);
 </script>
