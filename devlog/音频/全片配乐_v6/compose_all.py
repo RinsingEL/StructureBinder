@@ -39,7 +39,7 @@ FF = v.FF
 BPM = c12.BPM
 BEAT_S = c12.BEAT_S
 WHO = c12.WHO
-PARTS = c12.PARTS
+PARTS = {**c12.PARTS, 'quiet_percussion': (40, 9, 0.08, -30.5, 0.04)}
 
 # Extend chord palette cleanly with A-major / F#m harmony for Theme C (Acts 4 & 5)
 CHORDS = {
@@ -271,9 +271,12 @@ def make_full_score(op_beats, act_offsets, total_beats, duration_s, events, sect
         elif k == 'act4_gears':
             # Crisp mechanical gears & craftsman steps
             pat = {0.0: (0, 0.75, 46), 1.0: (2, 0.7, 41), 2.0: (1, 0.75, 43), 3.0: (3, 0.7, 39)}
-        elif k in ('act4_coast', 'act4_adventure'):
+        elif k == 'act4_coast':
             # Bright open Theme C stride
             pat = {0.0: (0, 1.1, 46), 1.5: (2, 0.75, 41), 2.0: (1, 1.0, 43), 3.5: (3, 0.45, 38)}
+        elif k == 'act4_adventure':
+            # Solid quarter-note adventure drive locked with Kick + Snap (no choppy offbeat gaps)
+            pat = {0.0: (0, 1.2, 48), 1.0: (2, 0.95, 42), 2.0: (1, 1.15, 46), 3.0: (3, 0.95, 42)}
         else:
             pat = {0.0: (0, 1.1, 43), 1.5: (2, 0.75, 38), 2.5: (1, 0.9, 40), 3.5: (3, 0.4, 36)}
 
@@ -283,6 +286,10 @@ def make_full_score(op_beats, act_offsets, total_beats, duration_s, events, sect
         # Bass
         if k in ('act5_thanks', 'act4_night', 'act4_finale'):
             add('shared_bass', base, root, 3.2, 46)
+        elif k == 'act4_adventure':
+            # Full adventure anchor on beats 1 & 3
+            add('shared_bass', base, root, 1.9, 58)
+            add('shared_bass', base + 2.0, alt_bass, 1.8, 50)
         else:
             add('shared_bass', base, root, 1.8, 52)
             add('shared_bass', base + 2.0, alt_bass, 1.5, 42)
@@ -295,17 +302,24 @@ def make_full_score(op_beats, act_offsets, total_beats, duration_s, events, sect
         elif k == 'act4_gears':
             for bt in (0.0, 1.0, 2.0, 3.0):
                 add('quiet_percussion', base + bt, 42 if bt in (1, 3) else 37, 0.09, 25 if bt in (0, 2) else 20)
-        elif k in ('act4_coast', 'act4_day', 'act4_adventure'):
+        elif k in ('act4_coast', 'act4_day'):
             for bt in (0.5, 1.5, 2.5, 3.5):
                 add('quiet_percussion', base + bt, 42, 0.09, 20 if k == 'act4_day' else 24)
-            if k == 'act4_adventure' and bar % 2 == 0:
-                add('quiet_percussion', base + 1.0, 37, 0.11, 24)
-                add('quiet_percussion', base + 3.0, 37, 0.11, 24)
+        elif k == 'act4_adventure':
+            # Original Brush kit (prog 40): Kick (35) on 1 & 3 + Sidestick/Brush Snare (37 + 38) on 2 & 4 + light Hats (42) tying the bar together
+            add('quiet_percussion', base + 0.0, 35, 0.20, 17)
+            add('quiet_percussion', base + 1.0, 37, 0.12, 30)
+            add('quiet_percussion', base + 1.0, 38, 0.18, 42)
+            add('quiet_percussion', base + 2.0, 35, 0.20, 15)
+            add('quiet_percussion', base + 3.0, 37, 0.12, 30)
+            add('quiet_percussion', base + 3.0, 38, 0.18, 42)
+            for sub in (0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5):
+                add('quiet_percussion', base + sub, 42, 0.08, 22 if sub in (0.0, 1.0, 2.0, 3.0) else 15)
 
         # Warm pad swells
-        if k in ('act3_open', 'act3_d4', 'act3_tlall', 'act4_night', 'act4_finale', 'act5_thanks') and (bar % 2 == 0 or k in ('act4_night', 'act4_finale', 'act5_thanks')):
+        if k in ('act3_open', 'act3_d4', 'act3_tlall', 'act4_night', 'act4_adventure', 'act4_finale', 'act5_thanks') and (bar % 2 == 0 or k in ('act4_night', 'act4_finale', 'act5_thanks')):
             for p in ch[1:]:
-                add('soft_pad', base, p, 3.8, 36 if k == 'act4_night' else 33)
+                add('soft_pad', base, p, 3.8, 36 if k == 'act4_night' else (30 if k == 'act4_adventure' else 33))
 
     # 2. Dialogue Ensemble & Anchored Themes across Acts 3, 4, 5
     a3_anchors = {'tl', 'n2606', 'rewrite', 'tlall'}

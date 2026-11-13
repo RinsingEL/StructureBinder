@@ -84,7 +84,7 @@ def render(name, shaped=True):
         elif kind == 0:
             synth.noteoff(ch, p)
 
-    cutoff_hp = 38 if name == 'shared_bass' else 85
+    cutoff_hp = 38 if name == 'shared_bass' else (65 if name == 'quiet_percussion' else 85)
     cutoff_lp = 5500 if name == 'soft_pad' else 7200
     out = signal.sosfilt(signal.butter(2, cutoff_hp, 'highpass', fs=SR, output='sos'), out, axis=0).astype(np.float32)
     out = signal.sosfilt(signal.butter(2, cutoff_lp, 'lowpass', fs=SR, output='sos'), out, axis=0).astype(np.float32)
