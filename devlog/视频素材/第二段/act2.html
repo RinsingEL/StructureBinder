@@ -76,27 +76,30 @@ const FALLBACK = { think: ['d4', 'talk_smile'], talk_smile: ['d4'], d4: ['talk_s
 const { beats: BEATS, durations: DUR, lines: SCRIPT } = window.ACT2;
 
 // 时间线：每屏字幕按每秒约 6 字计时。要翻页时，如果上一拍的动画还没播完，就先停在那里等它播完（例如 D7 全城快放）
-// 画面卡在音乐的拍子上（108 BPM，见 ../common/beatgrid.js）：每屏字幕从拍上开始；PPT 翻页那一屏从重拍开始，翻页正好落在重拍上
+// 画面卡在音乐的拍子上（108 BPM，见 ../common/beatgrid.js）：每屏字幕从拍上开始；换人开口和子步骤从重拍（第 1/3 拍）开始；重要翻页从整小节第 1 拍开始
 const G = BeatGrid(108);
 const INTRO = 0.8, OUTRO = 2.4;
-// 镜头只在两句话之间推近、拉回：第一拍那句话之前、最后一句（Gemini 接第三段）之前各停三拍，镜头在停顿里动完
-const CAM = 3 * G.beat, ZD = 2 * G.beat;
+// 镜头只在两句话之间推近、拉回：留一整小节（4 拍）呼吸，镜头在中间 2 拍动完
+const CAM = 4 * G.beat, ZD = 2 * G.beat;
+const MAJOR_BEATS = new Set(['W1', 'W2', 'W3a', 'T1', 'T2', 'T3', 'T4', 'D1', 'D1e', 'D2', 'D3', 'D4', 'D5a', 'D6', 'D7', 'D-photos']);
 const CAM_IN_LINE = SCRIPT.findIndex(l => l.cards.some(c => c.beat)), CAM_OUT_LINE = SCRIPT.length - 1;
 let Z0 = 0, Z1 = 0;
 const timeline = [], beatStarts = [];
-let t = G.next(INTRO), curBeat = -1;
+let t = G.next(INTRO, 4), curBeat = -1, prevWho = null;
 for (const [li, line] of SCRIPT.entries()) {
-  if (li === CAM_IN_LINE) { t = G.next(t, 2); Z0 = t; t += CAM; }
-  if (li === CAM_OUT_LINE) { t = G.next(t, 2); Z1 = t; t += CAM; }
+  if (li === CAM_IN_LINE) { t = G.next(t, 4); Z0 = t; t += CAM; }
+  if (li === CAM_OUT_LINE) { t = G.next(t, 4); Z1 = t; t += CAM; }
+  if (line.who !== prevWho) t = G.next(t, 2);
+  if (line.id === '2-60') t = G.next(t, 4); // 天象台照片放大落在整小节第 1 拍
   let lineStart = null;
   for (const c of line.cards) {
     const b = c.beat ? BEATS.indexOf(c.beat) : -1;
     if (b >= 0 && b !== curBeat) {
       if (curBeat >= 0) {
         const last = beatStarts[beatStarts.length - 1];
-        t = Math.max(t, last.t + DUR[curBeat] + 0.4);
+        t = Math.max(t, last.t + DUR[curBeat] + 0.15);
       }
-      t = G.next(t, 2);
+      t = G.next(t, MAJOR_BEATS.has(BEATS[b]) ? 4 : 2);
       beatStarts.push({ beat: b, t });
       curBeat = b;
     }
@@ -106,6 +109,7 @@ for (const [li, line] of SCRIPT.entries()) {
     timeline.push({ id: line.id, who: line.who, face: c.face, text: c.text, start: t, end, lineStart, beat: b >= 0 && beatStarts[beatStarts.length - 1].t === t ? BEATS[b] : undefined });
     t = end;
   }
+  prevWho = line.who;
   t = G.next(t + 0.05);
 }
 window.DURATION = G.next(t + OUTRO, 4);
