@@ -376,7 +376,9 @@ def make_score(op_beats, total_beats, duration_s, events, sections, latencies):
     # 4. Character Motifs & Dialogue Ensemble
     obs_start = SEC['observatory']
     campus_anchors = {'T4', 'D1', 'D2', 'D5a', 'D6', 'D-photos'}
+    hard_stop_kinds = campus_anchors | {'D4'}
     last_solo_beat = {}
+    relay = None  # (anchor_beat, anchor_end) for spanning 8-bar anchor themes across 2 speakers
     for i, e in enumerate(events):
         who = e['who']
         part = WHO[who]
@@ -393,20 +395,52 @@ def make_score(op_beats, total_beats, duration_s, events, sections, latencies):
 
         # Skip normal lead phrase right on D4's dramatic 1-bar pause
         if e['kind'] == 'D4':
+            relay = None
             continue
 
         in_b2 = b >= SEC['city_enter']
         if in_b2:
-            # Theme B2: Anchor sections state the warm Campus Theme on piano cleanly without stiff repeated stamps
+            # Theme B2: Anchor sections state a full 8-bar (32b) Campus Theme when clear of the next anchor,
+            # allowing Speaker 1 on Bars 1-4 and Speaker 2 (e.g. Astra after D6) to relay through Bars 5-8.
             if e['kind'] in campus_anchors:
-                theme_len = min(32.0, max(12.0, avail - 1.5))
-                render_motif('rin_piano', b, theme_len, motifs.CAMPUS_THEME_B2, 0.90, latencies['rin_piano'])
+                next_hard = next((ev['beat'] for ev in events[i + 1:] if ev['kind'] in hard_stop_kinds or ev['beat'] >= obs_start), total_beats)
+                theme_len = 32.0 if (next_hard - b >= 32.0) else 16.0
+                piano_scale = 0.80 if part != 'rin_piano' else 0.90
+                render_motif('rin_piano', b, theme_len, motifs.CAMPUS_THEME_B2, piano_scale, latencies['rin_piano'])
                 last_solo_beat['rin_piano'] = b
-                if part != 'rin_piano' and avail >= 22:
-                    b2_vars = motifs.B2_CONVERSATIONS[part]
-                    render_motif(part, b + 16.0, min(6.0, avail - 17.5), b2_vars[i % len(b2_vars)], 0.80, latencies[part])
-                    last_solo_beat[part] = b + 16.0
+                relay = (b, b + theme_len) if (theme_len >= 32.0 and avail < 26.0) else None
+                if part != 'rin_piano':
+                    duet_line = motifs.ANCHOR_DUETS['B2'].get(part)
+                    if duet_line:
+                        render_motif(part, b, 16.0, duet_line, 0.86, latencies[part])
+                        last_solo_beat[part] = b
+                    if theme_len >= 32.0 and avail >= 26.0:
+                        p2_same = motifs.ANCHOR_DUETS_P2['B2'].get(part)
+                        if p2_same:
+                            render_motif(part, b, 32.0, p2_same, 0.84, latencies[part])
+                            last_solo_beat[part] = b + 16.0
+                    if avail >= 36.0:
+                        b2_vars = motifs.B2_CONVERSATIONS[part]
+                        render_motif(part, b + 32.0, min(6.5, avail - 33.5), b2_vars[i % len(b2_vars)], 0.80, latencies[part])
+                        last_solo_beat[part] = b + 32.0
                 continue
+
+            # If a 2nd speaker enters during Bars 5-8 of an active 8-bar Theme Anchor, relay together cleanly!
+            if relay is not None and b < relay[1] - 4.0:
+                a_b, a_end = relay
+                relay = None
+                if part != 'rin_piano' and b >= a_b + 11.0:
+                    p2 = motifs.ANCHOR_DUETS_P2['B2'].get(part)
+                    if p2:
+                        render_motif(part, a_b, 32.0, p2, 0.86, latencies[part])
+                        last_solo_beat[part] = a_b + 16.0
+                    tail_start = max(a_end + 1.0, b + 20.0)
+                    if b + avail >= tail_start + 6.0:
+                        b2_vars = motifs.B2_CONVERSATIONS[part]
+                        render_motif(part, tail_start, min(6.5, b + avail - tail_start - 1.5), b2_vars[(i + 1) % len(b2_vars)], 0.78, latencies[part])
+                        last_solo_beat[part] = tail_start
+                    continue
+            relay = None
 
             # Regular dialogue in B2: relaxed mid-register conversational phrasing
             if b - last_solo_beat.get(part, -999.0) >= 8.0:

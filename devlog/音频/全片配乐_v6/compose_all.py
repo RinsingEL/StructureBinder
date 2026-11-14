@@ -117,6 +117,7 @@ def load_all_timelines():
         ('act3_trials',    mark_abs('第三段', 'methods')),
         ('act3_sept',      mark_abs('第三段', 'n2609')),
         ('act3_d4',        mark_abs('第三段', 'n2610')),
+        ('act3_rewrite',   mark_abs('第三段', 'rewrite')),
         ('act3_tlall',     mark_abs('第三段', 'tlall')),
         ('act4_open',      float(a4_off)),
         ('act4_coast',     mark_abs('第四段', 'harbor')),
@@ -162,8 +163,8 @@ def make_full_score(op_beats, act_offsets, total_beats, duration_s, events, sect
             # Smooth V/V -> V pivot in final 2 bars of Act 3 into Act 4's A major
             if b >= SEC['act4_open'] - 8:
                 return 'E7sus' if b < SEC['act4_open'] - 4 else 'E_a'
-            if k == 'act3_d4':
-                # Emotional D4 confession & rewrite curve
+            if k in ('act3_d4', 'act3_rewrite'):
+                # Emotional D4 confession & rewrite curve (continuous chord cycle across the rewrite turn)
                 rel = int((b - SEC['act3_d4']) // 4)
                 prog = ['Bm7', 'Fsm7', 'Gmaj7', 'D/Fs', 'Em7', 'Gm6', 'Em7', 'A7sus',
                         'D', 'A/Cs', 'Bm7', 'Fsm7', 'Gmaj7', 'D/Fs', 'Em7', 'A']
@@ -253,14 +254,27 @@ def make_full_score(op_beats, act_offsets, total_beats, duration_s, events, sect
                     add('soft_pad', base, p, 3.8, 38)
             continue
 
-        if k == 'act5_thanks':
-            # Intimate afternoon acoustic arpeggio, no drums
-            pat = {0.0: (0, 1.4, 42), 1.0: (1, 1.1, 37), 2.0: (2, 1.2, 40), 3.0: (3, 1.0, 36)}
-        elif k in ('act3_open', 'act3_d4', 'act4_finale'):
+        is_break_bar = (k in ('act3_tl', 'act3_trials') and bar % 8 == 7)
+
+        if k in ('act3_rewrite', 'act3_tlall', 'act4_finale', 'act5_thanks'):
+            # Luminous rising 1-2-3-4 arpeggio (D4 rewrite dawn, Act 3 wrap-up, Act 4 sunset -> Act 5 farewell)
+            pat = {0.0: (0, 1.35, 43), 1.0: (1, 1.1, 38), 2.0: (2, 1.2, 41), 3.0: (3, 1.0, 37)}
+        elif k == 'act3_open':
             pat = {0.0: (0, 1.5, 42), 1.5: (2, 0.9, 37), 2.5: (1, 1.0, 39)}
-        elif k == 'act3_trials':
-            # Playful storytelling bounce
-            pat = {0.0: (0, 0.9, 44), 1.5: (2, 0.7, 38), 2.5: (1, 0.85, 41), 3.5: (3, 0.4, 36)}
+        elif k == 'act3_d4':
+            # Deep half-time breath for the 2610 D4 reflection & letting go
+            pat = {0.0: (0, 2.2, 42), 2.0: (2, 1.8, 37)}
+        elif k in ('act3_tl', 'act3_trials'):
+            # Theme A' trials: 2-bar A/B call-and-response + subtle 8-bar breath drop-out
+            if is_break_bar:
+                pat = {0.0: (0, 2.2, 42), 2.0: (2, 1.6, 36)}
+            elif bar % 2 == 0:
+                pat = {0.0: (0, 0.9, 44), 1.5: (2, 0.7, 38), 2.5: (1, 0.85, 41), 3.5: (3, 0.4, 36)}
+            else:
+                pat = {0.0: (0, 1.35, 42), 2.0: (2, 1.25, 38), 3.0: (1, 0.9, 37)}
+        elif k == 'act3_sept':
+            # September milestone (2609) team sprint: steady 1-2-3-4 step forward
+            pat = {0.0: (0, 0.85, 46), 1.0: (2, 0.75, 41), 2.0: (1, 0.85, 44), 3.0: (3, 0.75, 40)}
         elif k == 'act4_night':
             # Gentle nocturnal shimmer
             pat = {0.0: (0, 2.2, 40), 2.0: (2, 1.6, 36)}
@@ -272,8 +286,17 @@ def make_full_score(op_beats, act_offsets, total_beats, duration_s, events, sect
             # Crisp mechanical gears & craftsman steps
             pat = {0.0: (0, 0.75, 46), 1.0: (2, 0.7, 41), 2.0: (1, 0.75, 43), 3.0: (3, 0.7, 39)}
         elif k == 'act4_coast':
-            # Bright open Theme C stride
-            pat = {0.0: (0, 1.1, 46), 1.5: (2, 0.75, 41), 2.0: (1, 1.0, 43), 3.5: (3, 0.45, 38)}
+            # Sunlit coastal Theme C: 2-bar 3+3+2 stride answered by smooth 1-2-3-4
+            if bar % 2 == 0:
+                pat = {0.0: (0, 1.4, 46), 1.5: (2, 1.3, 42), 3.0: (1, 1.0, 43)}
+            else:
+                pat = {0.0: (0, 1.2, 45), 1.0: (2, 0.9, 40), 2.0: (1, 1.1, 43), 3.0: (3, 0.9, 39)}
+        elif k == 'act4_day':
+            # Calm daytime A/B stroll leading gently toward nightfall
+            if bar % 2 == 0:
+                pat = {0.0: (0, 1.15, 44), 1.5: (2, 0.85, 39), 2.5: (1, 0.95, 41), 3.5: (3, 0.5, 37)}
+            else:
+                pat = {0.0: (0, 1.6, 42), 2.0: (2, 1.4, 38)}
         elif k == 'act4_adventure':
             # Solid quarter-note adventure drive locked with Kick + Snap (no choppy offbeat gaps)
             pat = {0.0: (0, 1.2, 48), 1.0: (2, 0.95, 42), 2.0: (1, 1.15, 46), 3.0: (3, 0.95, 42)}
@@ -284,27 +307,51 @@ def make_full_score(op_beats, act_offsets, total_beats, duration_s, events, sect
             add('shared_guitar', base + bt, ch[idx], d, vel)
 
         # Bass
-        if k in ('act5_thanks', 'act4_night', 'act4_finale'):
-            add('shared_bass', base, root, 3.2, 46)
+        if k in ('act3_d4', 'act3_rewrite', 'act3_tlall', 'act5_thanks', 'act4_night', 'act4_finale') or is_break_bar:
+            add('shared_bass', base, root, 3.4 if k == 'act3_d4' else 3.2, 46)
         elif k == 'act4_adventure':
             # Full adventure anchor on beats 1 & 3
             add('shared_bass', base, root, 1.9, 58)
             add('shared_bass', base + 2.0, alt_bass, 1.8, 50)
+        elif k == 'act3_sept':
+            add('shared_bass', base, root, 1.85, 54)
+            add('shared_bass', base + 2.0, alt_bass, 1.6, 45)
         else:
             add('shared_bass', base, root, 1.8, 52)
             add('shared_bass', base + 2.0, alt_bass, 1.5, 42)
 
-        # Subtle percussion (kept clean and absent in intimate/nocturnal sections)
-        if k in ('act3_trials', 'act3_sept'):
+        # Subtle percussion (kept clean and absent in intimate/nocturnal/half-time sections)
+        if k in ('act3_tl', 'act3_trials') and not is_break_bar:
             if bar % 2 == 0:
-                add('quiet_percussion', base + 1.0, 42, 0.10, 21)
-                add('quiet_percussion', base + 3.0, 42, 0.10, 21)
+                add('quiet_percussion', base + 1.0, 37, 0.10, 23)
+                add('quiet_percussion', base + 1.0, 42, 0.09, 19)
+                add('quiet_percussion', base + 3.0, 37, 0.10, 23)
+                add('quiet_percussion', base + 3.0, 42, 0.09, 19)
+        elif k == 'act3_sept':
+            # Gentle Brush sprint step (mid-arc: downbeat-only soft Kick every bar + crisp Sidestick/Brush + quarter Hats, saving full Kick climax for Act 4)
+            add('quiet_percussion', base + 0.0, 35, 0.16, 12)
+            add('quiet_percussion', base + 1.0, 37, 0.11, 26)
+            add('quiet_percussion', base + 1.0, 38, 0.15, 34)
+            add('quiet_percussion', base + 3.0, 37, 0.11, 26)
+            add('quiet_percussion', base + 3.0, 38, 0.15, 34)
+            for sub in (0.0, 1.0, 2.0, 3.0):
+                add('quiet_percussion', base + sub, 42, 0.08, 21 if sub in (0.0, 2.0) else 16)
         elif k == 'act4_gears':
             for bt in (0.0, 1.0, 2.0, 3.0):
                 add('quiet_percussion', base + bt, 42 if bt in (1, 3) else 37, 0.09, 25 if bt in (0, 2) else 20)
-        elif k in ('act4_coast', 'act4_day'):
-            for bt in (0.5, 1.5, 2.5, 3.5):
-                add('quiet_percussion', base + bt, 42, 0.09, 20 if k == 'act4_day' else 24)
+        elif k == 'act4_coast':
+            # Open coastal footsteps: warm Sidestick (37) on 2 & 4 + quarter Brush Hats (no lonely offbeat chopping)
+            add('quiet_percussion', base + 1.0, 37, 0.11, 25)
+            add('quiet_percussion', base + 3.0, 37, 0.11, 25)
+            for sub in (0.0, 1.0, 2.0, 3.0):
+                add('quiet_percussion', base + sub, 42, 0.08, 19 if sub in (0.0, 2.0) else 15)
+        elif k == 'act4_day':
+            # Gentle daytime breeze on even bars before fading into drumless night
+            if bar % 2 == 0:
+                add('quiet_percussion', base + 1.0, 37, 0.10, 21)
+                add('quiet_percussion', base + 1.0, 42, 0.08, 17)
+                add('quiet_percussion', base + 3.0, 37, 0.10, 21)
+                add('quiet_percussion', base + 3.0, 42, 0.08, 17)
         elif k == 'act4_adventure':
             # Original Brush kit (prog 40): Kick (35) on 1 & 3 + Sidestick/Brush Snare (37 + 38) on 2 & 4 + light Hats (42) tying the bar together
             add('quiet_percussion', base + 0.0, 35, 0.20, 17)
@@ -316,15 +363,39 @@ def make_full_score(op_beats, act_offsets, total_beats, duration_s, events, sect
             for sub in (0.0, 0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5):
                 add('quiet_percussion', base + sub, 42, 0.08, 22 if sub in (0.0, 1.0, 2.0, 3.0) else 15)
 
+        # Act 5 Roll-Call Ensemble Layering: after each partner speaks their thank-you (5-1..5-6),
+        # they stay seated in a dedicated non-overlapping register/beat pocket until everyone plays together.
+        if k == 'act5_thanks' and SEC['act5_thanks'] + 16 <= base < SEC['act5_bye']:
+            if base >= 3944:  # After 5-1 Rin: soft piano chime on beat 1
+                add('rin_piano', base + 0.0, ch[2] + 12, 1.8, 35)
+                add_env('rin_piano', base, base + 2.2, 0.40)
+            if base >= 3960 and bar % 2 == 0:  # After 5-2 Claude: warm low-mid clarinet sustain on even bars
+                add('claude_clarinet', base + 0.0, ch[0], 3.5, 36, latencies['claude_clarinet'])
+                add_env('claude_clarinet', base, base + 3.8, 0.42, latencies['claude_clarinet'])
+            if base >= 3992 and bar % 2 == 1:  # After 5-3 吉酱/Gemini: airy high flute breath on odd bars
+                add('gemini_flute', base + 2.0, ch[3] + 12, 2.5, 37, latencies['gemini_flute'])
+                add_env('gemini_flute', base + 1.8, base + 4.4, 0.42, latencies['gemini_flute'])
+            if base >= 4012:  # After 5-4 DeepSeek: delicate right-side pizzicato stars on offbeats
+                add('deepseek_pizz', base + 1.5, ch[1] + 12, 0.25, 35, latencies['deepseek_pizz'])
+                add('deepseek_pizz', base + 3.5, ch[2] + 12, 0.25, 33, latencies['deepseek_pizz'])
+                add_env('deepseek_pizz', base + 1.3, base + 3.9, 0.38, latencies['deepseek_pizz'])
+            if base >= 4032:  # After 5-5 GLM: sparkling upper-register vibes touches on beats 2 & 4
+                add('glm_vibes', base + 1.0, ch[2] + 12, 1.3, 34)
+                add('glm_vibes', base + 3.0, ch[3] + 12, 1.3, 34)
+                add_env('glm_vibes', base + 0.8, base + 4.2, 0.40)
+
         # Warm pad swells
-        if k in ('act3_open', 'act3_d4', 'act3_tlall', 'act4_night', 'act4_adventure', 'act4_finale', 'act5_thanks') and (bar % 2 == 0 or k in ('act4_night', 'act4_finale', 'act5_thanks')):
+        if k in ('act3_open', 'act3_d4', 'act3_rewrite', 'act3_tlall', 'act4_night', 'act4_adventure', 'act4_finale', 'act5_thanks') and (bar % 2 == 0 or k in ('act3_d4', 'act4_night', 'act4_finale', 'act5_thanks')):
             for p in ch[1:]:
-                add('soft_pad', base, p, 3.8, 36 if k == 'act4_night' else (30 if k == 'act4_adventure' else 33))
+                add('soft_pad', base, p, 3.8, 36 if k in ('act4_night', 'act3_d4') else (30 if k == 'act4_adventure' else 33))
 
     # 2. Dialogue Ensemble & Anchored Themes across Acts 3, 4, 5
-    a3_anchors = {'tl', 'n2606', 'rewrite', 'tlall'}
+    a3_anchors = {'sea', 'tl', 'n2606', 'rewrite', 'tlall'}
     a4_anchors = {'harbor', 'day', 'gears', 'valley', 'clues', 'finale'}
+    hard_stop_34 = a3_anchors | a4_anchors | {'bye'}
     last_solo_beat = {}
+    relay = None  # (anchor_beat, anchor_theme, anchor_end) for 8-bar relay duets across 2 speakers
+    anchor_end_block = None  # end beat of current 32-beat anchor so incoming phrases wait cleanly for Bar 9 downbeat
 
     for i, e in enumerate(events):
         b = e['beat']
@@ -337,43 +408,111 @@ def make_full_score(op_beats, act_offsets, total_beats, duration_s, events, sect
         avail = next_b - b
         th = theme_at(b)
 
-        # Act 5 Final Polaroid Goodbye ("大家再见!") -> clean luminous Aadd9 bell cadence
+        # Act 5 Final Polaroid Goodbye ("大家再见!") -> all 6 clubroom partners gather on one luminous Aadd9 cadence
         if e.get('kind') == 'bye' or b >= SEC['act5_bye']:
+            relay = None
             if e.get('kind') == 'bye':
+                add('claude_clarinet', b + 0.0, 64, 5.5, 38, latencies['claude_clarinet'])
+                add_env('claude_clarinet', b, b + 6.5, 0.48, latencies['claude_clarinet'])
+                for p in (57, 61, 71):
+                    add('astra_epiano', b + 1.0, p, 6.2, 40)
+                add_env('astra_epiano', b + 0.8, b + 7.5, 0.50)
                 for off, p, d, vel in [(0.0, 69, 2.2, 54), (1.0, 73, 2.0, 56), (2.0, 76, 3.0, 58), (4.0, 83, 6.0, 52)]:
                     add('rin_piano', b + off, p, d, vel)
                 add_env('rin_piano', b, b + 10.0, 0.85)
-                for off, p, d, vel in [(2.0, 76, 3.5, 48), (4.0, 81, 5.5, 50), (5.0, 83, 5.5, 46)]:
+                for off, p, d, vel in [(2.0, 76, 0.35, 40), (4.0, 81, 0.45, 42)]:
+                    add('deepseek_pizz', b + off, p, d, vel, latencies['deepseek_pizz'])
+                add_env('deepseek_pizz', b + 1.8, b + 5.0, 0.50, latencies['deepseek_pizz'])
+                for off, p, d, vel in [(2.0, 76, 3.5, 46), (4.0, 81, 5.5, 48), (5.0, 83, 5.5, 44)]:
                     add('glm_vibes', b + off, p, d, vel)
                 add_env('glm_vibes', b + 2.0, b + 10.5, 0.72)
-                for off, p, d, vel in [(4.0, 73, 3.5, 46), (6.0, 76, 4.5, 44)]:
+                for off, p, d, vel in [(4.0, 73, 3.5, 45), (6.0, 76, 4.5, 43)]:
                     add('gemini_flute', b + off, p, d, vel, latencies['gemini_flute'])
                 add_env('gemini_flute', b + 4.0, b + 10.5, 0.76, latencies['gemini_flute'])
             continue
 
-        # Act 3 Anchor statements -> Theme A' (nostalgic piano)
-        if th == 'A_prime' and (e['id'] == '3-1' or e.get('kind') in a3_anchors):
-            theme_len = min(32.0, max(12.0, avail - 1.5))
-            render_motif('rin_piano', b, theme_len, motifs.THEME_A_PRIME, 0.90, latencies['rin_piano'])
+        # Act 3 Anchor statements -> full 8-bar Theme A' piano when clear, relaying smoothly across 2 speakers
+        if th == 'A_prime' and e.get('kind') in a3_anchors:
+            next_hard = next((ev['beat'] for ev in events[i + 1:] if ev.get('kind') in hard_stop_34 or ev['beat'] >= SEC['act4_open']), SEC['act4_open'])
+            theme_len = 32.0 if (next_hard - b >= 32.0) else 16.0
+            piano_scale = 0.80 if part != 'rin_piano' else 0.90
+            render_motif('rin_piano', b, theme_len, motifs.THEME_A_PRIME, piano_scale, latencies['rin_piano'])
             last_solo_beat['rin_piano'] = b
-            if part != 'rin_piano' and avail >= 22:
-                ap_vars = motifs.A_PRIME_CONVERSATIONS[part]
-                render_motif(part, b + 16.0, min(6.0, avail - 17.5), ap_vars[i % len(ap_vars)], 0.80, latencies[part])
-                last_solo_beat[part] = b + 16.0
+            relay = (b, 'A_prime', b + theme_len) if (theme_len >= 32.0 and avail < 26.0) else None
+            anchor_end_block = b + theme_len if theme_len >= 32.0 else None
+            if part == 'rin_piano' and theme_len >= 32.0:
+                p2_gem = motifs.ANCHOR_DUETS_P2['A_prime']['gemini_flute']
+                render_motif('gemini_flute', b, 32.0, p2_gem, 0.72, latencies['gemini_flute'])
+                last_solo_beat['gemini_flute'] = b + 16.0
+            elif part != 'rin_piano':
+                duet_line = motifs.ANCHOR_DUETS['A_prime'].get(part)
+                if duet_line:
+                    render_motif(part, b, 16.0, duet_line, 0.86, latencies[part])
+                    last_solo_beat[part] = b
+                if theme_len >= 32.0 and avail >= 26.0:
+                    p2_same = motifs.ANCHOR_DUETS_P2['A_prime'].get(part)
+                    if p2_same:
+                        render_motif(part, b, 32.0, p2_same, 0.84, latencies[part])
+                        last_solo_beat[part] = b + 16.0
+                if avail >= 36.0:
+                    ap_vars = motifs.A_PRIME_CONVERSATIONS[part]
+                    render_motif(part, b + 32.0, min(6.5, avail - 33.5), ap_vars[i % len(ap_vars)], 0.80, latencies[part])
+                    last_solo_beat[part] = b + 32.0
             continue
 
-        # Act 4 Anchor statements -> Theme C (bright open piano + gentle flute on finale)
+        # Act 4 Anchor statements -> full 8-bar Theme C piano when clear, relaying smoothly across 2 speakers
         if th == 'C' and b < SEC['act5_thanks'] and (e['id'] == '4-1' or e.get('kind') in a4_anchors):
-            theme_len = min(32.0, max(12.0, avail - 1.5))
-            render_motif('rin_piano', b, theme_len, motifs.THEME_C_ADVENTURE, 0.92, latencies['rin_piano'])
+            next_hard = next((ev['beat'] for ev in events[i + 1:] if ev.get('kind') in hard_stop_34 or ev['beat'] >= SEC['act5_thanks']), SEC['act5_thanks'])
+            theme_len = 32.0 if (next_hard - b >= 32.0 and e.get('kind') != 'finale') else 16.0
+            piano_scale = 0.82 if part != 'rin_piano' else 0.92
+            render_motif('rin_piano', b, theme_len, motifs.THEME_C_ADVENTURE, piano_scale, latencies['rin_piano'])
             last_solo_beat['rin_piano'] = b
-            if e.get('kind') == 'finale' and avail >= 18:
-                render_motif('gemini_flute', b + 8.0, min(14.0, avail - 9.5), motifs.C_CONVERSATIONS['gemini_flute'][0], 0.86, latencies['gemini_flute'])
-            elif part != 'rin_piano' and avail >= 22:
-                c_vars = motifs.C_CONVERSATIONS[part]
-                render_motif(part, b + 16.0, min(6.0, avail - 17.5), c_vars[i % len(c_vars)], 0.82, latencies[part])
-                last_solo_beat[part] = b + 16.0
+            relay = (b, 'C', b + theme_len) if (theme_len >= 32.0 and avail < 26.0 and e.get('kind') != 'finale') else None
+            anchor_end_block = (b + theme_len) if (theme_len >= 32.0 and e.get('kind') != 'finale') else None
+            if e.get('kind') == 'finale':
+                render_motif('gemini_flute', b + 8.0, 14.0, motifs.C_CONVERSATIONS['gemini_flute'][0], 0.84, latencies['gemini_flute'])
+            elif part == 'rin_piano' and theme_len >= 32.0:
+                p2_vibes = motifs.ANCHOR_DUETS_P2['C']['glm_vibes']
+                render_motif('glm_vibes', b, 32.0, p2_vibes, 0.72, latencies['glm_vibes'])
+                last_solo_beat['glm_vibes'] = b + 16.0
+            elif part != 'rin_piano':
+                duet_line = motifs.ANCHOR_DUETS['C'].get(part)
+                if duet_line:
+                    render_motif(part, b, 16.0, duet_line, 0.86, latencies[part])
+                    last_solo_beat[part] = b
+                if theme_len >= 32.0 and avail >= 26.0:
+                    p2_same = motifs.ANCHOR_DUETS_P2['C'].get(part)
+                    if p2_same:
+                        render_motif(part, b, 32.0, p2_same, 0.84, latencies[part])
+                        last_solo_beat[part] = b + 16.0
+                if avail >= 36.0:
+                    c_vars = motifs.C_CONVERSATIONS[part]
+                    render_motif(part, b + 32.0, min(6.5, avail - 33.5), c_vars[i % len(c_vars)], 0.82, latencies[part])
+                    last_solo_beat[part] = b + 32.0
             continue
+
+        # Relay speaker joining Bars 5-8 of an active 8-bar anchor theme cleanly without interrupting Piano
+        if relay is not None and b < relay[2] - 4.0:
+            a_b, a_th, a_end = relay
+            relay = None
+            if part != 'rin_piano' and b >= a_b + 11.0 and th == a_th and b < SEC['act5_thanks']:
+                p2 = motifs.ANCHOR_DUETS_P2[a_th].get(part)
+                if p2:
+                    render_motif(part, a_b, 32.0, p2, 0.86, latencies[part])
+                    last_solo_beat[part] = a_b + 16.0
+                tail_start = max(a_end + 1.0, b + 20.0)
+                if b + avail >= tail_start + 6.0:
+                    conv = motifs.A_PRIME_CONVERSATIONS if th == 'A_prime' else motifs.C_CONVERSATIONS
+                    render_motif(part, tail_start, min(6.5, b + avail - tail_start - 1.5), conv[part][(i + 1) % len(conv[part])], 0.78, latencies[part])
+                    last_solo_beat[part] = tail_start
+                continue
+        relay = None
+        if anchor_end_block is not None and b < anchor_end_block - 0.5:
+            if b + avail <= anchor_end_block + 5.0:
+                continue
+            b = anchor_end_block
+            avail = next_b - b
+        anchor_end_block = None
 
         # Normal dialogue phrases (Theme A' or Theme C), keeping cozy breathing space
         conv_bank = motifs.A_PRIME_CONVERSATIONS if th == 'A_prime' else motifs.C_CONVERSATIONS

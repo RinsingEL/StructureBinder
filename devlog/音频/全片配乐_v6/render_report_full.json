@@ -166,6 +166,11 @@
       "time_s": 1460.0
     },
     {
+      "name": "act3_rewrite",
+      "beat": 2728.0,
+      "time_s": 1515.556
+    },
+    {
       "name": "act3_tlall",
       "beat": 2836.0,
       "time_s": 1575.556
@@ -217,32 +222,32 @@
     }
   ],
   "loudness": {
-    "input_i": -21.52,
+    "input_i": -21.45,
     "input_tp": -1.7,
-    "input_lra": 5.8
+    "input_lra": 7.0
   },
   "compression_max_db": {
     "rin_piano": 0.0,
     "gemini_flute": 0.0,
     "claude_clarinet": 0.0,
-    "astra_epiano": 1.9940859079360962,
+    "astra_epiano": 2.0232110023498535,
     "deepseek_pizz": 0.0,
     "glm_vibes": 0.0,
-    "shared_guitar": 2.902040719985962,
-    "shared_bass": 3.6857142448425293,
+    "shared_guitar": 2.9301536083221436,
+    "shared_bass": 3.625887632369995,
     "soft_pad": 0.0,
     "quiet_percussion": 0.0
   },
   "note_counts": {
-    "rin_piano": 473,
-    "gemini_flute": 144,
-    "claude_clarinet": 375,
-    "astra_epiano": 522,
-    "deepseek_pizz": 159,
-    "glm_vibes": 173,
-    "shared_guitar": 3663,
-    "shared_bass": 1927,
-    "soft_pad": 522,
-    "quiet_percussion": 1705
+    "rin_piano": 572,
+    "gemini_flute": 185,
+    "claude_clarinet": 478,
+    "astra_epiano": 547,
+    "deepseek_pizz": 183,
+    "glm_vibes": 189,
+    "shared_guitar": 3513,
+    "shared_bass": 1839,
+    "soft_pad": 681,
+    "quiet_percussion": 2856
   }
 }
