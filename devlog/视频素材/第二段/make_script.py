@@ -10,9 +10,13 @@ TABLE = HERE.parent / '逐句配画面表.md'
 WHO = {'Rin': 'rin', 'Gemini': 'gemini', 'Claude': 'claude', 'Astra': 'astra', 'DeepSeek': 'deepseek', 'GLM': 'glm'}
 FACE = {'招呼': 'greet', '开心': 'talk_smile', '讲解': 'talk_smile', '反应': 'd4', '吐槽': 'd4',
         '自嘲': 'wry', '感动': 'moved', '提问': 'think', '认真': 'think', '默认': 'listen'}
-BEATS = ['W1', 'W2', 'W3a', 'W3b', 'W3c', 'T1', 'T2', 'T3', 'T3-end', 'T4', 'D1', 'D1b', 'D1c', 'D1d', 'D1e',
-         'D2', 'D3', 'D4', 'D5a', 'D5b', 'D6', 'D7', 'D-photos']
-DURATION = [0, 6.5, 1.5, 1.5, 1.5, 3.0, 16.0, 16.0, 1.0, 3.8, 3.0, 2.2, 5.5, 4.5, 22.0, 4.2, 6.5, 4.5, 4.5, 6.5, 6.5, 14.0, 12.0]
+BEATS = ['W1', 'W2', 'W3a', 'W3b', 'W3c', 'T1', 'T2', 'T3', 'T3-end', 'T4',
+         'D1', 'D1b', 'D1c', 'D1d', 'D1e', 'D2', 'D3', 'D4', 'D5a', 'D5b', 'D6', 'D7', 'D-photos']
+# 108 BPM 下每段 PPT 动画时长按拍取整（单位：拍），让翻页和等待自然贴合小节/重拍
+BEAT = 60 / 108
+BEAT_COUNTS = [0, 12, 3, 3, 3, 6, 28, 28, 2, 8,
+               6, 4, 10, 8, 40, 8, 12, 8, 8, 12, 12, 24, 24]
+DURATION = [round(n * BEAT, 6) for n in BEAT_COUNTS]
 
 def beat_tokens(cell):
     if 'W3' in cell and '高度' in cell:

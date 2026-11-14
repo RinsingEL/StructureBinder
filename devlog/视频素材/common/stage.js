@@ -84,9 +84,20 @@
     document.getElementById('band').appendChild(av);
   }
 
-  // 时间线：每屏字幕按每秒约 6 字计时；mark 记下这一屏开始时触发的画面事件
-  // 推近、拉回只在两句话之间：镜头要动的那句话之前停 CAM 秒，镜头在停顿里动完
-  const CAM = 1.4, ZD = 1.2;
+  // 时间线：对齐 108 BPM 节拍表；重要事件与镜头停顿落在重拍/小节线上
+  const G = (window.BeatGrid ? window.BeatGrid : bpm => {
+    const beat = 60 / bpm, eps = 1e-6;
+    return {
+      bpm, beat, bar: 4 * beat,
+      next: (x, u = 1) => Math.ceil(x / (beat * u) - eps) * beat * u,
+      endAfter: (s, m, sk = 0.25) => Math.ceil((s + m - sk) / beat - eps) * beat,
+      beatOf: x => x / beat,
+    };
+  })(108);
+  window.GRID = G;
+
+  // 推近、拉回只在两句话之间：镜头要动的那句话之前停 CAM 秒（一整小节 4 拍），镜头在停顿里动完
+  const CAM = 4 * G.beat, ZD = 2 * G.beat;
   const lineOf = name => name.startsWith('@') ? window.SCRIPT.lines.findIndex(l => l.id === name.slice(1))
     : window.SCRIPT.lines.findIndex(l => l.cards.some(c => c.mark === name));
   const shotLines = [];
@@ -98,21 +109,22 @@
   }
   const pauseAt = new Set(shotLines.flat()), pauseTime = {};
   const timeline = [], marks = {}, lines = {};
-  let t = cfg.INTRO;
+  let t = G.next(cfg.INTRO, 2);
   for (const [li, line] of window.SCRIPT.lines.entries()) {
-    if (pauseAt.has(li)) { pauseTime[li] = t + 0.05; t += CAM; }
+    if (pauseAt.has(li)) { t = G.next(t, 4); pauseTime[li] = t; t += CAM; }
     const start = t; lines[line.id] = t;
     for (const c of line.cards) {
-      const dur = Math.max(1.8, c.text.replace(/\n/g, '').length / 6 + 0.7) + (c.hold || 0);
-      if (c.mark) marks[c.mark] = t + 0.2;
+      if (c.mark) { t = G.next(t, 2); marks[c.mark] = t; }
+      const minDur = Math.max(1.8, c.text.replace(/\n/g, '').length / 6 + 0.7) + (c.hold || 0);
+      const end = G.endAfter(t, minDur, 0.25);
       const react = {};
       for (const [id, v] of Object.entries(c.react || {})) { const [face, fx] = v.split('+'); react[id] = { face, fx }; }
-      timeline.push({ id: line.id, who: line.who, face: c.face, fx: c.fx, react, text: c.text, start: t, end: t + dur, lineStart: start });
-      t += dur;
+      timeline.push({ id: line.id, who: line.who, face: c.face, fx: c.fx, react, text: c.text, start: t, end, lineStart: start });
+      t = end;
     }
-    t += cfg.GAP;
+    t = G.next(t + cfg.GAP, 2);
   }
-  window.DURATION = t + cfg.OUTRO;
+  window.DURATION = G.next(t + cfg.OUTRO, 4);
   window.MARKS = marks; window.LINES = lines; window.TIMELINE = timeline; // TIMELINE 给配音、提示音脚本对时间用
 
   const $ = id => document.getElementById(id);
