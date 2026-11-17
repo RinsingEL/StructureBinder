@@ -1,0 +1,9 @@
+{
+  "model": "s2.1-pro-free",
+  "text": "然后是挑房子的风格。之前给这里的建议其实是北欧风，但这座城的职责是学院，AI 最后选了魔法学院这套素材，一共四十五种。",
+  "reference_sha256": "154160bf893e72d5c4c13f0de0aee6923470e849e1ac67af40c9feecbb5d3742",
+  "reference_text": "大家好，欢迎来参观我们的社团。今天，我们一起看看这座城市吧。",
+  "duration": 9.566621315192744,
+  "sha256": "d5826a12000a3d801ec3e0a45bc7026cf1d6f726e14dfe512cae6bbb24a9dfb5",
+  "status": "generated"
+}

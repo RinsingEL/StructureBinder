@@ -1,0 +1,69 @@
+{
+  "clips": [
+    {
+      "who": "gemini",
+      "file": "开场配音/001_gemini_L01.wav",
+      "reference": "参考音色/Gemini.wav",
+      "audio_sha256": "c588abac5c640c62a518fc6e0a31b0a7e6994b670d3ba19f1d0b15fdf33204a4",
+      "reference_sha256": "870e7ebbd84ab9b14800e08e0f349211285505d561d669255ac089fdcb3b161f",
+      "source_audio": "开场配音/001_gemini_L01.wav",
+      "source_reference": "参考音色/Gemini.wav",
+      "duration": 16.486167800453515,
+      "reel_start": 0.0,
+      "unchanged_from_previous_bundle": true
+    },
+    {
+      "who": "claude",
+      "file": "开场配音/002_claude_L02.wav",
+      "reference": "参考音色/Claude.wav",
+      "audio_sha256": "322a0c098051026b13696b6c62df6a7d1ce91fe62c3845bd82015583b8d3f617",
+      "reference_sha256": "154160bf893e72d5c4c13f0de0aee6923470e849e1ac67af40c9feecbb5d3742",
+      "source_audio": "开场配音/002_claude_L02.wav",
+      "source_reference": "参考音色/Claude.wav",
+      "duration": 15.139410430839002,
+      "reel_start": 17.086167800453516,
+      "unchanged_from_previous_bundle": true
+    },
+    {
+      "who": "astra",
+      "file": "开场配音/003_astra_L03.wav",
+      "reference": "参考音色/Astra.wav",
+      "audio_sha256": "9965e87f35aeecd90ba9fcb028ed7b7c321d0a64261db37fcaa37f48c365af6c",
+      "reference_sha256": "a650ecddd8407402eb31410c2b975827874c49b895cf8c7171af36f4a2156bb4",
+      "source_audio": "开场配音/003_astra_L03.wav",
+      "source_reference": "参考音色/Astra.wav",
+      "duration": 17.22920634920635,
+      "reel_start": 32.82557823129252,
+      "unchanged_from_previous_bundle": true
+    },
+    {
+      "who": "deepseek",
+      "file": "开场配音/004_deepseek_L04.wav",
+      "reference": "参考音色/DeepSeek.wav",
+      "audio_sha256": "3e88a9fb7d737aad5bb3c5a030126401dbeeaebd313015c1a3ce602a31dbc9dc",
+      "reference_sha256": "afebde26716703ced48b6422de31e78d71e8591d76fe025d0ab08aa1ac4218a8",
+      "source_audio": "开场配音/004_deepseek_L04.wav",
+      "source_reference": "参考音色/DeepSeek.wav",
+      "duration": 14.907210884353741,
+      "reel_start": 50.65478458049887,
+      "unchanged_from_previous_bundle": true
+    },
+    {
+      "who": "glm",
+      "file": "开场配音/005_glm_L05.wav",
+      "reference": "参考音色/GLM.wav",
+      "audio_sha256": "033af6d3950f02f8e38693358db31d5a238452f92e6af60592df1b85fadeb713",
+      "reference_sha256": "42837635cc56449f7cf417e2f04a8848944cf4094fb299bbc2d4cbdd6993a798",
+      "source_audio": "试听/五人开场_GLM新_20261117/生成记录/GLM替换_20261117_02/GLM开场_API原始.wav",
+      "source_reference": "试听/五人开场_GLM新_20261117/生成记录/GLM替换_20261117_02/GLM用户参考_原文件.wav",
+      "duration": 17.972244897959182,
+      "reel_start": 66.16199546485261,
+      "unchanged_from_previous_bundle": false
+    }
+  ],
+  "reel_seconds": 84.1342403628118,
+  "timeline_seconds": 126.66666666666667,
+  "alignment_warnings": [],
+  "new_api_calls": 1,
+  "previous_version": "历史版本/GLM替换前_20261117_01"
+}

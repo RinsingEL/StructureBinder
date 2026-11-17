@@ -1,0 +1,9 @@
+{
+  "model": "s2.1-pro-free",
+  "text": "四十五种，挑起来可不轻松。我上次就把版本挑错了，最后只盖了十四栋就收场。",
+  "reference_sha256": "afebde26716703ced48b6422de31e78d71e8591d76fe025d0ab08aa1ac4218a8",
+  "reference_text": "大家好，欢迎来参观我们的社团。今天，我们一起看看这座城市吧。",
+  "duration": 6.640907029478458,
+  "sha256": "d84fc035c622d0e8a1abfe18c5c0b3e8fcedda8874b902833a5c30b4f17fa30e",
+  "status": "generated"
+}

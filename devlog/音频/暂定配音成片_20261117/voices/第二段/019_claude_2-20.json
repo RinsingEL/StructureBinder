@@ -1,0 +1,9 @@
+{
+  "model": "s2.1-pro-free",
+  "text": "今天我们就挑一个国家走进去，镜潮学院。整个国家只有这一座城，所以这座城要一个人扛起教书、藏书、接待客人和学生生活。",
+  "reference_sha256": "154160bf893e72d5c4c13f0de0aee6923470e849e1ac67af40c9feecbb5d3742",
+  "reference_text": "大家好，欢迎来参观我们的社团。今天，我们一起看看这座城市吧。",
+  "duration": 10.448979591836734,
+  "sha256": "0e22307ab3ab47523bd1ddcad9063c705321df5199c43e2a74d6fa87c63c2726",
+  "status": "generated"
+}

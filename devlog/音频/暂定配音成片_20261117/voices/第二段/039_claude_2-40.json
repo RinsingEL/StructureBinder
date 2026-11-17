@@ -1,0 +1,9 @@
+{
+  "model": "s2.1-pro-free",
+  "text": "然后，程序算完了……只落下了一栋。",
+  "reference_sha256": "154160bf893e72d5c4c13f0de0aee6923470e849e1ac67af40c9feecbb5d3742",
+  "reference_text": "大家好，欢迎来参观我们的社团。今天，我们一起看看这座城市吧。",
+  "duration": 3.0650340136054424,
+  "sha256": "d390689e6f88363bf8fb062b312470b746147f14420f6a7d07177bd0ba304a82",
+  "status": "generated"
+}

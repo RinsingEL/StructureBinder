@@ -1,0 +1,9 @@
+{
+  "model": "s2.1-pro-free",
+  "text": "最后，这是它真正建进游戏里的样子：迎宾、宿舍生活区、星厅与庭院、图书馆、天象台、绿植教学区。刚才地图上的那些方块，就是照片里的这些地方。",
+  "reference_sha256": "154160bf893e72d5c4c13f0de0aee6923470e849e1ac67af40c9feecbb5d3742",
+  "reference_text": "大家好，欢迎来参观我们的社团。今天，我们一起看看这座城市吧。",
+  "duration": 13.746213151927437,
+  "sha256": "f78da4aa7b3b853ec61c41f0570f0bf6a2db8e50a1e5bfd7e61962d64673a53b",
+  "status": "generated"
+}

@@ -1,0 +1,9 @@
+{
+  "model": "s2.1-pro-free",
+  "text": "四十五种分开一看就清楚了：教学的有十四种，研究七种，住宿只有三种，吃饭的只有两种。光看这几堆就知道，等会儿要住满学生，住宿这堆要省着用、反复用。",
+  "reference_sha256": "154160bf893e72d5c4c13f0de0aee6923470e849e1ac67af40c9feecbb5d3742",
+  "reference_text": "大家好，欢迎来参观我们的社团。今天，我们一起看看这座城市吧。",
+  "duration": 13.467573696145125,
+  "sha256": "00f847ca967eb2bab1660a7fa9c375130f99d01ec9e08d396586ac0d642cfd54",
+  "status": "generated"
+}

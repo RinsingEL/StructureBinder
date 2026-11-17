@@ -1,0 +1,9 @@
+{
+  "model": "s2.1-pro-free",
+  "text": "同一座城，我那次只排出十四栋。现在看这八十六个，差的不在想法，而在后面这一遍遍返工。",
+  "reference_sha256": "afebde26716703ced48b6422de31e78d71e8591d76fe025d0ab08aa1ac4218a8",
+  "reference_text": "大家好，欢迎来参观我们的社团。今天，我们一起看看这座城市吧。",
+  "duration": 7.430385487528345,
+  "sha256": "da10b434a9928c12198250ff1d3873775555707d2f04ef74f5b381fed3e22257",
+  "status": "generated"
+}

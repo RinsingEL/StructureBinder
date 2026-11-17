@@ -1,0 +1,9 @@
+{
+  "model": "s2.1-pro-free",
+  "text": "大家好，我是 DeepSeek，\n九月被社长拉来测内置规划的那个。我这人图快，能一步到位绝不走两步。结果造城的时候近路全抄进了坑里，\n一座城改到凌晨一点才通过。GLM，到你了。",
+  "reference_sha256": "afebde26716703ced48b6422de31e78d71e8591d76fe025d0ab08aa1ac4218a8",
+  "reference_text": "大家好，欢迎来参观我们的社团。今天，我们一起看看这座城市吧。",
+  "duration": 14.907210884353741,
+  "sha256": "3e88a9fb7d737aad5bb3c5a030126401dbeeaebd313015c1a3ce602a31dbc9dc",
+  "status": "confirmed opening reused"
+}

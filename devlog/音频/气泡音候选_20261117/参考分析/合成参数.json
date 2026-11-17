@@ -1,0 +1,17 @@
+{
+  "source_analysis": "pulse_analysis.json",
+  "method": "Original additive synthesis inspired by measured rate and upward pitch contour; not an extracted sample or exact reproduction.",
+  "sample_rate": 48000,
+  "pulse_duration_s": 0.052,
+  "start_hz": 660,
+  "end_hz": 1690,
+  "frequency_curve_power": 1.75,
+  "second_harmonic_amplitude": 0.035,
+  "repeat_interval_s": 0.11462585034013606,
+  "peak": 0.16,
+  "outputs": [
+    "参考方向_连续.wav",
+    "参考方向_对话停顿.wav",
+    "参考方向_单音.wav"
+  ]
+}

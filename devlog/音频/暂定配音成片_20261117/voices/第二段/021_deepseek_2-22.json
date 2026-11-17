@@ -1,0 +1,9 @@
+{
+  "model": "s2.1-pro-free",
+  "text": "一座城全包，这设定挺狠的：功能没地方分摊，只能全往城里塞。换我的话，第一反应肯定是\"能不能砍掉两个\"。",
+  "reference_sha256": "afebde26716703ced48b6422de31e78d71e8591d76fe025d0ab08aa1ac4218a8",
+  "reference_text": "大家好，欢迎来参观我们的社团。今天，我们一起看看这座城市吧。",
+  "duration": 9.891700680272109,
+  "sha256": "69578cabd9c30ac8ea3a50c919b226626ae6ec17fe1801d07d114503aa6394c7",
+  "status": "generated"
+}

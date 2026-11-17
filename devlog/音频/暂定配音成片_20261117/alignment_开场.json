@@ -1,0 +1,2024 @@
+{
+  "001_gemini_L01.wav": {
+    "sha256": "c588abac5c640c62a518fc6e0a31b0a7e6994b670d3ba19f1d0b15fdf33204a4",
+    "text": "Hello,大家好,我是Gemini。去年11月社长刚有这个点子的时候,就是我们俩在网页上复制粘贴着一步步摸索起来的。今天开放日的策划,还有大家看到的例会,都是我和社长一块准备的。桌上有茶点,大家随便做。",
+    "words": [
+      {
+        "word": "Hello,",
+        "start": 0.0,
+        "end": 0.18,
+        "probability": 0.45578935742378235
+      },
+      {
+        "word": "大家好,",
+        "start": 0.26,
+        "end": 0.42,
+        "probability": 0.9628399014472961
+      },
+      {
+        "word": "我是",
+        "start": 0.98,
+        "end": 1.16,
+        "probability": 0.9871123433113098
+      },
+      {
+        "word": "G",
+        "start": 1.16,
+        "end": 1.34,
+        "probability": 0.08795902132987976
+      },
+      {
+        "word": "em",
+        "start": 1.34,
+        "end": 1.4,
+        "probability": 0.5979487299919128
+      },
+      {
+        "word": "ini。",
+        "start": 1.4,
+        "end": 1.62,
+        "probability": 0.021496476605534554
+      },
+      {
+        "word": "去",
+        "start": 2.28,
+        "end": 2.46,
+        "probability": 0.9892328977584839
+      },
+      {
+        "word": "年",
+        "start": 2.46,
+        "end": 2.62,
+        "probability": 0.9988885521888733
+      },
+      {
+        "word": "11",
+        "start": 2.62,
+        "end": 2.86,
+        "probability": 0.9045384526252747
+      },
+      {
+        "word": "月",
+        "start": 2.86,
+        "end": 3.16,
+        "probability": 0.995915949344635
+      },
+      {
+        "word": "社",
+        "start": 3.16,
+        "end": 3.38,
+        "probability": 0.853114664554596
+      },
+      {
+        "word": "长",
+        "start": 3.38,
+        "end": 3.54,
+        "probability": 0.28794974088668823
+      },
+      {
+        "word": "刚",
+        "start": 3.54,
+        "end": 3.68,
+        "probability": 0.9874916076660156
+      },
+      {
+        "word": "有",
+        "start": 3.68,
+        "end": 3.8,
+        "probability": 0.9984182119369507
+      },
+      {
+        "word": "这个",
+        "start": 3.8,
+        "end": 3.98,
+        "probability": 0.9792723059654236
+      },
+      {
+        "word": "点",
+        "start": 3.98,
+        "end": 4.16,
+        "probability": 0.9749437570571899
+      },
+      {
+        "word": "子",
+        "start": 4.16,
+        "end": 4.3,
+        "probability": 0.9960152506828308
+      },
+      {
+        "word": "的时候,",
+        "start": 4.3,
+        "end": 4.66,
+        "probability": 0.9884508848190308
+      },
+      {
+        "word": "就是",
+        "start": 4.92,
+        "end": 5.2,
+        "probability": 0.9118913412094116
+      },
+      {
+        "word": "我们",
+        "start": 5.2,
+        "end": 5.42,
+        "probability": 0.9975864887237549
+      },
+      {
+        "word": "俩",
+        "start": 5.42,
+        "end": 5.6,
+        "probability": 0.999191552400589
+      },
+      {
+        "word": "在",
+        "start": 5.6,
+        "end": 5.72,
+        "probability": 0.9981639981269836
+      },
+      {
+        "word": "网",
+        "start": 5.72,
+        "end": 5.86,
+        "probability": 0.9975391626358032
+      },
+      {
+        "word": "页",
+        "start": 5.86,
+        "end": 6.02,
+        "probability": 0.947515070438385
+      },
+      {
+        "word": "上",
+        "start": 6.02,
+        "end": 6.18,
+        "probability": 0.9955857992172241
+      },
+      {
+        "word": "复",
+        "start": 6.18,
+        "end": 6.36,
+        "probability": 0.8494544923305511
+      },
+      {
+        "word": "制",
+        "start": 6.36,
+        "end": 6.5,
+        "probability": 0.9877551198005676
+      },
+      {
+        "word": "粘",
+        "start": 6.5,
+        "end": 6.64,
+        "probability": 0.9422014951705933
+      },
+      {
+        "word": "贴",
+        "start": 6.64,
+        "end": 6.8,
+        "probability": 0.9925382733345032
+      },
+      {
+        "word": "着",
+        "start": 6.8,
+        "end": 6.94,
+        "probability": 0.9732542634010315
+      },
+      {
+        "word": "一",
+        "start": 6.94,
+        "end": 7.1,
+        "probability": 0.9907931685447693
+      },
+      {
+        "word": "步",
+        "start": 7.1,
+        "end": 7.2,
+        "probability": 0.9340245723724365
+      },
+      {
+        "word": "步",
+        "start": 7.2,
+        "end": 7.3,
+        "probability": 0.945875883102417
+      },
+      {
+        "word": "摸",
+        "start": 7.3,
+        "end": 7.48,
+        "probability": 0.9495306313037872
+      },
+      {
+        "word": "索",
+        "start": 7.48,
+        "end": 7.62,
+        "probability": 0.8794624209403992
+      },
+      {
+        "word": "起",
+        "start": 7.62,
+        "end": 7.76,
+        "probability": 0.9975177049636841
+      },
+      {
+        "word": "来",
+        "start": 7.76,
+        "end": 7.92,
+        "probability": 0.9988277554512024
+      },
+      {
+        "word": "的。",
+        "start": 7.92,
+        "end": 8.04,
+        "probability": 0.9981155395507812
+      },
+      {
+        "word": "今天",
+        "start": 8.68,
+        "end": 9.0,
+        "probability": 0.9951521158218384
+      },
+      {
+        "word": "开",
+        "start": 9.0,
+        "end": 9.24,
+        "probability": 0.9869877099990845
+      },
+      {
+        "word": "放",
+        "start": 9.24,
+        "end": 9.38,
+        "probability": 0.9980382323265076
+      },
+      {
+        "word": "日",
+        "start": 9.38,
+        "end": 9.52,
+        "probability": 0.9988131523132324
+      },
+      {
+        "word": "的",
+        "start": 9.52,
+        "end": 9.62,
+        "probability": 0.9979063272476196
+      },
+      {
+        "word": "策",
+        "start": 9.62,
+        "end": 9.78,
+        "probability": 0.9685260057449341
+      },
+      {
+        "word": "划,",
+        "start": 9.78,
+        "end": 10.02,
+        "probability": 0.9871878921985626
+      },
+      {
+        "word": "还有",
+        "start": 10.42,
+        "end": 10.6,
+        "probability": 0.9891818165779114
+      },
+      {
+        "word": "大家",
+        "start": 10.6,
+        "end": 10.86,
+        "probability": 0.9979990124702454
+      },
+      {
+        "word": "看到",
+        "start": 10.86,
+        "end": 11.14,
+        "probability": 0.9963488578796387
+      },
+      {
+        "word": "的",
+        "start": 11.14,
+        "end": 11.34,
+        "probability": 0.9996681213378906
+      },
+      {
+        "word": "例",
+        "start": 11.34,
+        "end": 11.48,
+        "probability": 0.6853426098823547
+      },
+      {
+        "word": "会,",
+        "start": 11.48,
+        "end": 11.7,
+        "probability": 0.9624243378639221
+      },
+      {
+        "word": "都是",
+        "start": 12.18,
+        "end": 12.3,
+        "probability": 0.9878948330879211
+      },
+      {
+        "word": "我",
+        "start": 12.3,
+        "end": 12.5,
+        "probability": 0.9979004859924316
+      },
+      {
+        "word": "和",
+        "start": 12.5,
+        "end": 12.62,
+        "probability": 0.9986916184425354
+      },
+      {
+        "word": "社",
+        "start": 12.62,
+        "end": 12.78,
+        "probability": 0.9980425834655762
+      },
+      {
+        "word": "长",
+        "start": 12.78,
+        "end": 12.94,
+        "probability": 0.9982485771179199
+      },
+      {
+        "word": "一",
+        "start": 12.94,
+        "end": 13.06,
+        "probability": 0.994265615940094
+      },
+      {
+        "word": "块",
+        "start": 13.06,
+        "end": 13.16,
+        "probability": 0.9978038668632507
+      },
+      {
+        "word": "准",
+        "start": 13.16,
+        "end": 13.32,
+        "probability": 0.9515625834465027
+      },
+      {
+        "word": "备",
+        "start": 13.32,
+        "end": 13.48,
+        "probability": 0.9999376535415649
+      },
+      {
+        "word": "的。",
+        "start": 13.48,
+        "end": 13.64,
+        "probability": 0.9995062351226807
+      },
+      {
+        "word": "桌",
+        "start": 14.24,
+        "end": 14.48,
+        "probability": 0.9974271655082703
+      },
+      {
+        "word": "上",
+        "start": 14.48,
+        "end": 14.64,
+        "probability": 0.9995192289352417
+      },
+      {
+        "word": "有",
+        "start": 14.64,
+        "end": 14.76,
+        "probability": 0.9988116025924683
+      },
+      {
+        "word": "茶",
+        "start": 14.76,
+        "end": 14.92,
+        "probability": 0.977329432964325
+      },
+      {
+        "word": "点,",
+        "start": 14.92,
+        "end": 15.14,
+        "probability": 0.9836650490760803
+      },
+      {
+        "word": "大家",
+        "start": 15.54,
+        "end": 15.74,
+        "probability": 0.9991635084152222
+      },
+      {
+        "word": "随",
+        "start": 15.74,
+        "end": 15.94,
+        "probability": 0.9981820583343506
+      },
+      {
+        "word": "便",
+        "start": 15.94,
+        "end": 16.1,
+        "probability": 0.9998099207878113
+      },
+      {
+        "word": "做。",
+        "start": 16.1,
+        "end": 16.26,
+        "probability": 0.48477160930633545
+      }
+    ]
+  },
+  "002_claude_L02.wav": {
+    "sha256": "322a0c098051026b13696b6c62df6a7d1ce91fe62c3845bd82015583b8d3f617",
+    "text": "大家好,我是Claude,10月刚加入。在社团里负责整体设计,就是想清楚,这座城为什么长成这样,里面的人怎么过日子。我写下来的设计,最后都是靠Astra变成游戏里真能走进去的地方的。",
+    "words": [
+      {
+        "word": "大家好,",
+        "start": 0.0,
+        "end": 0.3,
+        "probability": 0.9095385074615479
+      },
+      {
+        "word": "我是",
+        "start": 0.7,
+        "end": 0.88,
+        "probability": 0.9775328040122986
+      },
+      {
+        "word": "C",
+        "start": 0.88,
+        "end": 1.08,
+        "probability": 0.1500665843486786
+      },
+      {
+        "word": "la",
+        "start": 1.08,
+        "end": 1.12,
+        "probability": 0.309502512216568
+      },
+      {
+        "word": "ude,",
+        "start": 1.12,
+        "end": 1.38,
+        "probability": 0.9973368048667908
+      },
+      {
+        "word": "10",
+        "start": 1.64,
+        "end": 1.84,
+        "probability": 0.5905933380126953
+      },
+      {
+        "word": "月",
+        "start": 1.84,
+        "end": 1.94,
+        "probability": 0.980680525302887
+      },
+      {
+        "word": "刚",
+        "start": 1.94,
+        "end": 2.06,
+        "probability": 0.0628606379032135
+      },
+      {
+        "word": "加入。",
+        "start": 2.06,
+        "end": 2.4,
+        "probability": 0.9978970289230347
+      },
+      {
+        "word": "在",
+        "start": 3.04,
+        "end": 3.3,
+        "probability": 0.9795042872428894
+      },
+      {
+        "word": "社",
+        "start": 3.3,
+        "end": 3.44,
+        "probability": 0.9924737215042114
+      },
+      {
+        "word": "团",
+        "start": 3.44,
+        "end": 3.6,
+        "probability": 0.9926166534423828
+      },
+      {
+        "word": "里",
+        "start": 3.6,
+        "end": 3.72,
+        "probability": 0.9969246983528137
+      },
+      {
+        "word": "负",
+        "start": 3.72,
+        "end": 3.86,
+        "probability": 0.9902837574481964
+      },
+      {
+        "word": "责",
+        "start": 3.86,
+        "end": 4.0,
+        "probability": 0.9975495338439941
+      },
+      {
+        "word": "整",
+        "start": 4.0,
+        "end": 4.14,
+        "probability": 0.9985816478729248
+      },
+      {
+        "word": "体",
+        "start": 4.14,
+        "end": 4.3,
+        "probability": 0.9989973902702332
+      },
+      {
+        "word": "设",
+        "start": 4.3,
+        "end": 4.48,
+        "probability": 0.9851412773132324
+      },
+      {
+        "word": "计,",
+        "start": 4.48,
+        "end": 4.68,
+        "probability": 0.999159961938858
+      },
+      {
+        "word": "就是",
+        "start": 5.18,
+        "end": 5.46,
+        "probability": 0.9232913851737976
+      },
+      {
+        "word": "想",
+        "start": 5.46,
+        "end": 5.7,
+        "probability": 0.9990068078041077
+      },
+      {
+        "word": "清楚,",
+        "start": 5.7,
+        "end": 6.06,
+        "probability": 0.9992654919624329
+      },
+      {
+        "word": "这",
+        "start": 6.58,
+        "end": 6.72,
+        "probability": 0.8763719797134399
+      },
+      {
+        "word": "座",
+        "start": 6.72,
+        "end": 6.86,
+        "probability": 0.9872636497020721
+      },
+      {
+        "word": "城",
+        "start": 6.86,
+        "end": 7.0,
+        "probability": 0.9973401427268982
+      },
+      {
+        "word": "为什么",
+        "start": 7.0,
+        "end": 7.22,
+        "probability": 0.9895860552787781
+      },
+      {
+        "word": "长",
+        "start": 7.22,
+        "end": 7.5,
+        "probability": 0.9857945442199707
+      },
+      {
+        "word": "成",
+        "start": 7.5,
+        "end": 7.66,
+        "probability": 0.9993749260902405
+      },
+      {
+        "word": "这样,",
+        "start": 7.66,
+        "end": 7.94,
+        "probability": 0.9972854852676392
+      },
+      {
+        "word": "里",
+        "start": 8.38,
+        "end": 8.5,
+        "probability": 0.9904420971870422
+      },
+      {
+        "word": "面",
+        "start": 8.5,
+        "end": 8.66,
+        "probability": 0.9931396842002869
+      },
+      {
+        "word": "的人",
+        "start": 8.66,
+        "end": 8.82,
+        "probability": 0.9871619343757629
+      },
+      {
+        "word": "怎么",
+        "start": 8.82,
+        "end": 9.08,
+        "probability": 0.9928491115570068
+      },
+      {
+        "word": "过",
+        "start": 9.08,
+        "end": 9.26,
+        "probability": 0.9969006776809692
+      },
+      {
+        "word": "日",
+        "start": 9.26,
+        "end": 9.46,
+        "probability": 0.9959869980812073
+      },
+      {
+        "word": "子。",
+        "start": 9.46,
+        "end": 9.68,
+        "probability": 0.9999616146087646
+      },
+      {
+        "word": "我",
+        "start": 10.32,
+        "end": 10.48,
+        "probability": 0.9961976408958435
+      },
+      {
+        "word": "写",
+        "start": 10.48,
+        "end": 10.64,
+        "probability": 0.9972961843013763
+      },
+      {
+        "word": "下",
+        "start": 10.64,
+        "end": 10.78,
+        "probability": 0.997368574142456
+      },
+      {
+        "word": "来",
+        "start": 10.78,
+        "end": 10.88,
+        "probability": 0.965642511844635
+      },
+      {
+        "word": "的",
+        "start": 10.88,
+        "end": 10.96,
+        "probability": 0.998940646648407
+      },
+      {
+        "word": "设",
+        "start": 10.96,
+        "end": 11.14,
+        "probability": 0.9974765777587891
+      },
+      {
+        "word": "计,",
+        "start": 11.14,
+        "end": 11.36,
+        "probability": 0.9997488856315613
+      },
+      {
+        "word": "最",
+        "start": 11.72,
+        "end": 11.9,
+        "probability": 0.9919019341468811
+      },
+      {
+        "word": "后",
+        "start": 11.9,
+        "end": 12.04,
+        "probability": 0.9997497200965881
+      },
+      {
+        "word": "都是",
+        "start": 12.04,
+        "end": 12.24,
+        "probability": 0.9922824501991272
+      },
+      {
+        "word": "靠",
+        "start": 12.24,
+        "end": 12.4,
+        "probability": 0.9636626541614532
+      },
+      {
+        "word": "A",
+        "start": 12.4,
+        "end": 12.58,
+        "probability": 0.640139102935791
+      },
+      {
+        "word": "stra",
+        "start": 12.58,
+        "end": 12.76,
+        "probability": 0.9251753091812134
+      },
+      {
+        "word": "变",
+        "start": 12.76,
+        "end": 13.12,
+        "probability": 0.7835963368415833
+      },
+      {
+        "word": "成",
+        "start": 13.12,
+        "end": 13.28,
+        "probability": 0.9976475834846497
+      },
+      {
+        "word": "游",
+        "start": 13.28,
+        "end": 13.42,
+        "probability": 0.996380478143692
+      },
+      {
+        "word": "戏",
+        "start": 13.42,
+        "end": 13.56,
+        "probability": 0.9937041401863098
+      },
+      {
+        "word": "里",
+        "start": 13.56,
+        "end": 13.68,
+        "probability": 0.9956583976745605
+      },
+      {
+        "word": "真",
+        "start": 13.68,
+        "end": 13.84,
+        "probability": 0.9459726214408875
+      },
+      {
+        "word": "能",
+        "start": 13.84,
+        "end": 13.96,
+        "probability": 0.998659610748291
+      },
+      {
+        "word": "走",
+        "start": 13.96,
+        "end": 14.12,
+        "probability": 0.9976200461387634
+      },
+      {
+        "word": "进",
+        "start": 14.12,
+        "end": 14.3,
+        "probability": 0.9991818070411682
+      },
+      {
+        "word": "去",
+        "start": 14.3,
+        "end": 14.4,
+        "probability": 0.9959008097648621
+      },
+      {
+        "word": "的",
+        "start": 14.4,
+        "end": 14.5,
+        "probability": 0.9991369843482971
+      },
+      {
+        "word": "地方",
+        "start": 14.5,
+        "end": 14.72,
+        "probability": 0.9982847571372986
+      },
+      {
+        "word": "的。",
+        "start": 14.72,
+        "end": 14.94,
+        "probability": 0.9887107014656067
+      }
+    ]
+  },
+  "003_astra_L03.wav": {
+    "sha256": "9965e87f35aeecd90ba9fcb028ed7b7c321d0a64261db37fcaa37f48c365af6c",
+    "text": "大家好,我是Astra,今年1月加入。平时主要负责写代码,把大家的点子一点点做进游戏里。今天终于能和大家一起看看这些城市了。欢迎来过,也欢迎告诉我们哪里看着奇怪。社长平时进游戏就没少发现问题。",
+    "words": [
+      {
+        "word": "大家好,",
+        "start": 0.0,
+        "end": 0.16,
+        "probability": 0.859249472618103
+      },
+      {
+        "word": "我是",
+        "start": 0.78,
+        "end": 0.98,
+        "probability": 0.9738699197769165
+      },
+      {
+        "word": "A",
+        "start": 0.98,
+        "end": 1.22,
+        "probability": 0.2926631569862366
+      },
+      {
+        "word": "stra,",
+        "start": 1.22,
+        "end": 1.34,
+        "probability": 0.29003646969795227
+      },
+      {
+        "word": "今年",
+        "start": 1.64,
+        "end": 1.9,
+        "probability": 0.9583708047866821
+      },
+      {
+        "word": "1",
+        "start": 1.9,
+        "end": 2.18,
+        "probability": 0.836437463760376
+      },
+      {
+        "word": "月",
+        "start": 2.18,
+        "end": 2.32,
+        "probability": 0.9883949756622314
+      },
+      {
+        "word": "加入。",
+        "start": 2.32,
+        "end": 2.64,
+        "probability": 0.9982888102531433
+      },
+      {
+        "word": "平",
+        "start": 3.32,
+        "end": 3.58,
+        "probability": 0.954007625579834
+      },
+      {
+        "word": "时",
+        "start": 3.58,
+        "end": 3.74,
+        "probability": 0.5669640898704529
+      },
+      {
+        "word": "主",
+        "start": 3.74,
+        "end": 3.86,
+        "probability": 0.992127537727356
+      },
+      {
+        "word": "要",
+        "start": 3.86,
+        "end": 4.0,
+        "probability": 0.9996951818466187
+      },
+      {
+        "word": "负",
+        "start": 4.0,
+        "end": 4.14,
+        "probability": 0.9855970442295074
+      },
+      {
+        "word": "责",
+        "start": 4.14,
+        "end": 4.28,
+        "probability": 0.9959560036659241
+      },
+      {
+        "word": "写",
+        "start": 4.28,
+        "end": 4.44,
+        "probability": 0.9828983247280121
+      },
+      {
+        "word": "代",
+        "start": 4.44,
+        "end": 4.6,
+        "probability": 0.9543660879135132
+      },
+      {
+        "word": "码,",
+        "start": 4.6,
+        "end": 4.88,
+        "probability": 0.9859810173511505
+      },
+      {
+        "word": "把",
+        "start": 5.26,
+        "end": 5.42,
+        "probability": 0.9787830114364624
+      },
+      {
+        "word": "大家",
+        "start": 5.42,
+        "end": 5.66,
+        "probability": 0.9925597906112671
+      },
+      {
+        "word": "的",
+        "start": 5.66,
+        "end": 5.8,
+        "probability": 0.991743266582489
+      },
+      {
+        "word": "点",
+        "start": 5.8,
+        "end": 6.0,
+        "probability": 0.9888261556625366
+      },
+      {
+        "word": "子",
+        "start": 6.0,
+        "end": 6.24,
+        "probability": 0.9433625340461731
+      },
+      {
+        "word": "一点",
+        "start": 6.24,
+        "end": 6.5,
+        "probability": 0.9303649067878723
+      },
+      {
+        "word": "点",
+        "start": 6.5,
+        "end": 6.72,
+        "probability": 0.9512500166893005
+      },
+      {
+        "word": "做",
+        "start": 6.72,
+        "end": 6.86,
+        "probability": 0.7374219298362732
+      },
+      {
+        "word": "进",
+        "start": 6.86,
+        "end": 7.04,
+        "probability": 0.9904720783233643
+      },
+      {
+        "word": "游",
+        "start": 7.04,
+        "end": 7.18,
+        "probability": 0.9920001924037933
+      },
+      {
+        "word": "戏",
+        "start": 7.18,
+        "end": 7.4,
+        "probability": 0.9992632567882538
+      },
+      {
+        "word": "里。",
+        "start": 7.4,
+        "end": 7.58,
+        "probability": 0.9932790398597717
+      },
+      {
+        "word": "今天",
+        "start": 8.06,
+        "end": 8.38,
+        "probability": 0.9960038065910339
+      },
+      {
+        "word": "终",
+        "start": 8.38,
+        "end": 8.66,
+        "probability": 0.9933651685714722
+      },
+      {
+        "word": "于",
+        "start": 8.66,
+        "end": 8.76,
+        "probability": 0.99600750207901
+      },
+      {
+        "word": "能",
+        "start": 8.76,
+        "end": 8.88,
+        "probability": 0.9981170892715454
+      },
+      {
+        "word": "和",
+        "start": 8.88,
+        "end": 9.02,
+        "probability": 0.9881460666656494
+      },
+      {
+        "word": "大家",
+        "start": 9.02,
+        "end": 9.34,
+        "probability": 0.998838484287262
+      },
+      {
+        "word": "一起",
+        "start": 9.34,
+        "end": 9.68,
+        "probability": 0.9940657615661621
+      },
+      {
+        "word": "看看",
+        "start": 9.68,
+        "end": 9.96,
+        "probability": 0.9949126243591309
+      },
+      {
+        "word": "这",
+        "start": 9.96,
+        "end": 10.2,
+        "probability": 0.9941489696502686
+      },
+      {
+        "word": "些",
+        "start": 10.2,
+        "end": 10.3,
+        "probability": 0.998950719833374
+      },
+      {
+        "word": "城",
+        "start": 10.3,
+        "end": 10.48,
+        "probability": 0.9842548370361328
+      },
+      {
+        "word": "市",
+        "start": 10.48,
+        "end": 10.74,
+        "probability": 0.9991245865821838
+      },
+      {
+        "word": "了。",
+        "start": 10.74,
+        "end": 10.9,
+        "probability": 0.9790756106376648
+      },
+      {
+        "word": "欢",
+        "start": 11.1,
+        "end": 11.26,
+        "probability": 0.9914482831954956
+      },
+      {
+        "word": "迎",
+        "start": 11.26,
+        "end": 11.4,
+        "probability": 0.9999070167541504
+      },
+      {
+        "word": "来",
+        "start": 11.4,
+        "end": 11.56,
+        "probability": 0.9974898099899292
+      },
+      {
+        "word": "过,",
+        "start": 11.56,
+        "end": 11.74,
+        "probability": 0.40041595697402954
+      },
+      {
+        "word": "也",
+        "start": 12.04,
+        "end": 12.16,
+        "probability": 0.9982894062995911
+      },
+      {
+        "word": "欢",
+        "start": 12.16,
+        "end": 12.32,
+        "probability": 0.9924148917198181
+      },
+      {
+        "word": "迎",
+        "start": 12.32,
+        "end": 12.48,
+        "probability": 0.9975990653038025
+      },
+      {
+        "word": "告诉",
+        "start": 12.48,
+        "end": 12.68,
+        "probability": 0.9963839054107666
+      },
+      {
+        "word": "我们",
+        "start": 12.68,
+        "end": 13.02,
+        "probability": 0.98636394739151
+      },
+      {
+        "word": "哪",
+        "start": 13.02,
+        "end": 13.24,
+        "probability": 0.9623551368713379
+      },
+      {
+        "word": "里",
+        "start": 13.24,
+        "end": 13.4,
+        "probability": 0.9904010891914368
+      },
+      {
+        "word": "看",
+        "start": 13.4,
+        "end": 13.54,
+        "probability": 0.9987486600875854
+      },
+      {
+        "word": "着",
+        "start": 13.54,
+        "end": 13.66,
+        "probability": 0.989993155002594
+      },
+      {
+        "word": "奇怪。",
+        "start": 13.66,
+        "end": 14.0,
+        "probability": 0.9979307651519775
+      },
+      {
+        "word": "社",
+        "start": 14.58,
+        "end": 14.78,
+        "probability": 0.9381295442581177
+      },
+      {
+        "word": "长",
+        "start": 14.78,
+        "end": 14.96,
+        "probability": 0.9958307147026062
+      },
+      {
+        "word": "平",
+        "start": 14.96,
+        "end": 15.14,
+        "probability": 0.9931800365447998
+      },
+      {
+        "word": "时",
+        "start": 15.14,
+        "end": 15.3,
+        "probability": 0.9954314231872559
+      },
+      {
+        "word": "进",
+        "start": 15.3,
+        "end": 15.44,
+        "probability": 0.9979093670845032
+      },
+      {
+        "word": "游",
+        "start": 15.44,
+        "end": 15.62,
+        "probability": 0.9984034895896912
+      },
+      {
+        "word": "戏",
+        "start": 15.62,
+        "end": 15.8,
+        "probability": 0.9997954964637756
+      },
+      {
+        "word": "就",
+        "start": 15.8,
+        "end": 15.98,
+        "probability": 0.9081313610076904
+      },
+      {
+        "word": "没",
+        "start": 15.98,
+        "end": 16.12,
+        "probability": 0.9796439409255981
+      },
+      {
+        "word": "少",
+        "start": 16.12,
+        "end": 16.28,
+        "probability": 0.9934149980545044
+      },
+      {
+        "word": "发",
+        "start": 16.28,
+        "end": 16.44,
+        "probability": 0.9969300627708435
+      },
+      {
+        "word": "现",
+        "start": 16.44,
+        "end": 16.6,
+        "probability": 0.9948351383209229
+      },
+      {
+        "word": "问题。",
+        "start": 16.6,
+        "end": 16.88,
+        "probability": 0.9979856014251709
+      }
+    ]
+  },
+  "004_deepseek_L04.wav": {
+    "sha256": "3e88a9fb7d737aad5bb3c5a030126401dbeeaebd313015c1a3ce602a31dbc9dc",
+    "text": "大家好,我是DeepSeek,9月被社长拉来测内置规划的那个,我这人图快,能一步到位绝不走两步。结果造成的时候,进入全超进了坑里,一座城改到凌晨一点才通过,GEM到你啦!",
+    "words": [
+      {
+        "word": "大家好,",
+        "start": 0.0,
+        "end": 0.22,
+        "probability": 0.8331453204154968
+      },
+      {
+        "word": "我是",
+        "start": 0.72,
+        "end": 0.9,
+        "probability": 0.9826599359512329
+      },
+      {
+        "word": "De",
+        "start": 0.9,
+        "end": 1.04,
+        "probability": 0.5564401745796204
+      },
+      {
+        "word": "ep",
+        "start": 1.04,
+        "end": 1.1,
+        "probability": 0.9962062835693359
+      },
+      {
+        "word": "Se",
+        "start": 1.1,
+        "end": 1.3,
+        "probability": 0.12356577813625336
+      },
+      {
+        "word": "ek,",
+        "start": 1.3,
+        "end": 1.44,
+        "probability": 0.8991802334785461
+      },
+      {
+        "word": "9",
+        "start": 1.84,
+        "end": 2.22,
+        "probability": 0.6405735611915588
+      },
+      {
+        "word": "月",
+        "start": 2.22,
+        "end": 2.46,
+        "probability": 0.9865944385528564
+      },
+      {
+        "word": "被",
+        "start": 2.46,
+        "end": 2.66,
+        "probability": 0.9454073309898376
+      },
+      {
+        "word": "社",
+        "start": 2.66,
+        "end": 2.8,
+        "probability": 0.9145696759223938
+      },
+      {
+        "word": "长",
+        "start": 2.8,
+        "end": 2.94,
+        "probability": 0.16840583086013794
+      },
+      {
+        "word": "拉",
+        "start": 2.94,
+        "end": 3.08,
+        "probability": 0.980811357498169
+      },
+      {
+        "word": "来",
+        "start": 3.08,
+        "end": 3.2,
+        "probability": 0.8041874766349792
+      },
+      {
+        "word": "测",
+        "start": 3.2,
+        "end": 3.32,
+        "probability": 0.685365691781044
+      },
+      {
+        "word": "内",
+        "start": 3.32,
+        "end": 3.46,
+        "probability": 0.27040278911590576
+      },
+      {
+        "word": "置",
+        "start": 3.46,
+        "end": 3.54,
+        "probability": 0.7637760639190674
+      },
+      {
+        "word": "规",
+        "start": 3.54,
+        "end": 3.68,
+        "probability": 0.9212446510791779
+      },
+      {
+        "word": "划",
+        "start": 3.68,
+        "end": 3.88,
+        "probability": 0.9698810875415802
+      },
+      {
+        "word": "的",
+        "start": 3.88,
+        "end": 3.98,
+        "probability": 0.9961676001548767
+      },
+      {
+        "word": "那个,",
+        "start": 3.98,
+        "end": 4.22,
+        "probability": 0.9819726943969727
+      },
+      {
+        "word": "我",
+        "start": 4.74,
+        "end": 5.1,
+        "probability": 0.9869875907897949
+      },
+      {
+        "word": "这",
+        "start": 5.1,
+        "end": 5.22,
+        "probability": 0.6533423066139221
+      },
+      {
+        "word": "人",
+        "start": 5.22,
+        "end": 5.34,
+        "probability": 0.9991808533668518
+      },
+      {
+        "word": "图",
+        "start": 5.34,
+        "end": 5.52,
+        "probability": 0.8689320683479309
+      },
+      {
+        "word": "快,",
+        "start": 5.52,
+        "end": 5.74,
+        "probability": 0.7706901431083679
+      },
+      {
+        "word": "能",
+        "start": 6.14,
+        "end": 6.36,
+        "probability": 0.9922009110450745
+      },
+      {
+        "word": "一",
+        "start": 6.36,
+        "end": 6.5,
+        "probability": 0.8427387475967407
+      },
+      {
+        "word": "步",
+        "start": 6.5,
+        "end": 6.62,
+        "probability": 0.984357476234436
+      },
+      {
+        "word": "到",
+        "start": 6.62,
+        "end": 6.74,
+        "probability": 0.9863358736038208
+      },
+      {
+        "word": "位",
+        "start": 6.74,
+        "end": 6.94,
+        "probability": 0.9828894734382629
+      },
+      {
+        "word": "绝",
+        "start": 6.94,
+        "end": 7.16,
+        "probability": 0.9226129651069641
+      },
+      {
+        "word": "不",
+        "start": 7.16,
+        "end": 7.28,
+        "probability": 0.9796583652496338
+      },
+      {
+        "word": "走",
+        "start": 7.28,
+        "end": 7.38,
+        "probability": 0.9911676645278931
+      },
+      {
+        "word": "两",
+        "start": 7.38,
+        "end": 7.56,
+        "probability": 0.991530179977417
+      },
+      {
+        "word": "步。",
+        "start": 7.56,
+        "end": 7.82,
+        "probability": 0.9999395608901978
+      },
+      {
+        "word": "结",
+        "start": 8.4,
+        "end": 8.58,
+        "probability": 0.9892618656158447
+      },
+      {
+        "word": "果",
+        "start": 8.58,
+        "end": 8.76,
+        "probability": 0.9997696280479431
+      },
+      {
+        "word": "造",
+        "start": 8.76,
+        "end": 8.92,
+        "probability": 0.9860817193984985
+      },
+      {
+        "word": "成",
+        "start": 8.92,
+        "end": 9.08,
+        "probability": 0.9991143345832825
+      },
+      {
+        "word": "的时候,",
+        "start": 9.08,
+        "end": 9.42,
+        "probability": 0.9717906713485718
+      },
+      {
+        "word": "进",
+        "start": 9.64,
+        "end": 9.72,
+        "probability": 0.7849603891372681
+      },
+      {
+        "word": "入",
+        "start": 9.72,
+        "end": 9.86,
+        "probability": 0.9373262524604797
+      },
+      {
+        "word": "全",
+        "start": 9.86,
+        "end": 10.02,
+        "probability": 0.9632481932640076
+      },
+      {
+        "word": "超",
+        "start": 10.02,
+        "end": 10.2,
+        "probability": 0.9830724000930786
+      },
+      {
+        "word": "进",
+        "start": 10.2,
+        "end": 10.34,
+        "probability": 0.8463726043701172
+      },
+      {
+        "word": "了",
+        "start": 10.34,
+        "end": 10.44,
+        "probability": 0.9767740964889526
+      },
+      {
+        "word": "坑",
+        "start": 10.44,
+        "end": 10.56,
+        "probability": 0.9984163045883179
+      },
+      {
+        "word": "里,",
+        "start": 10.56,
+        "end": 10.76,
+        "probability": 0.9881612062454224
+      },
+      {
+        "word": "一",
+        "start": 11.34,
+        "end": 11.5,
+        "probability": 0.8245589733123779
+      },
+      {
+        "word": "座",
+        "start": 11.5,
+        "end": 11.64,
+        "probability": 0.9850140810012817
+      },
+      {
+        "word": "城",
+        "start": 11.64,
+        "end": 11.84,
+        "probability": 0.9931039214134216
+      },
+      {
+        "word": "改",
+        "start": 11.84,
+        "end": 12.06,
+        "probability": 0.9401194453239441
+      },
+      {
+        "word": "到",
+        "start": 12.06,
+        "end": 12.18,
+        "probability": 0.9729496836662292
+      },
+      {
+        "word": "凌",
+        "start": 12.18,
+        "end": 12.3,
+        "probability": 0.9681740701198578
+      },
+      {
+        "word": "晨",
+        "start": 12.3,
+        "end": 12.42,
+        "probability": 0.9811306297779083
+      },
+      {
+        "word": "一点",
+        "start": 12.42,
+        "end": 12.6,
+        "probability": 0.5447903871536255
+      },
+      {
+        "word": "才",
+        "start": 12.6,
+        "end": 12.82,
+        "probability": 0.9875895380973816
+      },
+      {
+        "word": "通",
+        "start": 12.82,
+        "end": 12.98,
+        "probability": 0.9987082481384277
+      },
+      {
+        "word": "过,",
+        "start": 12.98,
+        "end": 13.2,
+        "probability": 0.9972014427185059
+      },
+      {
+        "word": "G",
+        "start": 13.38,
+        "end": 13.54,
+        "probability": 0.16347123682498932
+      },
+      {
+        "word": "EM",
+        "start": 13.54,
+        "end": 13.68,
+        "probability": 0.009690210223197937
+      },
+      {
+        "word": "到",
+        "start": 13.68,
+        "end": 14.32,
+        "probability": 0.7096986174583435
+      },
+      {
+        "word": "你",
+        "start": 14.32,
+        "end": 14.52,
+        "probability": 0.9930272698402405
+      },
+      {
+        "word": "啦!",
+        "start": 14.52,
+        "end": 14.68,
+        "probability": 0.6882349252700806
+      }
+    ]
+  },
+  "005_glm_L05.wav": {
+    "sha256": "033af6d3950f02f8e38693358db31d5a238452f92e6af60592df1b85fadeb713",
+    "text": "大家好,我是GLM,9月跟DeepSeek一起被社长拉来侧内置规划的。我那场一开工,就对着宿主说了快四十分钟,马上就调用,工具却一直没发出去。所以看到我头上这个眼罩了吧,它不只是装饰。",
+    "words": [
+      {
+        "word": "大家好,",
+        "start": 0.0,
+        "end": 0.34,
+        "probability": 0.8264977931976318
+      },
+      {
+        "word": "我是",
+        "start": 0.88,
+        "end": 1.06,
+        "probability": 0.9759501814842224
+      },
+      {
+        "word": "GL",
+        "start": 1.06,
+        "end": 1.38,
+        "probability": 0.154420867562294
+      },
+      {
+        "word": "M,",
+        "start": 1.38,
+        "end": 1.76,
+        "probability": 0.9532692432403564
+      },
+      {
+        "word": "9",
+        "start": 2.44,
+        "end": 2.76,
+        "probability": 0.6525367498397827
+      },
+      {
+        "word": "月",
+        "start": 2.76,
+        "end": 2.96,
+        "probability": 0.9819862842559814
+      },
+      {
+        "word": "跟",
+        "start": 2.96,
+        "end": 3.12,
+        "probability": 0.9297134280204773
+      },
+      {
+        "word": "De",
+        "start": 3.12,
+        "end": 3.28,
+        "probability": 0.87047278881073
+      },
+      {
+        "word": "ep",
+        "start": 3.28,
+        "end": 3.34,
+        "probability": 0.9841841459274292
+      },
+      {
+        "word": "Se",
+        "start": 3.34,
+        "end": 3.52,
+        "probability": 0.04579348489642143
+      },
+      {
+        "word": "ek",
+        "start": 3.52,
+        "end": 3.64,
+        "probability": 0.7652891874313354
+      },
+      {
+        "word": "一起",
+        "start": 3.64,
+        "end": 3.84,
+        "probability": 0.7346739172935486
+      },
+      {
+        "word": "被",
+        "start": 3.84,
+        "end": 4.1,
+        "probability": 0.9796225428581238
+      },
+      {
+        "word": "社",
+        "start": 4.1,
+        "end": 4.26,
+        "probability": 0.956900954246521
+      },
+      {
+        "word": "长",
+        "start": 4.26,
+        "end": 4.44,
+        "probability": 0.4821665287017822
+      },
+      {
+        "word": "拉",
+        "start": 4.44,
+        "end": 4.58,
+        "probability": 0.7364619374275208
+      },
+      {
+        "word": "来",
+        "start": 4.58,
+        "end": 4.76,
+        "probability": 0.8887438774108887
+      },
+      {
+        "word": "侧",
+        "start": 4.76,
+        "end": 4.9,
+        "probability": 0.7431669682264328
+      },
+      {
+        "word": "内",
+        "start": 4.9,
+        "end": 5.08,
+        "probability": 0.9418705701828003
+      },
+      {
+        "word": "置",
+        "start": 5.08,
+        "end": 5.24,
+        "probability": 0.743630588054657
+      },
+      {
+        "word": "规",
+        "start": 5.24,
+        "end": 5.38,
+        "probability": 0.8903579115867615
+      },
+      {
+        "word": "划",
+        "start": 5.38,
+        "end": 5.62,
+        "probability": 0.9702306389808655
+      },
+      {
+        "word": "的。",
+        "start": 5.62,
+        "end": 5.84,
+        "probability": 0.9946909546852112
+      },
+      {
+        "word": "我",
+        "start": 6.44,
+        "end": 6.62,
+        "probability": 0.9906319379806519
+      },
+      {
+        "word": "那",
+        "start": 6.62,
+        "end": 6.76,
+        "probability": 0.8498615622520447
+      },
+      {
+        "word": "场",
+        "start": 6.76,
+        "end": 6.94,
+        "probability": 0.9950281977653503
+      },
+      {
+        "word": "一",
+        "start": 6.94,
+        "end": 7.1,
+        "probability": 0.995198667049408
+      },
+      {
+        "word": "开",
+        "start": 7.1,
+        "end": 7.26,
+        "probability": 0.9884489178657532
+      },
+      {
+        "word": "工,",
+        "start": 7.26,
+        "end": 7.48,
+        "probability": 0.9717831611633301
+      },
+      {
+        "word": "就",
+        "start": 7.8,
+        "end": 7.94,
+        "probability": 0.9916513562202454
+      },
+      {
+        "word": "对",
+        "start": 7.94,
+        "end": 8.08,
+        "probability": 0.9984126091003418
+      },
+      {
+        "word": "着",
+        "start": 8.08,
+        "end": 8.22,
+        "probability": 0.765163004398346
+      },
+      {
+        "word": "宿",
+        "start": 8.22,
+        "end": 8.38,
+        "probability": 0.8941400945186615
+      },
+      {
+        "word": "主",
+        "start": 8.38,
+        "end": 8.56,
+        "probability": 0.9997504353523254
+      },
+      {
+        "word": "说",
+        "start": 8.56,
+        "end": 8.72,
+        "probability": 0.9971458315849304
+      },
+      {
+        "word": "了",
+        "start": 8.72,
+        "end": 8.84,
+        "probability": 0.999029278755188
+      },
+      {
+        "word": "快",
+        "start": 8.84,
+        "end": 8.98,
+        "probability": 0.9965016841888428
+      },
+      {
+        "word": "四",
+        "start": 8.98,
+        "end": 9.2,
+        "probability": 0.4384179711341858
+      },
+      {
+        "word": "十",
+        "start": 9.2,
+        "end": 9.34,
+        "probability": 0.9979780316352844
+      },
+      {
+        "word": "分",
+        "start": 9.34,
+        "end": 9.5,
+        "probability": 0.9936872124671936
+      },
+      {
+        "word": "钟,",
+        "start": 9.5,
+        "end": 9.8,
+        "probability": 0.999544084072113
+      },
+      {
+        "word": "马",
+        "start": 10.3,
+        "end": 10.56,
+        "probability": 0.9834173321723938
+      },
+      {
+        "word": "上",
+        "start": 10.56,
+        "end": 10.78,
+        "probability": 0.9989114999771118
+      },
+      {
+        "word": "就",
+        "start": 10.78,
+        "end": 10.92,
+        "probability": 0.9959760308265686
+      },
+      {
+        "word": "调",
+        "start": 10.92,
+        "end": 11.1,
+        "probability": 0.7541793286800385
+      },
+      {
+        "word": "用,",
+        "start": 11.1,
+        "end": 11.34,
+        "probability": 0.9983348250389099
+      },
+      {
+        "word": "工",
+        "start": 11.86,
+        "end": 12.08,
+        "probability": 0.984298586845398
+      },
+      {
+        "word": "具",
+        "start": 12.08,
+        "end": 12.26,
+        "probability": 0.9951089024543762
+      },
+      {
+        "word": "却",
+        "start": 12.26,
+        "end": 12.42,
+        "probability": 0.9981811344623566
+      },
+      {
+        "word": "一直",
+        "start": 12.42,
+        "end": 12.6,
+        "probability": 0.9955136179924011
+      },
+      {
+        "word": "没",
+        "start": 12.6,
+        "end": 12.84,
+        "probability": 0.9912371635437012
+      },
+      {
+        "word": "发",
+        "start": 12.84,
+        "end": 13.02,
+        "probability": 0.9957987666130066
+      },
+      {
+        "word": "出去。",
+        "start": 13.02,
+        "end": 13.38,
+        "probability": 0.957390546798706
+      },
+      {
+        "word": "所以",
+        "start": 14.06,
+        "end": 14.38,
+        "probability": 0.9921168684959412
+      },
+      {
+        "word": "看到",
+        "start": 14.38,
+        "end": 14.66,
+        "probability": 0.9587159156799316
+      },
+      {
+        "word": "我",
+        "start": 14.66,
+        "end": 14.9,
+        "probability": 0.9991757273674011
+      },
+      {
+        "word": "头",
+        "start": 14.9,
+        "end": 15.02,
+        "probability": 0.9927679300308228
+      },
+      {
+        "word": "上",
+        "start": 15.02,
+        "end": 15.2,
+        "probability": 0.9991281628608704
+      },
+      {
+        "word": "这个",
+        "start": 15.2,
+        "end": 15.4,
+        "probability": 0.9848747849464417
+      },
+      {
+        "word": "眼",
+        "start": 15.4,
+        "end": 15.62,
+        "probability": 0.9142873287200928
+      },
+      {
+        "word": "罩",
+        "start": 15.62,
+        "end": 15.82,
+        "probability": 0.9970347583293915
+      },
+      {
+        "word": "了吧,",
+        "start": 15.82,
+        "end": 16.08,
+        "probability": 0.9692734479904175
+      },
+      {
+        "word": "它",
+        "start": 16.72,
+        "end": 16.82,
+        "probability": 0.6652475595474243
+      },
+      {
+        "word": "不",
+        "start": 16.82,
+        "end": 16.98,
+        "probability": 0.9959790706634521
+      },
+      {
+        "word": "只是",
+        "start": 16.98,
+        "end": 17.2,
+        "probability": 0.9582679867744446
+      },
+      {
+        "word": "装",
+        "start": 17.2,
+        "end": 17.46,
+        "probability": 0.9898212552070618
+      },
+      {
+        "word": "饰。",
+        "start": 17.46,
+        "end": 17.74,
+        "probability": 0.9855808019638062
+      }
+    ]
+  }
+}

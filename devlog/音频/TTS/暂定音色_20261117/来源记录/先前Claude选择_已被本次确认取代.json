@@ -1,0 +1,12 @@
+{
+  "role": "claude",
+  "reference_file": "claude_ref_fish_v7_01.wav",
+  "selected_source": "output/voice_design/GLM_20261116_07/GLM_v7_JA_01_试听.wav",
+  "sha256": "933bbdd5782af4ec5555bac85bdd300b27adf2114c20a6a13f85bdf79747cb4f",
+  "reference_text": "ふわぁ……みなさん、こんにちは、GLMです。前にプランニングのテストに呼ばれた時、40分くらいずっと『今すぐ呼び出しますね』って言ってたのに、結局ツールは一回も動かなかったんです……。だから、頭のこのアイマスク、ただの飾りじゃないんですよ。……うん、もうちょっと寝かせてくださいね。",
+  "reference_language": "ja",
+  "selected_by": "user",
+  "previous_reference": "claude_1.wav",
+  "previous_reference_preserved": true,
+  "note": "Selected audition WAV copied byte-for-byte; no further volume change."
+}

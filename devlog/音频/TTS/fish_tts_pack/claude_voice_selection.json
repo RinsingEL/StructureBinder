@@ -1,0 +1,12 @@
+{
+  "role": "claude",
+  "reference_file": "references/暂定_20261117/Claude.wav",
+  "selected_source": "claude_1.wav",
+  "sha256": "154160bf893e72d5c4c13f0de0aee6923470e849e1ac67af40c9feecbb5d3742",
+  "reference_text": "大家好，欢迎来参观我们的社团。今天，我们一起看看这座城市吧。",
+  "reference_language": "zh",
+  "selected_by": "user",
+  "status": "tentative",
+  "confirmed_date": "2026-11-17",
+  "note": "Original Claude confirmed with current GLM. Previous Japanese and Chinese trials remain preserved."
+}

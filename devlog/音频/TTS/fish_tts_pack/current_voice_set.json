@@ -1,0 +1,34 @@
+{
+  "status": "tentative",
+  "confirmed_date": "2026-11-17",
+  "confirmation": "原版小克＋目前GLM，约84秒",
+  "reference_directory": "references/暂定_20261117",
+  "package": "../暂定音色_20261117",
+  "roles": {
+    "gemini": {
+      "file": "references/暂定_20261117/Gemini.wav",
+      "reference_text": "大家好，欢迎来参观我们的社团。今天，我们一起看看这座城市吧。",
+      "sha256": "870e7ebbd84ab9b14800e08e0f349211285505d561d669255ac089fdcb3b161f"
+    },
+    "claude": {
+      "file": "references/暂定_20261117/Claude.wav",
+      "reference_text": "大家好，欢迎来参观我们的社团。今天，我们一起看看这座城市吧。",
+      "sha256": "154160bf893e72d5c4c13f0de0aee6923470e849e1ac67af40c9feecbb5d3742"
+    },
+    "astra": {
+      "file": "references/暂定_20261117/Astra.wav",
+      "reference_text": "大家好，我是 Astra。平时负责把大家的点子写进代码里，再仔细检查一下，有没有哪里不小心出了小差错。",
+      "sha256": "a650ecddd8407402eb31410c2b975827874c49b895cf8c7171af36f4a2156bb4"
+    },
+    "deepseek": {
+      "file": "references/暂定_20261117/DeepSeek.wav",
+      "reference_text": "大家好，欢迎来参观我们的社团。今天，我们一起看看这座城市吧。",
+      "sha256": "afebde26716703ced48b6422de31e78d71e8591d76fe025d0ab08aa1ac4218a8"
+    },
+    "glm": {
+      "file": "references/暂定_20261117/GLM.wav",
+      "reference_text": "大家好，欢迎来参观我们的社团。今天，我们一起看看这座城市吧。",
+      "sha256": "42837635cc56449f7cf417e2f04a8848944cf4094fb299bbc2d4cbdd6993a798"
+    }
+  }
+}
