@@ -1,0 +1,9 @@
+{
+  "model": "s2.1-pro-free",
+  "text": "DeepSeek 这个第一反应特别真实，其实 AI 一开始也是这么想的。后来我们专门教它：一座城扛的事越多，越要往外展开，而不是往里塞。这个故事有点长，等回顾的时候再讲。",
+  "reference_sha256": "154160bf893e72d5c4c13f0de0aee6923470e849e1ac67af40c9feecbb5d3742",
+  "reference_text": "大家好，欢迎来参观我们的社团。今天，我们一起看看这座城市吧。",
+  "duration": 13.281814058956916,
+  "sha256": "16b48618271a7ebfc1a389b543a8e51d86a2bbf910f13a278997a6c6b1fba7bd",
+  "status": "generated"
+}

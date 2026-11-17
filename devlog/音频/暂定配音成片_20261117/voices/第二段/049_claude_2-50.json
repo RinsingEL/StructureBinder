@@ -1,0 +1,9 @@
+{
+  "model": "s2.1-pro-free",
+  "text": "所以 Astra 最后换了排法。Astra，你给大家讲讲现在这条巷子吧？",
+  "reference_sha256": "154160bf893e72d5c4c13f0de0aee6923470e849e1ac67af40c9feecbb5d3742",
+  "reference_text": "大家好，欢迎来参观我们的社团。今天，我们一起看看这座城市吧。",
+  "duration": 5.201269841269841,
+  "sha256": "ae90baa5cdcb6181b716d4434db59b5329176bb23f6bfc1a0f44fca8435cc073",
+  "status": "generated"
+}

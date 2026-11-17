@@ -1,0 +1,9 @@
+{
+  "model": "s2.1-pro-free",
+  "text": "那我们从一张白纸开始吧。",
+  "reference_sha256": "154160bf893e72d5c4c13f0de0aee6923470e849e1ac67af40c9feecbb5d3742",
+  "reference_text": "大家好，欢迎来参观我们的社团。今天，我们一起看看这座城市吧。",
+  "duration": 1.6253968253968254,
+  "sha256": "511c0dd12a65b5ce5a3a2972da2f71a8d22ab3f0fc57b6c26bff9a25a2705110",
+  "status": "generated"
+}

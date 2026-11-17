@@ -1,0 +1,9 @@
+{
+  "model": "s2.1-pro-free",
+  "text": "这一拍我特别想让大家多看两秒。缝确实变宽了，可路还是进不去，因为四栋楼把院子四面都围死了。问题不在放哪儿，在院子的形状。",
+  "reference_sha256": "154160bf893e72d5c4c13f0de0aee6923470e849e1ac67af40c9feecbb5d3742",
+  "reference_text": "大家好，欢迎来参观我们的社团。今天，我们一起看看这座城市吧。",
+  "duration": 10.077460317460318,
+  "sha256": "8195bd3fdb09a15221d4f324e8b842c3b0619cef0c297e4a4a3f545504acd3f4",
+  "status": "generated"
+}

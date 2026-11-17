@@ -1,0 +1,9 @@
+{
+  "model": "s2.1-pro-free",
+  "text": "哈喽大家好，我是 Gemini！去年十一月社长刚有这个点子的时候，\n就是我们俩在网页上复制粘贴着一步步摸索起来的。今天开放日的策划，还有大家看到的立绘，\n都是我和社长一块准备的。桌上有茶点，大家随便坐！",
+  "reference_sha256": "870e7ebbd84ab9b14800e08e0f349211285505d561d669255ac089fdcb3b161f",
+  "reference_text": "大家好，欢迎来参观我们的社团。今天，我们一起看看这座城市吧。",
+  "duration": 16.486167800453515,
+  "sha256": "c588abac5c640c62a518fc6e0a31b0a7e6994b670d3ba19f1d0b15fdf33204a4",
+  "status": "confirmed opening reused"
+}

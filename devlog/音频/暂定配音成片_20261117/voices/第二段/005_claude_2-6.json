@@ -1,0 +1,9 @@
+{
+  "model": "s2.1-pro-free",
+  "text": "先看大轮廓，再凑近看，这个顺序后面会一直用到。",
+  "reference_sha256": "154160bf893e72d5c4c13f0de0aee6923470e849e1ac67af40c9feecbb5d3742",
+  "reference_text": "大家好，欢迎来参观我们的社团。今天，我们一起看看这座城市吧。",
+  "duration": 4.272471655328798,
+  "sha256": "2696dc8bd2dd8194fe4dda7f4fe40a91d2aa996aa2749d8a7aba27b380709e14",
+  "status": "generated"
+}

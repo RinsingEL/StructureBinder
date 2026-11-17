@@ -1,0 +1,20 @@
+{
+  "source": "全片配乐_v6/compose_all.py",
+  "git_commit": "c5ae5158a",
+  "duration": 1006.6666666666666,
+  "bpm": 108,
+  "global_gain_db": 3.83,
+  "note_counts": {
+    "rin_piano": 201,
+    "gemini_flute": 89,
+    "claude_clarinet": 238,
+    "astra_epiano": 310,
+    "deepseek_pizz": 87,
+    "glm_vibes": 122,
+    "shared_guitar": 1521,
+    "shared_bass": 854,
+    "soft_pad": 222,
+    "quiet_percussion": 583
+  },
+  "note": "Original composition and expression preserved; render limited to acts 1-2 and normalized across both."
+}

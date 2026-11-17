@@ -1,0 +1,68 @@
+[
+  {
+    "file": "01_开场_暂定配音.mp4",
+    "seconds": 126.666667,
+    "bytes": 13635516,
+    "streams": [
+      {
+        "type": "video",
+        "codec": "h264",
+        "frames": 3040,
+        "width": 1920,
+        "height": 1080,
+        "frame_rate": "24/1"
+      },
+      {
+        "type": "audio",
+        "codec": "aac",
+        "frames": 5939,
+        "sample_rate": 48000,
+        "channels": 2
+      }
+    ]
+  },
+  {
+    "file": "02_第二段_暂定配音.mp4",
+    "seconds": 880.0,
+    "bytes": 57685485,
+    "streams": [
+      {
+        "type": "video",
+        "codec": "h264",
+        "frames": 21120,
+        "width": 1920,
+        "height": 1080,
+        "frame_rate": "24/1"
+      },
+      {
+        "type": "audio",
+        "codec": "aac",
+        "frames": 41251,
+        "sample_rate": 48000,
+        "channels": 2
+      }
+    ]
+  },
+  {
+    "file": "开场至第二段_暂定配音.mp4",
+    "seconds": 1006.688,
+    "bytes": 71319123,
+    "streams": [
+      {
+        "type": "video",
+        "codec": "h264",
+        "frames": 24160,
+        "width": 1920,
+        "height": 1080,
+        "frame_rate": "24/1"
+      },
+      {
+        "type": "audio",
+        "codec": "aac",
+        "frames": 47190,
+        "sample_rate": 48000,
+        "channels": 2
+      }
+    ]
+  }
+]

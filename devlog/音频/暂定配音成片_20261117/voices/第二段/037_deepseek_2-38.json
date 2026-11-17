@@ -1,0 +1,9 @@
+{
+  "model": "s2.1-pro-free",
+  "text": "一栋十六张床，四栋就是六十四，住五十六个人，还留了点余量，这个数算得挺舒服。",
+  "reference_sha256": "afebde26716703ced48b6422de31e78d71e8591d76fe025d0ab08aa1ac4218a8",
+  "reference_text": "大家好，欢迎来参观我们的社团。今天，我们一起看看这座城市吧。",
+  "duration": 7.058866213151927,
+  "sha256": "bfd1b00b40906c69ee99e3fe345ce24abd92cf0e1f19122d7072f1ff1d2ca99a",
+  "status": "generated"
+}

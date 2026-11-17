@@ -1,0 +1,9 @@
+{
+  "model": "s2.1-pro-free",
+  "text": "动手之前，AI 先把国度阶段定下的职责拿出来再读一遍：教学、藏书、议事、研究、学生生活，还有港口迎客。这张单子会一直跟着它，后面每个功能区都要能对回这里的某一项。",
+  "reference_sha256": "154160bf893e72d5c4c13f0de0aee6923470e849e1ac67af40c9feecbb5d3742",
+  "reference_text": "大家好，欢迎来参观我们的社团。今天，我们一起看看这座城市吧。",
+  "duration": 14.349931972789115,
+  "sha256": "af8d305683801fc36a081148a8b4a7ffaa2e3ba3bb702fb5cef512db94d73d74",
+  "status": "generated"
+}

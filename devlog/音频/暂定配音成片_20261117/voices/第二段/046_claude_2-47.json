@@ -1,0 +1,9 @@
+{
+  "model": "s2.1-pro-free",
+  "text": "大家看这道缝：宿院和市场之间只剩 8 格，两条本该通过的主路，就卡在这儿。Astra，你当时先想到的办法是挪一挪？",
+  "reference_sha256": "154160bf893e72d5c4c13f0de0aee6923470e849e1ac67af40c9feecbb5d3742",
+  "reference_text": "大家好，欢迎来参观我们的社团。今天，我们一起看看这座城市吧。",
+  "duration": 10.263219954648527,
+  "sha256": "8b20bec0f058a1f663246851a79c7eeeaf7ca3a022001265c66b6cc1807eef80",
+  "status": "generated"
+}

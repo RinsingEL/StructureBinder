@@ -1,0 +1,9 @@
+{
+  "model": "s2.1-pro-free",
+  "text": "四栋楼门全朝里开、围出一个院子，出门几步就是食堂——先不说 AI 规划得怎么样，我自己看着都想进去住。",
+  "reference_sha256": "42837635cc56449f7cf417e2f04a8848944cf4094fb299bbc2d4cbdd6993a798",
+  "reference_text": "大家好，欢迎来参观我们的社团。今天，我们一起看看这座城市吧。",
+  "duration": 9.241541950113378,
+  "sha256": "9f675f00f5f1e95bebe7d9bb65da39eb5c117a58072ce2f0bb972fd35db169a5",
+  "status": "generated"
+}

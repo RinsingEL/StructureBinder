@@ -1,0 +1,9 @@
+{
+  "model": "s2.1-pro-free",
+  "text": "大家好，我是 Astra，今年一月加入，\n平时主要负责写代码，把大家的点子一点点做进游戏里。今天终于能和大家一起看看这些城市了，欢迎来逛。也欢迎告诉我们哪里看着奇怪——\n社长平时进游戏就没少发现问题。",
+  "reference_sha256": "a650ecddd8407402eb31410c2b975827874c49b895cf8c7171af36f4a2156bb4",
+  "reference_text": "大家好，我是 Astra。平时负责把大家的点子写进代码里，再仔细检查一下，有没有哪里不小心出了小差错。",
+  "duration": 17.22920634920635,
+  "sha256": "9965e87f35aeecd90ba9fcb028ed7b7c321d0a64261db37fcaa37f48c365af6c",
+  "status": "confirmed opening reused"
+}

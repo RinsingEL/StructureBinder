@@ -1,0 +1,9 @@
+{
+  "model": "s2.1-pro-free",
+  "text": "大家好，我是 Claude，十月刚加入。在社团里负责整体设计，就是想清楚\n这座城为什么长成这样、里面的人怎么过日子。我写下来的设计，最后都是靠 Astra\n变成游戏里真能走进去的地方的。",
+  "reference_sha256": "154160bf893e72d5c4c13f0de0aee6923470e849e1ac67af40c9feecbb5d3742",
+  "reference_text": "大家好，欢迎来参观我们的社团。今天，我们一起看看这座城市吧。",
+  "duration": 15.139410430839002,
+  "sha256": "322a0c098051026b13696b6c62df6a7d1ce91fe62c3845bd82015583b8d3f617",
+  "status": "confirmed opening reused"
+}

@@ -1,0 +1,168 @@
+{
+  "completed": true,
+  "scope": [
+    "开场",
+    "第二段"
+  ],
+  "media": [
+    {
+      "file": "01_开场_暂定配音.mp4",
+      "seconds": 126.666667,
+      "bytes": 13635516,
+      "streams": [
+        {
+          "type": "video",
+          "codec": "h264",
+          "frames": 3040,
+          "width": 1920,
+          "height": 1080,
+          "frame_rate": "24/1"
+        },
+        {
+          "type": "audio",
+          "codec": "aac",
+          "frames": 5939,
+          "sample_rate": 48000,
+          "channels": 2
+        }
+      ]
+    },
+    {
+      "file": "02_第二段_暂定配音.mp4",
+      "seconds": 880.0,
+      "bytes": 57685485,
+      "streams": [
+        {
+          "type": "video",
+          "codec": "h264",
+          "frames": 21120,
+          "width": 1920,
+          "height": 1080,
+          "frame_rate": "24/1"
+        },
+        {
+          "type": "audio",
+          "codec": "aac",
+          "frames": 41251,
+          "sample_rate": 48000,
+          "channels": 2
+        }
+      ]
+    },
+    {
+      "file": "开场至第二段_暂定配音.mp4",
+      "seconds": 1006.688,
+      "bytes": 71319123,
+      "streams": [
+        {
+          "type": "video",
+          "codec": "h264",
+          "frames": 24160,
+          "width": 1920,
+          "height": 1080,
+          "frame_rate": "24/1"
+        },
+        {
+          "type": "audio",
+          "codec": "aac",
+          "frames": 47190,
+          "sample_rate": 48000,
+          "channels": 2
+        }
+      ]
+    }
+  ],
+  "validation": {
+    "opening_full_decode": "passed",
+    "act2_full_decode": "passed",
+    "concat_metadata": "passed; 24160 video frames, expected combined duration within AAC padding",
+    "visual_checks": "Rin reveal/hold, Claude opening, world/city map, D4 one-building reveal, observatory photo inspected",
+    "placeholder_image": "Act2 early pre-PPT img has empty src under cover; later PPT images load successfully."
+  },
+  "speech_clips": {
+    "opening_reused": 5,
+    "act2_generated": 62
+  },
+  "voice_speed": "Original generated speed; no time stretching",
+  "music": "Gemini PR73 v6 composition, 108 BPM",
+  "bubble": "New synthesis from user-provided reference measurements; selected continuous sound, 8.724 triggers/s while Rin text reveals, followed by reading hold",
+  "timing_shifts": {
+    "开场": [],
+    "第二段": [
+      {
+        "id": "2-11",
+        "who": "glm",
+        "from": 131.11111111111111,
+        "to": 131.66666666666669
+      },
+      {
+        "id": "2-35",
+        "who": "claude",
+        "from": 468.8888888888889,
+        "to": 469.44444444444446
+      },
+      {
+        "id": "2-36",
+        "who": "claude",
+        "from": 482.22222222222223,
+        "to": 482.77777777777777
+      },
+      {
+        "id": "2-37",
+        "who": "astra",
+        "from": 497.7777777777778,
+        "to": 498.33333333333337
+      },
+      {
+        "id": "2-38",
+        "who": "deepseek",
+        "from": 518.8888888888889,
+        "to": 519.4444444444445
+      },
+      {
+        "id": "2-53",
+        "who": "claude",
+        "from": 707.7777777777778,
+        "to": 708.3333333333334
+      },
+      {
+        "id": "2-56",
+        "who": "gemini",
+        "from": 746.6666666666667,
+        "to": 747.2222222222223
+      },
+      {
+        "id": "2-57",
+        "who": "astra",
+        "from": 761.1111111111112,
+        "to": 762.2222222222223
+      },
+      {
+        "id": "2-58",
+        "who": "deepseek",
+        "from": 777.7777777777778,
+        "to": 778.8888888888889
+      },
+      {
+        "id": "2-63",
+        "who": "deepseek",
+        "from": 847.7777777777778,
+        "to": 850.0
+      }
+    ]
+  },
+  "loudness": {
+    "开场": {
+      "input_i": -18.63,
+      "input_tp": -1.5,
+      "input_lra": 6.2
+    },
+    "第二段": {
+      "input_i": -18.5,
+      "input_tp": -2.92,
+      "input_lra": 3.2
+    }
+  },
+  "subjective_mix_acceptance": "pending user listening",
+  "remaining_acts": "第三、第四、第五段 not generated in this first-two-act delivery"
+}

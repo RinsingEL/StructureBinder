@@ -1,0 +1,9 @@
+{
+  "model": "s2.1-pro-free",
+  "text": "这就是我最想让大家看到的一段。AI 不是一次就画对了，它也会走弯路，但每一步都知道自己要守住什么。",
+  "reference_sha256": "154160bf893e72d5c4c13f0de0aee6923470e849e1ac67af40c9feecbb5d3742",
+  "reference_text": "大家好，欢迎来参观我们的社团。今天，我们一起看看这座城市吧。",
+  "duration": 8.126984126984127,
+  "sha256": "c1d528db11df6888057035f24fefba229d485e8973f6e0ba70f1eb8b7cb55c8f",
+  "status": "generated"
+}

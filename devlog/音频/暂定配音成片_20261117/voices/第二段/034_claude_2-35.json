@@ -1,0 +1,9 @@
+{
+  "model": "s2.1-pro-free",
+  "text": "接下来我们只盯着一个区慢慢看：南边的学生宿院。这里要住五十六个人，AI 从住宿那堆里挑了一栋学院宿舍，十六张床，占地十九乘二十三格。",
+  "reference_sha256": "154160bf893e72d5c4c13f0de0aee6923470e849e1ac67af40c9feecbb5d3742",
+  "reference_text": "大家好，欢迎来参观我们的社团。今天，我们一起看看这座城市吧。",
+  "duration": 13.049614512471654,
+  "sha256": "52b77a04d2ae74619e83bd4d4b1d8d19b13142f69bc57f9f0dee758b322e2961",
+  "status": "generated"
+}
