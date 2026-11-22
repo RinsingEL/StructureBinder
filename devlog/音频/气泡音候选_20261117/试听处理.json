@@ -1,0 +1,35 @@
+[
+  {
+    "candidate": "A",
+    "source_file": "farfadet46_pop.ogg",
+    "original_duration": 0.27575,
+    "trimmed_duration": 0.14995833333333333,
+    "sequence_spacing": 0.18,
+    "source_page": "https://opengameart.org/content/bubbles-pop",
+    "author": "farfadet46",
+    "license": "CC0-1.0 (as listed on source page)",
+    "processing": "Mono 48kHz; trim outside -45dB relative activity with margins; peak -14dBFS; 2ms edge fades; one single then three repeats, no pitch shift."
+  },
+  {
+    "candidate": "B",
+    "source_file": "trezegames_p2.ogg",
+    "original_duration": 0.06825,
+    "trimmed_duration": 0.06825,
+    "sequence_spacing": 0.18,
+    "source_page": "https://opengameart.org/content/pop-effect-sounds",
+    "author": "trezegames",
+    "license": "CC0-1.0 (as listed on source page)",
+    "processing": "Mono 48kHz; trim outside -45dB relative activity with margins; peak -14dBFS; 2ms edge fades; one single then three repeats, no pitch shift."
+  },
+  {
+    "candidate": "C",
+    "source_file": "trezegames_p3.ogg",
+    "original_duration": 0.04533333333333334,
+    "trimmed_duration": 0.04533333333333334,
+    "sequence_spacing": 0.18,
+    "source_page": "https://opengameart.org/content/pop-effect-sounds",
+    "author": "trezegames",
+    "license": "CC0-1.0 (as listed on source page)",
+    "processing": "Mono 48kHz; trim outside -45dB relative activity with margins; peak -14dBFS; 2ms edge fades; one single then three repeats, no pitch shift."
+  }
+]

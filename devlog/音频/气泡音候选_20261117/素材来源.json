@@ -1,0 +1,43 @@
+[
+  {
+    "file": "farfadet46_pop.ogg",
+    "download_url": "https://opengameart.org/sites/default/files/pop.ogg",
+    "author": "farfadet46",
+    "source_page": "https://opengameart.org/content/bubbles-pop",
+    "license": "CC0-1.0 (as listed on source page)",
+    "sha256": "d55886ec5b145045d1abd13926675b93646a8865e53e1f7a3a58cfbb7b733cff",
+    "bytes": 8578,
+    "status": "downloaded"
+  },
+  {
+    "file": "trezegames_p2.ogg",
+    "download_url": "https://opengameart.org/sites/default/files/p_2.ogg",
+    "author": "trezegames",
+    "source_page": "https://opengameart.org/content/pop-effect-sounds",
+    "license": "CC0-1.0 (as listed on source page)",
+    "sha256": "191935b3c7a1ec3b09a6ae98fa830a86049edc177e670383b780fb5694aaff1e",
+    "bytes": 5481,
+    "status": "downloaded"
+  },
+  {
+    "file": "trezegames_p3.ogg",
+    "download_url": "https://opengameart.org/sites/default/files/p_3.ogg",
+    "author": "trezegames",
+    "source_page": "https://opengameart.org/content/pop-effect-sounds",
+    "license": "CC0-1.0 (as listed on source page)",
+    "sha256": "1d4f456714c70b83de02efe4d54f65ff6dfb2c74fec3a7ecd4aa8dde137424f3",
+    "bytes": 6100,
+    "status": "downloaded"
+  },
+  {
+    "file": "kenney_interface-sounds.zip",
+    "download_url": "https://kenney.nl/media/pages/assets/interface-sounds/fa43c1dd4d-1677589452/kenney_interface-sounds.zip",
+    "author": "Kenney",
+    "source_page": "https://kenney.nl/assets/interface-sounds",
+    "license": "CC0-1.0 (as listed on source page)",
+    "sha256": "a482fee089ef784418af85477a6b15739ce2fdf49c235c283f2f4c6815a494e4",
+    "bytes": 18690,
+    "status": "download_unavailable_HTTP_403",
+    "note": "Cached ZIP URL returned an HTML page; official fresh-link endpoint returned HTTP 403. No Kenney audio included."
+  }
+]

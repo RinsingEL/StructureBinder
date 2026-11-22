@@ -8,3 +8,4 @@ __pycache__/
 
 **/render/*_定稿.html
 **/render/concat.txt
+**/check-*.png

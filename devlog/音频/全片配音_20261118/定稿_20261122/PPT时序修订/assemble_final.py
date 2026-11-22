@@ -1,6 +1,6 @@
 from pathlib import Path
-import json,subprocess,hashlib,re
-H=Path(__file__).resolve().parent;FF='E:/AI/Qwen3-TTS/bin/ffmpeg.exe'
+import json,subprocess,hashlib,re,os
+H=Path(__file__).resolve().parent;FF=os.environ.get('FFMPEG', 'ffmpeg')
 acts=['开场','第二段','第三段','第四段','第五段']
 files=[H/f'{i:02}_{a}_定稿.mp4' for i,a in enumerate(acts,1)]
 assert all(p.is_file() and p.stat().st_size>10000 for p in files)

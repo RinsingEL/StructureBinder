@@ -1,9 +1,9 @@
 const {chromium}=require('../../视频素材/tools/node_modules/playwright');
 const fs=require('fs'),path=require('path');
 (async()=>{
-const browser=await chromium.launch({executablePath:'C:/Users/Rinsing/AppData/Local/ms-playwright/chromium_headless_shell-1217/chrome-headless-shell-win64/chrome-headless-shell.exe',args:['--autoplay-policy=no-user-gesture-required']});
+const browser=await chromium.launch({...(process.env.CHROMIUM_EXECUTABLE?{executablePath:process.env.CHROMIUM_EXECUTABLE}:{}),args:['--autoplay-policy=no-user-gesture-required']});
 const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
-await page.goto('http://127.0.0.1:8790/devlog/音频/全片配音_20261118/index.html');
+await page.goto('http://127.0.0.1:8790/devlog/音频/全片配音_20261118/preview.html');
 const results=[];
 for(let i=0;i<5;i++){
  await page.selectOption('#act',String(i));await page.waitForFunction(()=>ready&&!switching&&audio.readyState>=1,{},{timeout:30000});

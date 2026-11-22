@@ -10,7 +10,7 @@
 //   --preview        草稿：半分辨率、12 帧、画质低一点，快很多
 //
 // 第二段（页面里有 window.beatAt）会自动另开一个页面播第二幕 PPT，按拍定格后贴到白板上。
-const { chromium } = require('E:/Mod_Dev/StructureBinder/devlog/视频素材/tools/node_modules/playwright');
+const { chromium } = require('../../视频素材/tools/node_modules/playwright');
 const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
@@ -44,7 +44,7 @@ async function openScene(browser, page, preview) {
 
 // 第二段：第二幕 PPT 页面，按"第几拍、播到几成"定格
 async function openAtlas(browser, page) {
-  const atlasPath = 'E:/Mod_Dev/StructureBinder/devlog/act2/wtd-atlas.html';
+  const atlasPath = path.resolve(__dirname, '../../act2/wtd-atlas.html');
   const atlas = await browser.newPage({ viewport: { width: 1600, height: 900 } });
   await atlas.goto(pathToFileURL(atlasPath).href);
   await atlas.waitForTimeout(3000);
@@ -65,7 +65,7 @@ async function openAtlas(browser, page) {
 async function worker(opt) {
   const page = path.resolve(opt.page), preview = !!opt.preview;
   const fps = +opt.fps, a = +opt.a, z = +opt.z;
-  const browser = await chromium.launch({executablePath: 'C:/Users/Rinsing/AppData/Local/ms-playwright/chromium_headless_shell-1217/chrome-headless-shell-win64/chrome-headless-shell.exe'});
+  const browser = await chromium.launch((process.env.CHROMIUM_EXECUTABLE ? {executablePath: process.env.CHROMIUM_EXECUTABLE} : {}));
   const p = await openScene(browser, page, preview);
   const isAct2 = await p.evaluate(() => typeof window.beatAt === 'function');
   let atlas = null, lastKey = '';
@@ -108,7 +108,7 @@ async function main(opt) {
   const crf = +(opt.crf || (preview ? 30 : 24));
   const parts = Math.max(1, +(opt.parts || Math.max(1, Math.floor(os.cpus().length / 2) - 2)));
 
-  const browser = await chromium.launch({executablePath: 'C:/Users/Rinsing/AppData/Local/ms-playwright/chromium_headless_shell-1217/chrome-headless-shell-win64/chrome-headless-shell.exe'});
+  const browser = await chromium.launch((process.env.CHROMIUM_EXECUTABLE ? {executablePath: process.env.CHROMIUM_EXECUTABLE} : {}));
   const p = await openScene(browser, page, false);
   const D = await p.evaluate(() => window.DURATION);
   await browser.close();
@@ -116,7 +116,7 @@ async function main(opt) {
   const i0 = Math.floor(from * fps), i1 = Math.ceil(to * fps), n = i1 - i0;
   console.log(`${path.basename(page)}：全长 ${D.toFixed(1)} 秒，录 ${from}–${to.toFixed(1)} 秒，共 ${n} 帧，${parts} 路同时录${preview ? '（草稿）' : ''}`);
 
-  const tempRoot = 'E:/Mod_Dev/StructureBinder/.tools/devlog-audio/voiced-20261117'; fs.mkdirSync(tempRoot,{recursive:true}); const tmp=fs.mkdtempSync(path.join(tempRoot,'render-'));
+  const tempRoot = path.resolve(__dirname, '../../../.tools/devlog-audio/voiced-20261117'); fs.mkdirSync(tempRoot,{recursive:true}); const tmp=fs.mkdtempSync(path.join(tempRoot,'render-'));
   const done = new Array(parts).fill(0), started = Date.now();
   const jobs = [];
   for (let k = 0; k < parts; k++) {

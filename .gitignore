@@ -72,3 +72,22 @@ geomantia_mcp_log.jsonl
 
 # 配乐试作的大音频文件，mp4 里已经带着
 devlog/音频/claude_trial/*.wav
+
+# Local devlog media and audition intermediates; source snapshots are staged explicitly.
+/devlog/音频/**/*.wav
+/devlog/音频/**/*.mp3
+/devlog/音频/**/*.m4a
+/devlog/音频/**/*.mp4
+/devlog/音频/**/*.log
+/devlog/音频/TTS/*试听_*/
+/devlog/音频/TTS/fish_tts_pack/output/
+/devlog/音频/TTS/fish_tts_pack/alt_refs/
+/devlog/音频/TTS/fish_tts_pack/index.html
+/devlog/音频/TTS/五人开场_Claude新版_GLM保留_20261117/
+/devlog/音频/TTS/开场音色包_仅更新GLM_20261117/
+/devlog/音频/开场配音试听_20261115/
+/devlog/音频/暂定配音成片_20261117/仅配音1.05倍/
+/devlog/音频/暂定配音成片_20261117/*_配音预览.html
+/devlog/音频/气泡音候选_20261117/原始素材/
+/devlog/音频/气泡音候选_20261117/Kenney下载返回的素材页.html
+/devlog/音频/气泡音候选_20261117/参考分析/reference_analysis.png

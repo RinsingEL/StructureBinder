@@ -1,4 +1,6 @@
-# StructureBinder
+# StructureBinder · 社团开放日制作分支
+
+> 当前为 `codex/devlog` 视频制作分支。视频工程请从 **[devlog 入口](devlog/README.md)** 开始；下方保留 Mod 项目介绍。该分支不是新的 Mod 开发主线，视频改动不整支合回开发分支。
 
 > 一个仍在探索和开发中的 Minecraft Forge / AI 协作式城市生成项目。
 
