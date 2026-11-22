@@ -1,0 +1,143 @@
+{
+  "source_file": "第四段.json",
+  "source_sha256": "630ff9e359e5c1c2277de897bde6a9b81545383638868381746ee87be86af17f",
+  "earlier_exports_match_except_empty_audioChoice": true,
+  "tracks": [
+    {
+      "act": "开场",
+      "before": {
+        "voice": 0,
+        "bgm": -10,
+        "bubble": 0
+      },
+      "after": {
+        "voice": 0,
+        "bgm": -10,
+        "bubble": -10
+      }
+    },
+    {
+      "act": "第二段",
+      "before": {
+        "voice": 0,
+        "bgm": -6,
+        "bubble": 0
+      },
+      "after": {
+        "voice": 0,
+        "bgm": -10,
+        "bubble": -10
+      }
+    },
+    {
+      "act": "第三段",
+      "before": {
+        "voice": 0,
+        "bgm": 0,
+        "bubble": 0
+      },
+      "after": {
+        "voice": 0,
+        "bgm": -10,
+        "bubble": -10
+      }
+    },
+    {
+      "act": "第四段",
+      "before": {
+        "voice": 0,
+        "bgm": -10,
+        "bubble": -10
+      },
+      "after": {
+        "voice": 0,
+        "bgm": -10,
+        "bubble": -10
+      }
+    },
+    {
+      "act": "第五段",
+      "before": {
+        "voice": 0,
+        "bgm": 0,
+        "bubble": 0
+      },
+      "after": {
+        "voice": 0,
+        "bgm": -10,
+        "bubble": -10
+      }
+    }
+  ],
+  "fifth_act": "user confirmed no edits; original ending",
+  "imported_assets": [
+    {
+      "act": "第二段",
+      "file": "imports/bba9e0270f9735f4e2116309f7a76c768d481c7f3fcaf48c880ee0711fff4be6.wav",
+      "sha256": "bba9e0270f9735f4e2116309f7a76c768d481c7f3fcaf48c880ee0711fff4be6",
+      "bytes": 628654
+    },
+    {
+      "act": "第二段",
+      "file": "imports/21b4b5eb27682be7426ac3bc259fa70c0035c2a0af61a513e9e0566ba2c2b133.wav",
+      "sha256": "21b4b5eb27682be7426ac3bc259fa70c0035c2a0af61a513e9e0566ba2c2b133",
+      "bytes": 815900
+    },
+    {
+      "act": "第二段",
+      "file": "imports/57494884d1b4e9ff2fc75550a9b2ef80bd8448cbb53ac0fe6b15e23aac4c90d8.wav",
+      "sha256": "57494884d1b4e9ff2fc75550a9b2ef80bd8448cbb53ac0fe6b15e23aac4c90d8",
+      "bytes": 963020
+    },
+    {
+      "act": "第二段",
+      "file": "imports/fe6c44006b2372dca60dd88ce731841e32e0ddd8d31b1bbbe82390f0b15df653.wav",
+      "sha256": "fe6c44006b2372dca60dd88ce731841e32e0ddd8d31b1bbbe82390f0b15df653",
+      "bytes": 1132434
+    },
+    {
+      "act": "第二段",
+      "file": "imports/16c30c91dce37cb20e0eea9a13c272205139415591beae4a586d4916f60976aa.wav",
+      "sha256": "16c30c91dce37cb20e0eea9a13c272205139415591beae4a586d4916f60976aa",
+      "bytes": 1181474
+    },
+    {
+      "act": "第二段",
+      "file": "imports/01377ccafcca65014b374f22f0ece38999c917a6177485b3492f1e4271941919.wav",
+      "sha256": "01377ccafcca65014b374f22f0ece38999c917a6177485b3492f1e4271941919",
+      "bytes": 740110
+    },
+    {
+      "act": "第二段",
+      "file": "imports/be53f405aa73c3707cc627abd4a3955dbad8023e1d7d97aff2eae8aca3f8228f.wav",
+      "sha256": "be53f405aa73c3707cc627abd4a3955dbad8023e1d7d97aff2eae8aca3f8228f",
+      "bytes": 1319680
+    },
+    {
+      "act": "第二段",
+      "file": "imports/237aa92ed91e0928d352f43fc66bf3a07073ff896162426f98a1c73497f764f8.wav",
+      "sha256": "237aa92ed91e0928d352f43fc66bf3a07073ff896162426f98a1c73497f764f8",
+      "bytes": 1190390
+    },
+    {
+      "act": "第二段",
+      "file": "imports/b4c1b9a865ee2c59cde2f1321fea1d3c4d18d7a2b4c962509c82bded5a418288.wav",
+      "sha256": "b4c1b9a865ee2c59cde2f1321fea1d3c4d18d7a2b4c962509c82bded5a418288",
+      "bytes": 1723654
+    },
+    {
+      "act": "第四段",
+      "file": "imports/d2129c6fb8b1bf2ba155ebda335d6fb674e68d3dd987f807d189c2376d8231e9.wav",
+      "sha256": "d2129c6fb8b1bf2ba155ebda335d6fb674e68d3dd987f807d189c2376d8231e9",
+      "bytes": 1631756
+    },
+    {
+      "act": "第四段",
+      "file": "imports/6455a71718ee240353dc716371069ee598d549dce2016631b7da29a711fbd89c.wav",
+      "sha256": "6455a71718ee240353dc716371069ee598d549dce2016631b7da29a711fbd89c",
+      "bytes": 1480176
+    }
+  ],
+  "project_sha256": "c906039fdbe2fd1dcdb082e73995e0a8b2c95fc7307f1d7a436be8c8a67fae75",
+  "preserved": "all existing edits, subtitles, voice gains and source references"
+}

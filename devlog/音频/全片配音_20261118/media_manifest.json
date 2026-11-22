@@ -1,0 +1,2166 @@
+{
+  "version": 1,
+  "purpose": "Exact local media required by frozen preview/render plus original voice recordings; not uploaded to Git. Extract bundle at repository root.",
+  "files": [
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/开场/001_gemini_L01-dry.wav",
+      "bytes": 3165392,
+      "sha256": "bfc69c6eed18ae4d0d0a59837f75235084b2430a2f21de0c5824ae77fc697c98"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/开场/002_claude_L02-dry.wav",
+      "bytes": 2906812,
+      "sha256": "6b3a937e9af8a43d4d65f6bffec5fc854b92c128bda9662db796b545a3c8c61e"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/开场/003_astra_L03-dry.wav",
+      "bytes": 3308052,
+      "sha256": "26fc8ce5555cc397a06f6a25c41db59d6694452778c2dd5a094035e375b97de1"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/开场/004_deepseek_L04-dry.wav",
+      "bytes": 2862232,
+      "sha256": "d219a2bd8362ab8f55982b6437a09f9c206802fb7d64b3981a445e70b39b0dc6"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/开场/005_glm_L05-dry.wav",
+      "bytes": 3450716,
+      "sha256": "909e5dedbe85542d4aa4bf203667b22352a146878b7f5fe25a8700491b4cb77c"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第三段/001_gemini_3-2-dry.wav",
+      "bytes": 4842148,
+      "sha256": "824c37fd459921c8cb9ee5969fd07f85d80f448c0d02e0ea08a39a62ba94615a"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第三段/002_gemini_3-4-dry.wav",
+      "bytes": 3111892,
+      "sha256": "a4ddd9fd3f843b031b3a4ae77a5664794d944f5244eceb6979808ab6bbe14aa0"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第三段/003_astra_3-6-dry.wav",
+      "bytes": 1979500,
+      "sha256": "938503d609ce7d74c621d68f9884b0110c14135b03ff31c942ebb60a1f05479a"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第三段/004_astra_3-7-dry.wav",
+      "bytes": 3102976,
+      "sha256": "d7d1fd6b743da2f106ca82d24cb57e34fc81b4fa4452713281e78b7bc034847d"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第三段/005_deepseek_3-8-dry.wav",
+      "bytes": 1382096,
+      "sha256": "964836e9f305e6ed9597895799b6732cfa9625c1de2d485f99371106e35129a7"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第三段/006_deepseek_3-10-dry.wav",
+      "bytes": 1827920,
+      "sha256": "2c86b9ab29ed802a8b48dea0c4d81c1f3aee6362880c1f15df3d1036c50e93b1"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第三段/007_astra_3-11-dry.wav",
+      "bytes": 2737400,
+      "sha256": "8fd289ccb096eb8a31cc0b3a4c15d550fea681f0fb6e2523457601047fd9dc84"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第三段/008_astra_3-12-dry.wav",
+      "bytes": 2425324,
+      "sha256": "ae77bddfda5289b0bcfdd68d4553df62fc6973bd13a6c0612fca424f49ea11b8"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第三段/009_claude_3-13-dry.wav",
+      "bytes": 2113248,
+      "sha256": "78f8091da1c4ba444974966db505a7a6b3c95379bdb33d21c7056d8b206d007c"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第三段/010_astra_3-15-dry.wav",
+      "bytes": 2380740,
+      "sha256": "6c4f8505b0f000d44b0edb164b6aa11679ebe6cce98d8b744ca10efbc2205ca6"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第三段/011_astra_3-16-dry.wav",
+      "bytes": 2781984,
+      "sha256": "a154a5c8cdb534abc545ab5b0ce033cc168d25bb3924f38b9d003d64a66f2661"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第三段/012_astra_3-17-dry.wav",
+      "bytes": 1052188,
+      "sha256": "82c61851d21ef1f46b2796f7ea1120e7c9d16e6717c54c2ae7a485350dd5021f"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第三段/013_astra_3-19-dry.wav",
+      "bytes": 4013264,
+      "sha256": "1d7c4bfffab312c7f6e41af15464e15c86f014dc5b555ab5440c644c7b9719fd"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第三段/014_claude_3-19c-dry.wav",
+      "bytes": 1613924,
+      "sha256": "a93299801b61a2e6203b8ecd92e36775d9f4872c6578eff85c3a12c897129ce4"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第三段/015_astra_3-20-dry.wav",
+      "bytes": 4044388,
+      "sha256": "852344ab90845418b0b8fe82b99667dbd616cb2ba694d9a5635c894352859687"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第三段/016_astra_3-21-dry.wav",
+      "bytes": 2826564,
+      "sha256": "4440cb4eaac10af7fc7496193bea18a092194aefd0423635d42b7792bf6ec381"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第三段/017_astra_3-22-dry.wav",
+      "bytes": 3655796,
+      "sha256": "f36d3e9a5610a9c73d665e9117e7db03e41bc42e7d579153707bdb202f910372"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第三段/018_deepseek_3-24-dry.wav",
+      "bytes": 3892340,
+      "sha256": "215aed7a288ea4f810c262de564476bf247027be2845e9a3b8ecd1e4d720dc03"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第三段/019_glm_3-25-dry.wav",
+      "bytes": 5745100,
+      "sha256": "c798d358c3a01704a1289dd54e9de83cd23ec7d65ef0eabe65441f072c636268"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第三段/020_claude_3-27-dry.wav",
+      "bytes": 3758640,
+      "sha256": "e35398c89ca7330d74c4798ff413bca8cf51801f9bc5583921362f3b49a9ce54"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第三段/021_claude_3-28-dry.wav",
+      "bytes": 2443156,
+      "sha256": "e1fff883ae264687df6dfc400145ad41b7fffd37a2e095041ef84c28f9cd2883"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第三段/022_claude_3-29-dry.wav",
+      "bytes": 3813060,
+      "sha256": "3991fd0465986754996a2bada4406728f8f6f3a8dcaa279f714216c93ef63f46"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第三段/023_deepseek_3-30-dry.wav",
+      "bytes": 2398576,
+      "sha256": "eb8929191fd9c6ecd4a1b13e59b34e357d5539edc9799e4058b13b95702dd51b"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第三段/024_astra_3-31-dry.wav",
+      "bytes": 3816292,
+      "sha256": "2ce13b4b9e90be060ddc2b1cc8bf2ad54ded6b91f97cb523120c5775f0acec25"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第三段/025_gemini_3-32-dry.wav",
+      "bytes": 3459632,
+      "sha256": "0fa8952af62306e28d6e40d17499a0fd7e187f93d366c03857c42983a110e997"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/001_claude_2-2-dry.wav",
+      "bytes": 312124,
+      "sha256": "c1d6e1c2bbcf400036c8726f76180615ec8323d6aae5c719eb62e0017196a641"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/002_claude_2-3-dry.wav",
+      "bytes": 1096772,
+      "sha256": "c6dc8b9be3851ee1b4b251d6413a035be5c2dc778e856281fa6bc98afe65fa4f"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/003_claude_2-4-dry.wav",
+      "bytes": 2541236,
+      "sha256": "58803d3ee602d7acc000ac15864782a5c89e69cc87715e82e4bd57131914c3bb"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/004_astra_2-5-dry.wav",
+      "bytes": 3022728,
+      "sha256": "83cc61cfc32dbb2992033705a13b25716bfc1679980c422120a982e4053b4310"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/005_claude_2-6-dry.wav",
+      "bytes": 820360,
+      "sha256": "452c2446f9a82c65194d1a16547210de31025c1542c3fc790c372821bc21d0f1"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/006_claude_2-7-dry.wav",
+      "bytes": 3094060,
+      "sha256": "e36a09c2e096286748af9aba52b4befed12091ff85527a9f86d17f06e95904c7"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/007_astra_2-8-dry.wav",
+      "bytes": 2175664,
+      "sha256": "429666afeaf09e5d5e7fdb0dd5dc568ffc7388d8bc47148db81a243be14c980b"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/008_claude_2-9-dry.wav",
+      "bytes": 2978144,
+      "sha256": "0453163b803dc935c1ad81f65e62c28fc789b0827e99fc1a85e609d367a6b242"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/009_astra_2-10-dry.wav",
+      "bytes": 2389656,
+      "sha256": "3c502762de28f64f5429c4fc3ebc0e813b8a19cce6daf872252cd9826a7c8c6a"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/010_glm_2-11-dry.wav",
+      "bytes": 2157828,
+      "sha256": "0c9ca4a5ef207985154340d874fcc536efbce56597ba82c49d1d432bdeefbd28"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/011_claude_2-12-dry.wav",
+      "bytes": 4083860,
+      "sha256": "b5f50964ed6339b5c5e07cd94615a88b87f2508105d7caf698018734dce82221"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/012_claude_2-13-dry.wav",
+      "bytes": 2639320,
+      "sha256": "167936de2d996bea2a44619a5a5909aaca71ee4ee6eb1a6bb94ca7e9e238447d"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/013_astra_2-14-dry.wav",
+      "bytes": 2006252,
+      "sha256": "8ae2f7d5fdfb6822740786c4f9354dfe25bd9609155976ca8b5bb1aa05fc67a5"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/014_claude_2-15-dry.wav",
+      "bytes": 3245640,
+      "sha256": "da433269dead775aedd53382e7ffb4244d2cd37701102830412ec9b512c3cb52"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/015_astra_2-16-dry.wav",
+      "bytes": 3718684,
+      "sha256": "a3ba4677b70ab3839b00919a66a8fc6fd9e59c28e284996d0cd8471eb408bf11"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/016_glm_2-17-dry.wav",
+      "bytes": 1676340,
+      "sha256": "9561ec63d0836142b64808fa7ce77f6e33592f557778bf09d4f57dde415eb5ef"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/017_claude_2-18-dry.wav",
+      "bytes": 766860,
+      "sha256": "f43b1a518f17f6543169e089ca3fb1cb7e4b32191f869d22dce89367f1c50739"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/018_claude_2-19-dry.wav",
+      "bytes": 1881420,
+      "sha256": "fa006a3c08ca2e7821253156ab010223ab6a4a5b65ae0e9311d4933516b5c903"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/019_claude_2-20-dry.wav",
+      "bytes": 2006252,
+      "sha256": "33137aa13a772891cc3b1783d99f8fe574a99b29204b0acb00218fac7cced096"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/020_astra_2-21-dry.wav",
+      "bytes": 2826564,
+      "sha256": "9c8acd95b3949b71fce8297eaf50c0a3115880968952baea90907b68a4d38dc4"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/021_deepseek_2-22-dry.wav",
+      "bytes": 1899252,
+      "sha256": "9c2b8e2e5ffe5ddccfe18de7b0fd2118cb97b6203686caaa69f3c4245d91e14d"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/022_claude_2-23-dry.wav",
+      "bytes": 2550156,
+      "sha256": "d6e1e264a7066feec0a2571a835c9e0d24fdea403f754158d669230cf6dcfbf0"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/023_claude_2-24-dry.wav",
+      "bytes": 3432884,
+      "sha256": "7683f89ed9966b266012e21105b33323e82d3ab3af2dbef516d1d086bab7ea9d"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/024_deepseek_2-25-dry.wav",
+      "bytes": 811444,
+      "sha256": "3eb417da9ae9b046717f6bf61bcb00ee2a5e607325b07acba7bb73b5ae250c22"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/025_astra_2-26-dry.wav",
+      "bytes": 3201056,
+      "sha256": "d094b3317f8cd108c09207a0ecc9eb9a41e39d72879af37c67993c26ca154ee0"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/026_claude_2-27-dry.wav",
+      "bytes": 329956,
+      "sha256": "a52da0fa5fa1501f65aad4e0d9463b1250a41995e2f2b2dc821f3b695ecc19d0"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/027_claude_2-28-dry.wav",
+      "bytes": 2755232,
+      "sha256": "7d19c3d3e63e1973f34669b7f72f6b666d9aca28fe3ff350f76bde47ae9b7a48"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/028_claude_2-29-dry.wav",
+      "bytes": 1836836,
+      "sha256": "1817677ebeeb15544a8d84fe2bb5227fa9b6660989bc97e8295207684f2cd35f"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/029_astra_2-30-dry.wav",
+      "bytes": 2541236,
+      "sha256": "10dcdb3ff7922aaf2ce704e3fe66062e442f0caab52faef811a1abc53fb59655"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/030_deepseek_2-31-dry.wav",
+      "bytes": 1275100,
+      "sha256": "9aa9210e76d923e682cf4139659007415b27294f215cbca3bf224dfd1b64bb79"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/031_claude_2-32-dry.wav",
+      "bytes": 2585820,
+      "sha256": "dc53c3512c8d15452ce7932902c814044c3a3d6a7f3b49ec8fbc4d2e2370ff2d"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/032_claude_2-33-dry.wav",
+      "bytes": 3094060,
+      "sha256": "d1eba515e349c434680d16b7cb844cec24ca7d5c90a79b42b07ed5d8fa2fa4bf"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/033_astra_2-34-dry.wav",
+      "bytes": 4110892,
+      "sha256": "ed1cc8aa6d24c10b070faa13ce7596776d4cbaea95666ae2a5eea26f8cffd45d"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/034_claude_2-35-dry.wav",
+      "bytes": 2505572,
+      "sha256": "540082a5952d4f581c864f6d6713acf602a630b17caad4748ecbcd5bb02dae9c"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/035_claude_2-36-dry.wav",
+      "bytes": 2880064,
+      "sha256": "e41f274635ea673c61925fa936a8f419151d2a684404953fac9350646b952935"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/036_astra_2-37-dry.wav",
+      "bytes": 3929572,
+      "sha256": "7760672a523edd7388c39e2f694178c7695f895647b760660f102ff1fa1ddfba"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/037_deepseek_2-38-dry.wav",
+      "bytes": 1355348,
+      "sha256": "46053b82bc7a3a4c0e1c61727394df8ea913d6e5cb4b87e37beaad7c121d3c42"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/038_glm_2-39-dry.wav",
+      "bytes": 1774424,
+      "sha256": "33a571c362c49b2f92ebc2c88296c88eb70ffcd55d715939564768b7b456eb92"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/039_claude_2-40-dry.wav",
+      "bytes": 588532,
+      "sha256": "2c65a4ded4fa71578d388ed447398ccdbedfc00638bff3a2fd22524b08294f01"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/040_gemini_2-41-dry.wav",
+      "bytes": 1961668,
+      "sha256": "4037d5a615106ad2f403733b30c9957c42de02f1c24d801eb280c77cff560cfc"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/041_astra_2-42-dry.wav",
+      "bytes": 2452072,
+      "sha256": "ef266a5168c2797c3cc0b85eae8aa505d79b526e028f809fb69950417b22179f"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/042_glm_2-43-dry.wav",
+      "bytes": 1827920,
+      "sha256": "de37417926dd48a9b2f71c3e87a8fe01cdaf70429360756bce886c748af0efd3"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/043_astra_2-44-dry.wav",
+      "bytes": 2773064,
+      "sha256": "27d1f323a35dc18f2516235428492cf07b68402dab66bb9db632ee3db5a59c4e"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/044_astra_2-45-dry.wav",
+      "bytes": 3388300,
+      "sha256": "caa5a996e9fdd0aab798fc69fc0955eb6870dc7922a089fe6353bbb49406ed0a"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/045_astra_2-46-dry.wav",
+      "bytes": 1444512,
+      "sha256": "9f39c72170787cb9168abb61fc98c36a598d8cda30dc9fbfc85465ba9708c0f9"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/046_claude_2-47-dry.wav",
+      "bytes": 1970584,
+      "sha256": "5b3bda2f181cca3ae2a19482b032d3a6b5c7107788ac2397f748a46ccc776a24"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/047_astra_2-48-dry.wav",
+      "bytes": 3700376,
+      "sha256": "c384e9a0959a4c9d90c0751e6181d5871676e14fa3212325711cb62c3f4797cc"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/048_claude_2-49-dry.wav",
+      "bytes": 1934920,
+      "sha256": "cde3162e397c1d7d27a80e03cb93d1f8aa0bda91ff8e99cc571b91981cb08945"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/049_claude_2-50-dry.wav",
+      "bytes": 998688,
+      "sha256": "b92953fc32244b08731720c6510e84fd733077db5702a1b5adb019cdb9c6cf6e"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/050_astra_2-51-dry.wav",
+      "bytes": 3156472,
+      "sha256": "497eefbc7030b2925f44c0b7e1e6726bac3c4831b864c08caa1ccb27e6dfaf10"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/051_astra_2-52-dry.wav",
+      "bytes": 2576904,
+      "sha256": "b629a47c0a702a51550f1ee8411f2a06094fd71526d3a201c71ad71758c66326"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/052_claude_2-53-dry.wav",
+      "bytes": 1560428,
+      "sha256": "e45c555bcb62163aaf1194d67cdf0c7afe725954ab387ba925dfdec4f6a96c58"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/053_claude_2-54-dry.wav",
+      "bytes": 2621484,
+      "sha256": "57abdf1ac5aff2b857c7be2dd82a87dcec9fafa55acf2d534174f492288ee3b9"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/054_claude_2-55-dry.wav",
+      "bytes": 2639320,
+      "sha256": "ca1fe938526b0a4f21ef1efd801bc050e84b28592d433fa5c927369359140b8a"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/055_gemini_2-56-dry.wav",
+      "bytes": 2755232,
+      "sha256": "f19efc6fc43ee393f7ed8e3a586b8ede1c6fa7c427b0b7f80be344e96626ede5"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/056_astra_2-57-dry.wav",
+      "bytes": 3094060,
+      "sha256": "21f610ce83c1197f5a4b4c24a1021d0f85334d31a3a016ff1ee09819f042fe95"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/057_deepseek_2-58-dry.wav",
+      "bytes": 1426680,
+      "sha256": "2545af38dd3712c1e0496088cca18a7e443e40f264ec956e9689fe65c52c725c"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/058_glm_2-59-dry.wav",
+      "bytes": 2674984,
+      "sha256": "9b9ec006854bd54413133666d3386b4a8547011c32454c90cd6281a7a66e1686"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/059_astra_2-61-dry.wav",
+      "bytes": 3004892,
+      "sha256": "9d54e479559ef9ceeebd13522ad3fc7ffe810e2cf15d7535d82964cf40a7b816"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/060_glm_2-62-dry.wav",
+      "bytes": 2648236,
+      "sha256": "ef204797495d91c72578e80c53db2a53ea6b3f38e4d369aaf52cdaba510479f7"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/061_deepseek_2-63-dry.wav",
+      "bytes": 1239436,
+      "sha256": "465fba8a380f08ec63ab24959eb6d8b8d596d6d3a7fb4f5924ceabb7092b428a"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第二段/062_gemini_2-64-dry.wav",
+      "bytes": 3316972,
+      "sha256": "42ca836378be6e10b8cb2d6930a44870aeeeef5312e39c4242e3e5a0e3134599"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第五段/001_claude_5-2-dry.wav",
+      "bytes": 1515844,
+      "sha256": "03b4b2d83c2f4f4e2b56b4259141dd09895cff5a26e27c1e63ad46a8e06c7e8e"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第五段/002_gemini_5-3-dry.wav",
+      "bytes": 2755232,
+      "sha256": "823096ea886ddd375d8c3e939ce8de4f7ec6c8dac1a121286a72fa6b3ee2a1c3"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第五段/003_deepseek_5-4-dry.wav",
+      "bytes": 1640676,
+      "sha256": "a6478e687bf98fb5d6529d0589e199e822579f8130b2001c19094a1c2bf453a8"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第五段/004_glm_5-5-dry.wav",
+      "bytes": 2015168,
+      "sha256": "44a997e9ffcd7cf4e99d5b23c5c3483947ac2bb33c03660f9fb72d83edb779fa"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第五段/005_astra_5-6-dry.wav",
+      "bytes": 2220244,
+      "sha256": "e7e5c231677bf0842e389d282d195f6e6804a7a9efcffa5acab8b3eb269ad377"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第五段/006_all_5-7-dry.wav",
+      "bytes": 169460,
+      "sha256": "c155ce05096749beb5774c5c2224caf1ee0793cf7d88792fc91c0d845ef44936"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第四段/001_claude_4-1-dry.wav",
+      "bytes": 3800644,
+      "sha256": "d665447428aa945e505ab9c2db23b0f2870039e1cbe73d17064c356b262090f7"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第四段/002_claude_4-3-dry.wav",
+      "bytes": 3165392,
+      "sha256": "2e7f95d9fdbffe96d06d69e1741a68e04fdc76e1945943d886aa15f410bb0b26"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第四段/003_claude_4-4-dry.wav",
+      "bytes": 3325888,
+      "sha256": "36f7efa9bd45e95cda87ff2baf118f6e86ece053e73c31f8d5090e3e4af5a1f7"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第四段/004_astra_4-5-dry.wav",
+      "bytes": 3049476,
+      "sha256": "8364db0485ace77600df818f0b1d2f17894cfa4a70a3d5edcb2d5e12dd1e95e8"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第四段/005_glm_4-6-dry.wav",
+      "bytes": 2131080,
+      "sha256": "5fd4c95d6c53dbacd01c5daaa68f773398b96f8916f5029620a1432a46dec26c"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第四段/006_deepseek_4-7-dry.wav",
+      "bytes": 1551512,
+      "sha256": "a489454363e783e52bc618c3c44362a452234e12f4c5f29ff80483946073f081"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第四段/007_deepseek_4-9-dry.wav",
+      "bytes": 936276,
+      "sha256": "d8814b9bf216376403c2e03154a002afa0deb9f51e93aec0c32430144347a59b"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第四段/008_claude_4-10-dry.wav",
+      "bytes": 2024084,
+      "sha256": "a728caea4f2a9e97478966f67202bc78c865c7f5b74d1713572dd82fcb3be280"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第四段/009_claude_4-11-dry.wav",
+      "bytes": 1631760,
+      "sha256": "372ddc4d9c12fea146238180f1f551a3816fd1c63a4718dc3df269f402702893"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第四段/010_gemini_4-12-dry.wav",
+      "bytes": 1319684,
+      "sha256": "a29d4fc6b4dcf99ef8dcc5fe3aec97e9d9056f376b47cb6429bb5f15daac5c65"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第四段/011_claude_4-13-dry.wav",
+      "bytes": 3218888,
+      "sha256": "570214032d51e6380cc5cf0e15cd0f174d8fdad1ab53f1e7273f342533976e4a"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第四段/012_claude_4-14-dry.wav",
+      "bytes": 2853316,
+      "sha256": "01bca2576b1a0ecd78c4ac2dd9f34faad687e4ad86fcc386e8ce267d532d81b2"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第四段/013_astra_4-15-dry.wav",
+      "bytes": 3513132,
+      "sha256": "7b4f3a53660796d05889cd078a9cf12bf2c065c37c3d1762af5d5d49de62eba4"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第四段/014_glm_4-17-dry.wav",
+      "bytes": 1756588,
+      "sha256": "7844d8889589ff01fdd7196d62d7d0fa1942bf545de2a5f436f52ca47dfb6319"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第四段/015_deepseek_4-18-dry.wav",
+      "bytes": 1542596,
+      "sha256": "346721daa2a36f5fbb9a98238fe3423204e3f212c162f87a119e22c6ff98d85f"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第四段/016_gemini_4-19-dry.wav",
+      "bytes": 1810088,
+      "sha256": "23064cff0ee6f5cdf8f91ed136afd1b6342b01ed27eb9c3563bf8d19930eb651"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第四段/017_claude_4-20-dry.wav",
+      "bytes": 2327244,
+      "sha256": "f9df0726ca816136fb8c29c5b136cbddfc831afcb703d7ce6a0f8a795f59d71e"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第四段/018_claude_4-23-dry.wav",
+      "bytes": 3441800,
+      "sha256": "9f72441336e2cb3542c0141c58c2b9a45b406fc8462520da32912c9762d561d2"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第四段/019_claude_4-24-dry.wav",
+      "bytes": 2915728,
+      "sha256": "0c2e89683ae8183298fcb87397b36392c7eadfb9b6dcaef965b5534f24186914"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第四段/020_claude_4-25-dry.wav",
+      "bytes": 1194852,
+      "sha256": "14e19fd08ce370ee2cb22e5874371015f00ca36d09ebb6e3e9a7002cf31839cc"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第四段/021_claude_4-27-dry.wav",
+      "bytes": 2701736,
+      "sha256": "e9fca0e619d76e48ccfa7a8b2e9bd0ba62db4dd7a78e1bad923964cf7706de26"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第四段/022_claude_4-28-dry.wav",
+      "bytes": 1908168,
+      "sha256": "1ab5aa450e8ab17b7dab4d8b22ee79778bf797f2063ca41be5795c059ae2aa86"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第四段/023_deepseek_4-29-dry.wav",
+      "bytes": 2389656,
+      "sha256": "d3845fce4ad4fb3f6215ecbc5c4b7699db7a994bb2c3d325fe6691a0e84b1941"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第四段/024_glm_4-30-dry.wav",
+      "bytes": 2166748,
+      "sha256": "35cecc3c4c3489f88f9910b8ab027b687114e579a1fa1e198551a5f247c7bef8"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第四段/025_gemini_4-31-dry.wav",
+      "bytes": 3630708,
+      "sha256": "7ec4d2075a4ef3df04e59f701ddae834aa8918d0ea423ba9b3d8a28124fd088a"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第四段/026_astra_4-32-dry.wav",
+      "bytes": 3954048,
+      "sha256": "be9f1fd0d1bca5f58084764bb0f7427dedffdf0055d6ae88ee960156a536d03c"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第四段/027_claude_4-33-dry.wav",
+      "bytes": 2853316,
+      "sha256": "84bb70a2e0a4614a9057b27d56d46b4772e90da20d00a042c769f34435b63003"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第四段/028_claude_4-34-dry.wav",
+      "bytes": 2951396,
+      "sha256": "75201f924fda8c10032ffacb928c93d82e723b7745ca9b44c20a24957b1bd699"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/cache/第四段/029_claude_4-36-dry.wav",
+      "bytes": 3201056,
+      "sha256": "304867916199dff82630cc33b25e763be60afb6fd78d4275a71e162688aa2233"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/imports/01377ccafcca65014b374f22f0ece38999c917a6177485b3492f1e4271941919.wav",
+      "bytes": 740110,
+      "sha256": "01377ccafcca65014b374f22f0ece38999c917a6177485b3492f1e4271941919"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/imports/16c30c91dce37cb20e0eea9a13c272205139415591beae4a586d4916f60976aa.wav",
+      "bytes": 1181474,
+      "sha256": "16c30c91dce37cb20e0eea9a13c272205139415591beae4a586d4916f60976aa"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/imports/21b4b5eb27682be7426ac3bc259fa70c0035c2a0af61a513e9e0566ba2c2b133.wav",
+      "bytes": 815900,
+      "sha256": "21b4b5eb27682be7426ac3bc259fa70c0035c2a0af61a513e9e0566ba2c2b133"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/imports/237aa92ed91e0928d352f43fc66bf3a07073ff896162426f98a1c73497f764f8.wav",
+      "bytes": 1190390,
+      "sha256": "237aa92ed91e0928d352f43fc66bf3a07073ff896162426f98a1c73497f764f8"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/imports/57494884d1b4e9ff2fc75550a9b2ef80bd8448cbb53ac0fe6b15e23aac4c90d8.wav",
+      "bytes": 963020,
+      "sha256": "57494884d1b4e9ff2fc75550a9b2ef80bd8448cbb53ac0fe6b15e23aac4c90d8"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/imports/6455a71718ee240353dc716371069ee598d549dce2016631b7da29a711fbd89c.wav",
+      "bytes": 1480176,
+      "sha256": "6455a71718ee240353dc716371069ee598d549dce2016631b7da29a711fbd89c"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/imports/b4c1b9a865ee2c59cde2f1321fea1d3c4d18d7a2b4c962509c82bded5a418288.wav",
+      "bytes": 1723654,
+      "sha256": "b4c1b9a865ee2c59cde2f1321fea1d3c4d18d7a2b4c962509c82bded5a418288"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/imports/bba9e0270f9735f4e2116309f7a76c768d481c7f3fcaf48c880ee0711fff4be6.wav",
+      "bytes": 628654,
+      "sha256": "bba9e0270f9735f4e2116309f7a76c768d481c7f3fcaf48c880ee0711fff4be6"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/imports/be53f405aa73c3707cc627abd4a3955dbad8023e1d7d97aff2eae8aca3f8228f.wav",
+      "bytes": 1319680,
+      "sha256": "be53f405aa73c3707cc627abd4a3955dbad8023e1d7d97aff2eae8aca3f8228f"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/imports/d2129c6fb8b1bf2ba155ebda335d6fb674e68d3dd987f807d189c2376d8231e9.wav",
+      "bytes": 1631756,
+      "sha256": "d2129c6fb8b1bf2ba155ebda335d6fb674e68d3dd987f807d189c2376d8231e9"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/imports/fe6c44006b2372dca60dd88ce731841e32e0ddd8d31b1bbbe82390f0b15df653.wav",
+      "bytes": 1132434,
+      "sha256": "fe6c44006b2372dca60dd88ce731841e32e0ddd8d31b1bbbe82390f0b15df653"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/replacements/claude_2-4_gently-curious.wav",
+      "bytes": 1237070,
+      "sha256": "08eb6cd7fa967846e3f09417f03b1b58a96c65de05d2f5f32ae7e99d02f38ab6"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/开场_BGM试听.m4a",
+      "bytes": 2602779,
+      "sha256": "5e47834d03a921a3f79a60840088e4caef79b8846c8909c7daf0f6f9aa0e19e6"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/开场_Gemini配乐.wav",
+      "bytes": 36480102,
+      "sha256": "c5494730a712753df824f2661037c8304dae9ff88a8a9113e2cd97430bb84206"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/开场_混音.wav",
+      "bytes": 36480102,
+      "sha256": "e4c0c806c49feab3647b3d55e2a71253dec7f8b674471baaab30532cb5f9a69d"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/开场_试听.m4a",
+      "bytes": 2579297,
+      "sha256": "aa1f629246281c937568c97eb07de68d5146b2da4f39f407647318a114a81830"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/第三段_BGM试听.m4a",
+      "bytes": 12469446,
+      "sha256": "994a4e20a921ab8ddb0f50a61ed1fc4d787d1cd691801497b4672d1fb8594e67"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/第三段_Gemini配乐.wav",
+      "bytes": 174720102,
+      "sha256": "fec90835273dae66e93bfc612f59e0f95becfa681a5389d2a5e361d042bca081"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/第三段_混音.wav",
+      "bytes": 174720102,
+      "sha256": "036d6d1f86afb84e9d3a88989aeb3ab9a2009f090775e1069c34a3db77019ca7"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/第三段_试听.m4a",
+      "bytes": 12383450,
+      "sha256": "abdece76508685c68ebcc8b47bee8c6b23f62ff91e6482b9c3b8deb631de1f13"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/第二段_BGM试听.m4a",
+      "bytes": 18072938,
+      "sha256": "5b00907b170d2d5010c4130e53e276d4e772998fc278d76da5c244a5bb2eadee"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/第二段_Gemini配乐.wav",
+      "bytes": 253440102,
+      "sha256": "fedf4fe0cebeb32e9bcf8068fab413f7d8b834faebc24331cca4a2026f3415a1"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/第二段_混音.wav",
+      "bytes": 253440102,
+      "sha256": "c45f13e51fcdb23c1991cb71377a857b8cb421e2f928bfcd9cb9c9870e6956fc"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/第二段_试听.m4a",
+      "bytes": 17915991,
+      "sha256": "6637f4c7bc371c5f20604a4c827d1801d72bebb3bc7f68b911d757eb98b1e8e0"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/第五段_BGM试听.m4a",
+      "bytes": 1573820,
+      "sha256": "21b7a27d8607b044889058dbdf6266875e15d63cd576eb0296feba1b4e544b10"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/第五段_Gemini配乐.wav",
+      "bytes": 22400100,
+      "sha256": "c1f33f592ce712bb2d8c81c148ddf70436c3ecd1876abeadc5bcfcc5ca6318c2"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/第五段_混音.wav",
+      "bytes": 22400100,
+      "sha256": "787b82ede8a7059883ac6bc16940b99beda42630dac125b0c27106512e0705c8"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/第五段_试听.m4a",
+      "bytes": 1575984,
+      "sha256": "267ee62f7ceb9631adf8ec38e9297cee2927fb14f411ddb7ef01251526f2526e"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/第四段_BGM试听.m4a",
+      "bytes": 11896122,
+      "sha256": "806bab58c029a60738410f647a76ed78293847dbad7a3f5209b8a97ed59d7405"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/第四段_Gemini配乐.wav",
+      "bytes": 163840104,
+      "sha256": "2c8912f1129520d4393e0cf00532409f2ecd2f369cc6f5ab4d69478e630c2214"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/第四段_混音.wav",
+      "bytes": 163840104,
+      "sha256": "eeb75955be960584f20efbd9019c023ebee99426730bbccf712f0592a7c91fa9"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/第四段_试听.m4a",
+      "bytes": 11708218,
+      "sha256": "7a3af15c3b3485d0340792f79782080b64bd240d54953a631f278796a94e1fff"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/节奏排查/开场_接话等待.wav",
+      "bytes": 2112078,
+      "sha256": "8a530370d6edfb7c75cbeb8175fd7aefcefdc39aa8f0a7ca92f8ff9c1b2b8bbb"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/节奏排查/第二段_原生停顿.wav",
+      "bytes": 1344078,
+      "sha256": "3a734e0ae479ec39d065ca9c04062b7921a1d192c801fdb1221b81798e3416a6"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/节奏排查/第二段_快速接话.wav",
+      "bytes": 1920078,
+      "sha256": "42029cd51cba12ed7902c6af2a8646229bbd48d2b71f774dd123bfcc120edf25"
+    },
+    {
+      "path": "devlog/音频/全片配音_20261118/节奏排查/第二段_问答等待.wav",
+      "bytes": 2496078,
+      "sha256": "2d49aa68215146f5a6e4d91f5c783b4f4854c1df5def4d166c4122df99d885c8"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/开场/001_gemini_L01.json",
+      "bytes": 697,
+      "sha256": "49ee10e0956f28d0791251bfb1f783b13c582db3d72d36875650bc4913cbf468"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/开场/001_gemini_L01.wav",
+      "bytes": 1454124,
+      "sha256": "c588abac5c640c62a518fc6e0a31b0a7e6994b670d3ba19f1d0b15fdf33204a4"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/开场/002_claude_L02.json",
+      "bytes": 661,
+      "sha256": "1b6337ef1e54d2a1597dc5138565e2d384e5e9929614140a32c1fa25ade7d79c"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/开场/002_claude_L02.wav",
+      "bytes": 1335340,
+      "sha256": "322a0c098051026b13696b6c62df6a7d1ce91fe62c3845bd82015583b8d3f617"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/开场/003_astra_L03.json",
+      "bytes": 746,
+      "sha256": "5524f8d2fd4f31cfd6082bc3a4207ca55dfa4566d36a8ceec272d4084ad5302d"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/开场/003_astra_L03.wav",
+      "bytes": 1519660,
+      "sha256": "9965e87f35aeecd90ba9fcb028ed7b7c321d0a64261db37fcaa37f48c365af6c"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/开场/004_deepseek_L04.json",
+      "bytes": 648,
+      "sha256": "137050a95c6cb8abcbddcd223457d0c368e9f411af433d0b12115e130988eb83"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/开场/004_deepseek_L04.wav",
+      "bytes": 1314860,
+      "sha256": "3e88a9fb7d737aad5bb3c5a030126401dbeeaebd313015c1a3ce602a31dbc9dc"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/开场/005_glm_L05.json",
+      "bytes": 676,
+      "sha256": "1161f8c94e8145e3e52a1a5787dcbe3786aa0d44c83d143a2f13f27acf5fd78d"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/开场/005_glm_L05.wav",
+      "bytes": 1585196,
+      "sha256": "033af6d3950f02f8e38693358db31d5a238452f92e6af60592df1b85fadeb713"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/开场/manifest.json",
+      "bytes": 3301,
+      "sha256": "f37a090c70a7ce2d9bbef4cf08e4ba0f9162210877dea64c6445891081b16dca"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/开场/plan.json",
+      "bytes": 2865,
+      "sha256": "559a305dc6e598dd4f80ea0677b404f192eaf0d55274e286b519cf1b4f04cdcf"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第三段/001_gemini_3-2.json",
+      "bytes": 773,
+      "sha256": "96b0116d5b508473b675fac9e010b1ee602c077e9807746e08d0acbfdeacb9f9"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第三段/001_gemini_3-2.wav",
+      "bytes": 2224384,
+      "sha256": "c8f857dbd72bbdc74c62b93dc96e4b69729fd975cb99b3a2a0111679ee9ea16c"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第三段/002_gemini_3-4.json",
+      "bytes": 662,
+      "sha256": "94af87c4dbacd8f927afe6e6b8ae96897ba76e6006598c7a2c266bd1a3c6e42d"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第三段/002_gemini_3-4.wav",
+      "bytes": 1429548,
+      "sha256": "ab9a4c6bb09a9e9c1b68886478520a57b5c40f826a0854e1ff90f8e4ea5f13cb"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第三段/003_astra_3-6.json",
+      "bytes": 605,
+      "sha256": "0070f051d4079a53bdc5703d11a5ea59f16bdb99ec9691d53ff0872820caa01b"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第三段/003_astra_3-6.wav",
+      "bytes": 909356,
+      "sha256": "c60385ed9015731b3753260d6dd83dde84cc7e5276493ab7331fb6a9b49d6ed2"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第三段/004_astra_3-7.json",
+      "bytes": 701,
+      "sha256": "6731f6b5a584b9d53d1f7dde1c425b01f9b739ffb9f84bd9ec943f81497fa339"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第三段/004_astra_3-7.wav",
+      "bytes": 1425452,
+      "sha256": "6e9f6d61f17af4db8fa149ad6e031219abfef164dd6e027523db634bf8b44338"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第三段/005_deepseek_3-8.json",
+      "bytes": 514,
+      "sha256": "80729663271cf5fdee94cbdd63009661e759495ebfd1b9507ebbdc44c248a502"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第三段/005_deepseek_3-8.wav",
+      "bytes": 634924,
+      "sha256": "ddd3674c5061df23a78469dacefb0d80371b6d6290bfe26bd66b20929ffc9d2a"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第三段/006_deepseek_3-10.json",
+      "bytes": 542,
+      "sha256": "bc81edac567c2a6bc04084ba7d1042afe66235fd0c6263f81d4d8b86ab23cad0"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第三段/006_deepseek_3-10.wav",
+      "bytes": 839724,
+      "sha256": "421ca420c69198ce18ff2147385967ddca7878c89cdf19e9a5f44c7067212b3f"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第三段/007_astra_3-11.json",
+      "bytes": 692,
+      "sha256": "b30d386814f551a87698a84bd97409fa4b3f9c24590dd08e4d53f9cbf3b294f3"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第三段/007_astra_3-11.wav",
+      "bytes": 1257516,
+      "sha256": "8b98214cd1a67be76aa14369ff2b78bf662c37fc795ff45a7f34450df663b688"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第三段/008_astra_3-12.json",
+      "bytes": 645,
+      "sha256": "002527da632408d4a2b031908d4eb7bd91aad21689377a87d4dcf7101cbcc6d3"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第三段/008_astra_3-12.wav",
+      "bytes": 1114156,
+      "sha256": "184963ce9db382390d7c612cf44137dc46fe461202c0df9ed701bc55712513fa"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第三段/009_claude_3-13.json",
+      "bytes": 581,
+      "sha256": "3869c198ee4f6a3d8a4671d42003adfc4f81fd959983ea07ee628331da514e49"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第三段/009_claude_3-13.wav",
+      "bytes": 970796,
+      "sha256": "ece6632fd9c7a4f2d3443e5a879a2fa3687c11bfba4accad1107591756cae038"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第三段/010_astra_3-15.json",
+      "bytes": 645,
+      "sha256": "3abacb5e3d23872fc995a1ca2a08e2da661d69c5f00a14768551bc0026209a64"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第三段/010_astra_3-15.wav",
+      "bytes": 1093676,
+      "sha256": "d70539cbfca1a01e4a46d62f4d42cd81739c00ed28e451a44d867bcf4d26d36a"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第三段/011_astra_3-16.json",
+      "bytes": 674,
+      "sha256": "de12434580444550f1a8481bf73a207bf6fc9260e607ee9ec05e774b5e610eda"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第三段/011_astra_3-16.wav",
+      "bytes": 1277996,
+      "sha256": "5ef21bc9f7d8e9c0713fadb992555f2c2cf68df64e4b939d52b334e4263877a2"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第三段/012_astra_3-17.json",
+      "bytes": 534,
+      "sha256": "12e97832073f3a1b7523c1fe26fbeae9e3956cfe5fa52126d34489ff6a18e660"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第三段/012_astra_3-17.wav",
+      "bytes": 483372,
+      "sha256": "a808dc5a90e90151abb606781f1642f8136d1ef422c7ec8b74287dbfb7d574e0"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第三段/013_astra_3-19.json",
+      "bytes": 767,
+      "sha256": "27685fd2b6c55273c4d67e71cbe47a5744a8847d5651a1d1df0abe40807a2cac"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第三段/013_astra_3-19.wav",
+      "bytes": 1843616,
+      "sha256": "eb485940b7f24d17589fed2d46823af911f2d291f38eec2080cf925aade8adb7"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第三段/014_claude_3-19c.json",
+      "bytes": 516,
+      "sha256": "a8a5dc3e461f3b90700ecb02c7e3a299ca736ed677361fc80af4c4959dfd0153"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第三段/014_claude_3-19c.wav",
+      "bytes": 741420,
+      "sha256": "3328b1453751941bfaa2b234f3b5050f02ca36b4945f1cff882f726be13dca13"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第三段/015_astra_3-20.json",
+      "bytes": 762,
+      "sha256": "785eddf5273517ef813d156a2d7e031665cd45022d97f6b25c6cc5698f748483"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第三段/015_astra_3-20.wav",
+      "bytes": 1857914,
+      "sha256": "4b170df44845c3075df1ff59f117d8164e2a01c3bcf6df48b4236cc6100f1f1f"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第三段/016_astra_3-21.json",
+      "bytes": 696,
+      "sha256": "de733bdf5f8c6eb6e57f61cb312e220453d434959e2d65659708e2c055512859"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第三段/016_astra_3-21.wav",
+      "bytes": 1298476,
+      "sha256": "e199d94fb0a18ae5db22851fead80aa9196350ed8979b4a72ece6663501b5963"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第三段/017_astra_3-22.json",
+      "bytes": 735,
+      "sha256": "8132b225e25c318121566199d762bb8905ea97c21c7f5a243dce105ab7befb79"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第三段/017_astra_3-22.wav",
+      "bytes": 1679404,
+      "sha256": "c4185b75aa5c563546804873e4917e752b604797d755225520b15307df353564"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第三段/018_deepseek_3-24.json",
+      "bytes": 723,
+      "sha256": "aa11231d4bbee0207c4ea9237df33eb851806b24c30a0f30edd2c67d58bdfc7b"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第三段/018_deepseek_3-24.wav",
+      "bytes": 1788066,
+      "sha256": "2ae430a10b8d13b49132cc5de74c5a8f58b5009e553610ca66aa7346d547e442"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第三段/019_glm_3-25.json",
+      "bytes": 813,
+      "sha256": "74cb2d05636c6308a85fd879757530ed5c3eefa66978fb5b031313dd762353ce"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第三段/019_glm_3-25.wav",
+      "bytes": 2639178,
+      "sha256": "970f836fe289e827918e29b10227c0a71bb68213d426a9b78d483c2d8957059d"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第三段/020_claude_3-27.json",
+      "bytes": 726,
+      "sha256": "2ffa7a374c98df36ae2283e4733c39440b3561e8e61370fec1ca37b3fbe9f470"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第三段/020_claude_3-27.wav",
+      "bytes": 1726648,
+      "sha256": "70b8dbb12f0a90e20ae0e7a2205883fe2813f40dd290f4dca1ae121bfddecb4a"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第三段/021_claude_3-28.json",
+      "bytes": 626,
+      "sha256": "4274ae842b171457cb82758b5854aaef0edf111b2d39321dab300a874830e9f9"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第三段/021_claude_3-28.wav",
+      "bytes": 1122348,
+      "sha256": "cac70a21df84e8d835566380018ec9bbcd876268d1eb09beb774108d45045400"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第三段/022_claude_3-29.json",
+      "bytes": 709,
+      "sha256": "2117292d21cba8c03fc10304ac0e21f2baae6e6d42016e04937540ee81456cc0"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第三段/022_claude_3-29.wav",
+      "bytes": 1751648,
+      "sha256": "daa3f4da18a24f117e553d2c46d2585bd3aa2cb7882f2e9487d57b9a64d1ad52"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第三段/023_deepseek_3-30.json",
+      "bytes": 612,
+      "sha256": "ae53f477dc0743e31620d6c34993e93abd9177f25f47450c98d01d4448d35e01"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第三段/023_deepseek_3-30.wav",
+      "bytes": 1101868,
+      "sha256": "1bacdfc03a6fe6da46db2f0668efa6fdbd4b7bd30c25cf1de0676f97eedd0b54"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第三段/024_astra_3-31.json",
+      "bytes": 737,
+      "sha256": "a27ea3fa09d865798d1be09c535b97918a1d7b57ae836369877461eabe508544"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第三段/024_astra_3-31.wav",
+      "bytes": 1753132,
+      "sha256": "e2fa33aeea6279b31ceebb52541fe276dbb4fb758d88170b58eed86df86f8fe7"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第三段/025_gemini_3-32.json",
+      "bytes": 686,
+      "sha256": "6cfee47b6b3cbb99dc9453bcae276f44368853d9dbde5cd33e6d2841b3189116"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第三段/025_gemini_3-32.wav",
+      "bytes": 1589292,
+      "sha256": "3e1c116007a3c8f81d6972449aa6d72647e6c87b4f4f2a07ae52aef809671cc8"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第三段/manifest.json",
+      "bytes": 15495,
+      "sha256": "f7a95567e39241254c1ab61a60cd1f6cd0e9663f735ead82744fac45e972deee"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第三段/plan.json",
+      "bytes": 13765,
+      "sha256": "72be797b1ea511fd0de26bffe9c86771fbba7b82a5af56718e66d1432319892a"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/001_claude_2-2.json",
+      "bytes": 431,
+      "sha256": "e56b3977ce1e1a78d98eddc8098a7fb68202b5ec9a4f74d581c5aa6cbdeddbbe"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/001_claude_2-2.wav",
+      "bytes": 143404,
+      "sha256": "511c0dd12a65b5ce5a3a2972da2f71a8d22ab3f0fc57b6c26bff9a25a2705110"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/002_claude_2-3.json",
+      "bytes": 496,
+      "sha256": "efd201a010cecf94caa0df194fea7dee62599a2cae23e1e5ed03fb8897e92ea9"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/002_claude_2-3.wav",
+      "bytes": 503852,
+      "sha256": "46c99e65a7cd959025ebe0650332f98d96f24aafe9b68a3470f28eb4d2185596"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/003_claude_2-4.json",
+      "bytes": 619,
+      "sha256": "aa8057cb8dfbe31995a2a73eda83b0b5eeb1ca8863302ba8ed723298bef9c0d8"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/003_claude_2-4.wav",
+      "bytes": 1167404,
+      "sha256": "4221689e692412ad8805089bbdaca821813f34f6b8e6878c1b4740de6f552034"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/004_astra_2-5.json",
+      "bytes": 683,
+      "sha256": "844f9da2d165ddf23212d49f0344df04c0b657f56de60f6bb43deb256a3f113c"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/004_astra_2-5.wav",
+      "bytes": 1388588,
+      "sha256": "b5d4f5e9f458b14707971167aac6f4a1b1c8928b6ee1fbfdc1028d21ace0b03d"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/005_claude_2-6.json",
+      "bytes": 463,
+      "sha256": "3aa8a77a909962196d60e1041c5a16879b2d388ec7647a603342a4cbbcd3d2b9"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/005_claude_2-6.wav",
+      "bytes": 376876,
+      "sha256": "2696dc8bd2dd8194fe4dda7f4fe40a91d2aa996aa2749d8a7aba27b380709e14"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/006_claude_2-7.json",
+      "bytes": 638,
+      "sha256": "62449b5b14294a46aeee30ac3ce878f262a797c7f9767bbbf5010e692639e9d2"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/006_claude_2-7.wav",
+      "bytes": 1421356,
+      "sha256": "f634826986b22bbc127f75a55cae8d671a40d94b24b565f90bd5545fb6bda622"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/007_astra_2-8.json",
+      "bytes": 626,
+      "sha256": "33e70f29a7667b51e80f92ebafbd6eeb42eae41339fcdd373b09d0a243e92337"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/007_astra_2-8.wav",
+      "bytes": 999468,
+      "sha256": "80da45fd0e009f7a9c6f872593ea1dcbf910ebf6b0085d421066646200718c89"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/008_claude_2-9.json",
+      "bytes": 640,
+      "sha256": "b505ee140d543e346fb8a5c4d07fbfcdc9efac863026f74bc1f19276b8e0931f"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/008_claude_2-9.wav",
+      "bytes": 1368108,
+      "sha256": "c1741ee32ca03620973841c0dd1c36132e1fef72d17b4bf816b6690c4f0e2292"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/009_astra_2-10.json",
+      "bytes": 629,
+      "sha256": "427009dd69059172d0e1c2be0bffae8c25941e121b975f86f7088d86ef77424e"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/009_astra_2-10.wav",
+      "bytes": 1097772,
+      "sha256": "84761e75986e63cceecf213a81af10a7f3ae6060edbb4102fd37cee546daee13"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/010_glm_2-11.json",
+      "bytes": 580,
+      "sha256": "c7f8fd3a41a6ec0c50d101e336cb2269e4fc63f1e1050a986ef3d7af390a114a"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/010_glm_2-11.wav",
+      "bytes": 991276,
+      "sha256": "ddadf2d7cae071818dafc03089b0a03babf5acbdfce4b94628c662a029e5c0da"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/011_claude_2-12.json",
+      "bytes": 725,
+      "sha256": "a82bac140e26ec3476b5e876e7acf302caecb15e6542d895788a556d9309ae00"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/011_claude_2-12.wav",
+      "bytes": 1876046,
+      "sha256": "62ce5db288ac172ffee8194b1d679d080f7acfc6a5865ee33e0a941688351097"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/012_claude_2-13.json",
+      "bytes": 624,
+      "sha256": "ee6e1fb2e0a0ecddda22566b1918eead2b13ec68e23c72595dec0fc9346d1420"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/012_claude_2-13.wav",
+      "bytes": 1212460,
+      "sha256": "cd52e3a621863f30d9d49a7465be22a0fa591c6c1a987be4c7d83e85dda8d9e2"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/013_astra_2-14.json",
+      "bytes": 623,
+      "sha256": "33646c206b9bd6c25b627691660720c8a59ad0dcdc244438a6bba1c5d38924f0"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/013_astra_2-14.wav",
+      "bytes": 921644,
+      "sha256": "c259b7c2097ef1eb748c64e56216f39af873fd7d2b056f0f197744009a7f2e9d"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/014_claude_2-15.json",
+      "bytes": 660,
+      "sha256": "ee6f2971644b734f9bddaae6494a9e4079c8f47ba38a76ac1cf50651c06863d5"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/014_claude_2-15.wav",
+      "bytes": 1490988,
+      "sha256": "51db7aa559ee1a4e2f8bcd9732e8aa2ee5bbb4202457761589e66b62a3f3c014"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/015_astra_2-16.json",
+      "bytes": 768,
+      "sha256": "8ecfcfbe7a07fd1b5e8a879c461c2111b8c4be7939f7e3c276282d4d113a919b"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/015_astra_2-16.wav",
+      "bytes": 1708294,
+      "sha256": "3ae2f94a7b68e56db9ca76a4fad7969b32e521083c57f86018919ddc2c63f50c"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/016_glm_2-17.json",
+      "bytes": 520,
+      "sha256": "c26c7f8cdc90c940bec34b2f5737b83376e15d33ba8cf8e1fbb6cfb0286d6d67"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/016_glm_2-17.wav",
+      "bytes": 770092,
+      "sha256": "186317de19a4c34d002800b3521bd56cd151a99ad6398ecdc3ea508063899043"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/017_claude_2-18.json",
+      "bytes": 474,
+      "sha256": "cba4add0833291e08642d25c6291192a544e57d1f9c05a158902c21dad96fdd1"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/017_claude_2-18.wav",
+      "bytes": 352300,
+      "sha256": "a02664bfe27fa31b897e55c18019840432511b617b518ad95221697766b05dc0"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/018_claude_2-19.json",
+      "bytes": 577,
+      "sha256": "2935f1d5fd361c5305c3de1f1e3e237d1864a7f9fe0ae7b8f947d2aa8cb66eb9"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/018_claude_2-19.wav",
+      "bytes": 864300,
+      "sha256": "f80ae3a84be9bbcc40d3a3d7c5a7001942671e137a57f320c8081b5a29f32318"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/019_claude_2-20.json",
+      "bytes": 566,
+      "sha256": "dd04bce413be556dfa19ecbb2217b339edcbed9c3c00da25762a7f441cac7820"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/019_claude_2-20.wav",
+      "bytes": 921644,
+      "sha256": "0e22307ab3ab47523bd1ddcad9063c705321df5199c43e2a74d6fa87c63c2726"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/020_astra_2-21.json",
+      "bytes": 689,
+      "sha256": "4ceb656823a5c661779233b13cd44e84045f6dd26eda4373c46d8b46199dbd3b"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/020_astra_2-21.wav",
+      "bytes": 1298476,
+      "sha256": "24527d13de260576ebb0e4d858f45d1ee6f2d7ff6bde1ea2bd442b68aa50e71a"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/021_deepseek_2-22.json",
+      "bytes": 545,
+      "sha256": "f7d4eb24b39fd80062c4888d7ec0991aabcd1a11e0eea118bdd8fecd20260c2f"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/021_deepseek_2-22.wav",
+      "bytes": 872492,
+      "sha256": "69578cabd9c30ac8ea3a50c919b226626ae6ec17fe1801d07d114503aa6394c7"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/022_claude_2-23.json",
+      "bytes": 624,
+      "sha256": "8b4feef94c86bb586afcfcb8f9e3421c1196dfde1f9d86c2f5dcbe0dc6dd3a2f"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/022_claude_2-23.wav",
+      "bytes": 1171500,
+      "sha256": "16b48618271a7ebfc1a389b543a8e51d86a2bbf910f13a278997a6c6b1fba7bd"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/023_claude_2-24.json",
+      "bytes": 647,
+      "sha256": "be71041d59d6bd6836d507ac7c19988795e35ad086579bf5c356c1801e13c9ef"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/023_claude_2-24.wav",
+      "bytes": 1577004,
+      "sha256": "85c0aa5f4d78022e5611b7f3f59323388e012e23b5d5a0a783144e51ab838ee4"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/024_deepseek_2-25.json",
+      "bytes": 464,
+      "sha256": "1ba47d68e4437d96065d50b14331dee6d3e25fc26a2d932cd07fe8c6acc37c9e"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/024_deepseek_2-25.wav",
+      "bytes": 372780,
+      "sha256": "0a3f81e39c58a45f0d80bec14139ab7abbec0e7061b40533d72851006f30ee48"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/025_astra_2-26.json",
+      "bytes": 704,
+      "sha256": "3dcc376a5ba5a69cd7d8d69d8c80487b2debc68209dd514506c8fbf14432c4bf"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/025_astra_2-26.wav",
+      "bytes": 1470508,
+      "sha256": "e8507c954ed2b3b885fd347e9753ea755d8db5b631d2e56bbbf9c9bb8bee4b39"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/026_claude_2-27.json",
+      "bytes": 422,
+      "sha256": "a5ea4854d0f5122ecfff5f0df9151296bc763b6a6027bb28af78fd05791358d0"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/026_claude_2-27.wav",
+      "bytes": 151596,
+      "sha256": "62746493bfce85131d9415784bbe2f5045a00bd0c10e5558e1492ab135315296"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/027_claude_2-28.json",
+      "bytes": 632,
+      "sha256": "6b8301c4369ee5dca697ddc10036843184266c69c1568f8b7021df001f7681a5"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/027_claude_2-28.wav",
+      "bytes": 1265708,
+      "sha256": "af8d305683801fc36a081148a8b4a7ffaa2e3ba3bb702fb5cef512db94d73d74"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/028_claude_2-29.json",
+      "bytes": 565,
+      "sha256": "30a853c29ecd68c5428a10a25a904993e16863cef4e9fd882099db1a1da58eb0"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/028_claude_2-29.wav",
+      "bytes": 843820,
+      "sha256": "d5826a12000a3d801ec3e0a45bc7026cf1d6f726e14dfe512cae6bbb24a9dfb5"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/029_astra_2-30.json",
+      "bytes": 653,
+      "sha256": "7a966c9c3532c72fd4ddf1a8ca7e39a8734899b7aabc3399d65648b8931ccae2"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/029_astra_2-30.wav",
+      "bytes": 1167404,
+      "sha256": "4655438211e42ff2be69f1ffaed7d51a0bba6de22159b0f8877db51dc3a8cf54"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/030_deepseek_2-31.json",
+      "bytes": 502,
+      "sha256": "a4f09c4949f2c88a70dc13131524bc13d92787fb88ae0650e6fee52835abe7f2"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/030_deepseek_2-31.wav",
+      "bytes": 585772,
+      "sha256": "d84fc035c622d0e8a1abfe18c5c0b3e8fcedda8874b902833a5c30b4f17fa30e"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/031_claude_2-32.json",
+      "bytes": 611,
+      "sha256": "ae5f0f400f075403690a93c292ef02cb1b88b5c32e303b680bce7bc1a1c1b8b9"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/031_claude_2-32.wav",
+      "bytes": 1187884,
+      "sha256": "00f847ca967eb2bab1660a7fa9c375130f99d01ec9e08d396586ac0d642cfd54"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/032_claude_2-33.json",
+      "bytes": 675,
+      "sha256": "db43a0b6023fd05e2678a209e48ed91b48e98c950277cb2c445abb26b304ac5d"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/032_claude_2-33.wav",
+      "bytes": 1421356,
+      "sha256": "e54f7428c4ca88cb5c175d5c741a793591e78de535caca9f3a00594c9ce4f10e"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/033_astra_2-34.json",
+      "bytes": 775,
+      "sha256": "d2d528fd573f783f9672681be88596f7ee84c7656d5f3fe9203364a76948ea5f"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/033_astra_2-34.wav",
+      "bytes": 1888464,
+      "sha256": "e4c90237d56932aceddbf119211772ac9d3b071b8527cb48272ef9ba0d1c3337"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/034_claude_2-35.json",
+      "bytes": 587,
+      "sha256": "1fc8d7f4be879b93e35f90ad938206005798d369d252dd3685b9f7a5e4ea8f0c"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/034_claude_2-35.wav",
+      "bytes": 1151020,
+      "sha256": "52b77a04d2ae74619e83bd4d4b1d8d19b13142f69bc57f9f0dee758b322e2961"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/035_claude_2-36.json",
+      "bytes": 638,
+      "sha256": "4f3e79742e4e54a7838958feb538f3803a941bcf1a97d60115f09dfabbdb6bdb"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/035_claude_2-36.wav",
+      "bytes": 1323052,
+      "sha256": "f9baf76223ea1e65a53891e632b1aa21ad79f86b1a2765c55d148792b13347eb"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/036_astra_2-37.json",
+      "bytes": 754,
+      "sha256": "d76d2f3a294ca66251d65db14f132f5ac5d3473612b10c1761db7003af3a1ee6"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/036_astra_2-37.wav",
+      "bytes": 1805170,
+      "sha256": "447cd13f43c53c40a401276985a47030a8fe5d124da701f924aefaa22892f0a5"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/037_deepseek_2-38.json",
+      "bytes": 508,
+      "sha256": "148658ba92d39b4416dfd4e56363e84f29cf707f30943350e7e626e8d97958da"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/037_deepseek_2-38.wav",
+      "bytes": 622636,
+      "sha256": "bfd1b00b40906c69ee99e3fe345ce24abd92cf0e1f19122d7072f1ff1d2ca99a"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/038_glm_2-39.json",
+      "bytes": 539,
+      "sha256": "5077523d953d758347df0c1b16706eef2ac86b68d50d26c9a786774f8df600c5"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/038_glm_2-39.wav",
+      "bytes": 815148,
+      "sha256": "9f675f00f5f1e95bebe7d9bb65da39eb5c117a58072ce2f0bb972fd35db169a5"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/039_claude_2-40.json",
+      "bytes": 446,
+      "sha256": "86901b64c12b2d1cdcff654f4e622b334e60e12356c80633b0bd8041fcadb316"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/039_claude_2-40.wav",
+      "bytes": 270380,
+      "sha256": "d390689e6f88363bf8fb062b312470b746147f14420f6a7d07177bd0ba304a82"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/040_gemini_2-41.json",
+      "bytes": 572,
+      "sha256": "7cfdcbdb9654dbed989d0c186ac47ed85497cf7c592022c66b1dc141ffb13965"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/040_gemini_2-41.wav",
+      "bytes": 901164,
+      "sha256": "5521aa87d83149e1e0e07322d066bfe354d0a1eede912c275167e3f67e0648a7"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/041_astra_2-42.json",
+      "bytes": 641,
+      "sha256": "1b647d6a593dd134b17564b9ea2de6b664d2c9a6d88e292703eda80632ba2f75"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/041_astra_2-42.wav",
+      "bytes": 1126444,
+      "sha256": "fd8a2b5d997beaa672bc5cff4198824254c33640ca0678ffb233a92e14ab0883"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/042_glm_2-43.json",
+      "bytes": 529,
+      "sha256": "de5d9cd9945806952df075de96ad96b385b11053b3d7cd9048a076a80a6f8e40"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/042_glm_2-43.wav",
+      "bytes": 839724,
+      "sha256": "4b59a1fda50aed5bdf80f43844fd7dfa9cbe8ddfda3a5d212d55df243b8c2cc2"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/043_astra_2-44.json",
+      "bytes": 701,
+      "sha256": "2811fd667fc76c59e82b2fa42c59dba1ed84feda2cb7cbf78dbd5ee4a285dac7"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/043_astra_2-44.wav",
+      "bytes": 1273900,
+      "sha256": "e9cd7efa8ca505be4dba1018c0576e990238a39bdd6e14289faa2836d1178108"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/044_astra_2-45.json",
+      "bytes": 746,
+      "sha256": "b53dec75cd7ebfcd024cb3d7cc229482c559d28ebcbb49962aee33234881c7bc"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/044_astra_2-45.wav",
+      "bytes": 1556524,
+      "sha256": "7097682dd08622fc2fa6ac2e3eaf57e7b27ef6a76ea176a44f58cec8db43a0c3"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/045_astra_2-46.json",
+      "bytes": 556,
+      "sha256": "ad6bbd4de310d564ccc9012a79b840f582c2e8a7b3e1d711fe264c9c481deb71"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/045_astra_2-46.wav",
+      "bytes": 663596,
+      "sha256": "0356e0786877b1dfca89739ef54de36e81a829e61effbc2400ab0c2a551486bd"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/046_claude_2-47.json",
+      "bytes": 550,
+      "sha256": "09073565b5b2832a272cafade8e112e36d3d65081b9239d843a66def635e1f16"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/046_claude_2-47.wav",
+      "bytes": 905260,
+      "sha256": "8b20bec0f058a1f663246851a79c7eeeaf7ca3a022001265c66b6cc1807eef80"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/047_astra_2-48.json",
+      "bytes": 743,
+      "sha256": "f9e836fb42fb2384e167675f31c6afaf234fbedb5b9435b9104544bc9a1faa6b"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/047_astra_2-48.wav",
+      "bytes": 1699884,
+      "sha256": "d91f61266cef06dda7ab0889c846c74a4a343dfbdaf1148e647d0d699be7c5a4"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/048_claude_2-49.json",
+      "bytes": 575,
+      "sha256": "584ae8497df50baaccfacd469106bade1b294a440758df5c85ca8245697b3ea9"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/048_claude_2-49.wav",
+      "bytes": 888876,
+      "sha256": "8195bd3fdb09a15221d4f324e8b842c3b0619cef0c297e4a4a3f545504acd3f4"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/049_claude_2-50.json",
+      "bytes": 478,
+      "sha256": "829ffe58d48bcc130197c26663866f5a1596510311cb58564d211f7d5d8b8b76"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/049_claude_2-50.wav",
+      "bytes": 458796,
+      "sha256": "ae90baa5cdcb6181b716d4434db59b5329176bb23f6bfc1a0f44fca8435cc073"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/050_astra_2-51.json",
+      "bytes": 731,
+      "sha256": "949027d8e0a9683c4da9f0f21110816a80d22774338d68756c0cc1a2d2cad5bb"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/050_astra_2-51.wav",
+      "bytes": 1450028,
+      "sha256": "bef2d330c85d00ad225342ac375105299b7b62434085f35176a86d0812e1dbf2"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/051_astra_2-52.json",
+      "bytes": 648,
+      "sha256": "efa383db05e02d3cd6fec135b53cc1e2f358c065a3e7b952b5255eae119fb879"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/051_astra_2-52.wav",
+      "bytes": 1183788,
+      "sha256": "ecf41033363f7ae36e6b8b807bfb252fa0156e966edc5710eaeeaf94d4134414"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/052_claude_2-53.json",
+      "bytes": 535,
+      "sha256": "f1d8744bb9fa7e7b0c88a132fb67774000956dce3a637ba00094a64b72a3f677"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/052_claude_2-53.wav",
+      "bytes": 716844,
+      "sha256": "c1d528db11df6888057035f24fefba229d485e8973f6e0ba70f1eb8b7cb55c8f"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/053_claude_2-54.json",
+      "bytes": 614,
+      "sha256": "6ac3452c01ec099f2b7c42c6a26b3c8ed9550761fb7c9303561b49dfa9e94cea"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/053_claude_2-54.wav",
+      "bytes": 1204268,
+      "sha256": "65d9239986ba3e02511104c9970343d38cb057e98a681901dc42e2772149fdd1"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/054_claude_2-55.json",
+      "bytes": 599,
+      "sha256": "30eb2b516ae29ea3cacdd669e04f1401510dcaef6eca90bc09433962edf82d33"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/054_claude_2-55.wav",
+      "bytes": 1212460,
+      "sha256": "f78da4aa7b3b853ec61c41f0570f0bf6a2db8e50a1e5bfd7e61962d64673a53b"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/055_gemini_2-56.json",
+      "bytes": 611,
+      "sha256": "983d1f540dd4242dd2b9f88bb5890794ebd1b4dbffd89d69b9726e7cc9300fed"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/055_gemini_2-56.wav",
+      "bytes": 1265708,
+      "sha256": "adcd6c8ffbf144c11f43bd0b7179b1d2431d743fd153b3e0b0c857b8d8685bd5"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/056_astra_2-57.json",
+      "bytes": 695,
+      "sha256": "3d7713202f9866214dcf88af6744f9bd9c8db9b6162e6f96776fcf8fd9a2a7d9"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/056_astra_2-57.wav",
+      "bytes": 1421356,
+      "sha256": "f4b66cf14cb05d64f14d1f4280f5a949494e76960a6606db16639dcff43c7243"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/057_deepseek_2-58.json",
+      "bytes": 520,
+      "sha256": "6ebc5e47f2ded377343a8e690c8d232169b9f3a2c7880ac84019c731a753ba54"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/057_deepseek_2-58.wav",
+      "bytes": 655404,
+      "sha256": "da10b434a9928c12198250ff1d3873775555707d2f04ef74f5b381fed3e22257"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/058_glm_2-59.json",
+      "bytes": 633,
+      "sha256": "65547052581232509eed2e5c65faf3aae075e61fc32715defd46497933c0cf5b"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/058_glm_2-59.wav",
+      "bytes": 1228844,
+      "sha256": "2191abcffe56cae7790ae807b482acd69f02c9734aa7270d3bb37dfbde990f12"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/059_astra_2-61.json",
+      "bytes": 702,
+      "sha256": "39870f6a67922807457c85f0f497f0538391c7f8549c038afcf113755aa83b8c"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/059_astra_2-61.wav",
+      "bytes": 1380396,
+      "sha256": "309d74bd62b1a9a5237ba614aebf9834ac3e8ffdf010b4e7ee4cdb8084190400"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/060_glm_2-62.json",
+      "bytes": 571,
+      "sha256": "19c848ca681b6fb3604d372ed9f51f1da182157c698e8e8c54a158a5d5168e93"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/060_glm_2-62.wav",
+      "bytes": 1216556,
+      "sha256": "f1c4bd532c4652956bfeece2b7d47594fbd439eb7c2d1f1349765fa554a43070"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/061_deepseek_2-63.json",
+      "bytes": 505,
+      "sha256": "a1215a3373ee56590a17ef59023e4725a92d52275f43d3344000fc0c9e1c480c"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/061_deepseek_2-63.wav",
+      "bytes": 569388,
+      "sha256": "3647764a62af8099949a45c755e9873b4a2cd86f927c74f1512088e34535fab7"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/062_gemini_2-64.json",
+      "bytes": 690,
+      "sha256": "c21f34be8143e6d8d38d298ac9ac1e3a852301d51d664815ce86fbb45ef0889c"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/062_gemini_2-64.wav",
+      "bytes": 1523756,
+      "sha256": "b2f7f0ca7f2e8d18df86d5b4c2ff5e7377e8fa5765b0afa432777cb12ec6990e"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/manifest.json",
+      "bytes": 34665,
+      "sha256": "ce7d9c728a6cdfa9ed6615258de397868701f4852e58b3509b83dd35fff0f9f8"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第二段/plan.json",
+      "bytes": 30396,
+      "sha256": "52f5cc39eb40ab1843d70ee20ba7d5ae14012411a12724e72c583a578796d5d3"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第五段/001_claude_5-2.json",
+      "bytes": 520,
+      "sha256": "35b39b78528b07d895cd06951fa2522286e09bf28fe7fc6bf73f65fa9f125e2a"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第五段/001_claude_5-2.wav",
+      "bytes": 696364,
+      "sha256": "324370abeaf534e8e9cadbadcfde2dbf4ced3a839ceac63d38c965514bc230d0"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第五段/002_gemini_5-3.json",
+      "bytes": 653,
+      "sha256": "d46d635f5f49547a1517f32e8b8adfbe9c8d7d2b041d4ed8816579ae682d8a50"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第五段/002_gemini_5-3.wav",
+      "bytes": 1265708,
+      "sha256": "45a4798e4bfd3ad288501147345ea748b40ba94b6c9d5e5033d667011dfb920c"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第五段/003_deepseek_5-4.json",
+      "bytes": 547,
+      "sha256": "8b1a9bc444fc8de74906858a17c912d5c9a5af34bcc3c5f64c1cb3fc1c35d523"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第五段/003_deepseek_5-4.wav",
+      "bytes": 753708,
+      "sha256": "cc678191fcd615936b66e29446139439ec1dd5aea52029fd06c6fadfd894cba2"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第五段/004_glm_5-5.json",
+      "bytes": 551,
+      "sha256": "069545e6b1c916c531e99c24fe940e88c94073adbea0a62ec2e59bbe4b2f9469"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第五段/004_glm_5-5.wav",
+      "bytes": 925740,
+      "sha256": "aaa3d1edd3f44fae89dbfe3c25c2226c03e21f4467c021852c1f55ef425fe74c"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第五段/005_astra_5-6.json",
+      "bytes": 644,
+      "sha256": "1f39b54bac151238838b93f0f2a9aafed521209322e0b1283e0d6bd38f1e8c01"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第五段/005_astra_5-6.wav",
+      "bytes": 1019948,
+      "sha256": "8c3edf1fd4d260b7e5acfe8f2f3e69dfc1a787276e4a5ad5e8de0346dddda7a2"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第五段/006_all_5-7.json",
+      "bytes": 332,
+      "sha256": "4df6a97a011e2973c3e8e12ce1a278a2145932186e4d8a25e305b5af8392d75b"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第五段/006_all_5-7.wav",
+      "bytes": 77902,
+      "sha256": "b2cd7ffeb85288b0376a0e3db08eea58c072a2229b53e37777f8c86e658ada06"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第五段/chorus/astra.wav",
+      "bytes": 73772,
+      "sha256": "23a894d463a7de31d3cb68b04b266e409d6b4b4b16cf00df4821e9d12e2e9291"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第五段/chorus/claude.wav",
+      "bytes": 61484,
+      "sha256": "bae482597d671c3803863a4ce25659bf70425307792548654d56c97be6e8f66f"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第五段/chorus/deepseek.wav",
+      "bytes": 73772,
+      "sha256": "c20cffb60fccd876ea618a0f3fec7539916983e376103f58e7cf319ce64a4ed5"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第五段/chorus/gemini.wav",
+      "bytes": 69676,
+      "sha256": "b07efbb45a55419e5ad07b6b7a6ace12909a116e11a7f3dc72550c7d297fca3a"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第五段/chorus/glm.wav",
+      "bytes": 77868,
+      "sha256": "8ab516a3c580bcb4e926ed83b06fbfbf1c4589b0a4c86ba9543ef887701d4606"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第五段/manifest.json",
+      "bytes": 3112,
+      "sha256": "913f5f95e0d7a22eac09a15459d30e75b2ce0af2a767917ccaa1cc944bb957fc"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第五段/plan.json",
+      "bytes": 2436,
+      "sha256": "443695d1cc7f7b1c2ae41c5f3714989ed162137166799164878f57a9e235d3f4"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/001_claude_4-1.json",
+      "bytes": 722,
+      "sha256": "7d60d1a4339c73882fefbea641334fc50f9c1de4091a8801b404a3ac7dc35cbd"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/001_claude_4-1.wav",
+      "bytes": 1745944,
+      "sha256": "674805be4a391292592a14b9ef83be877676bb835b6faa9e82eb0ef902ae7c00"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/002_claude_4-3.json",
+      "bytes": 647,
+      "sha256": "c1a0f573ef569aab98ff730c5a87866f8c1cfb20f0659c34b9c00537eeef9a55"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/002_claude_4-3.wav",
+      "bytes": 1454124,
+      "sha256": "6929e4a96d76fc72f587a4c26423c15bc017cbc36b50d3cfdbf7ecd715848820"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/003_claude_4-4.json",
+      "bytes": 683,
+      "sha256": "b3e43423f38f17384c7d590afce77b2224287bed268f4336f6a73cc3040f86c2"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/003_claude_4-4.wav",
+      "bytes": 1527852,
+      "sha256": "274e16266db8d8ba0294cc12e53b4270696d70185ed4df14b6612bc988a58653"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/004_astra_4-5.json",
+      "bytes": 728,
+      "sha256": "4ac739844bdfb405d8cebecb112e344903724581b6a8648457f2a472249ce8bc"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/004_astra_4-5.wav",
+      "bytes": 1400876,
+      "sha256": "f9b6b56106435126fa4d168b94a9c940f41d5cba2153d990e3a6bfbea93010a4"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/005_glm_4-6.json",
+      "bytes": 575,
+      "sha256": "727e5feafb1f8fdfdb013a43157ba1e14f1ab4ddc4fd92efe066a1764590eaf0"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/005_glm_4-6.wav",
+      "bytes": 978988,
+      "sha256": "8a0dba064ee6a7cfb896b608ce6d21412345ca2fc1efd61358f9899578ba4d00"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/006_deepseek_4-7.json",
+      "bytes": 539,
+      "sha256": "d2e14b0b18748ec3f5ea4932026d299a8ba606a2d75812ad8bc3b4488e0f6584"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/006_deepseek_4-7.wav",
+      "bytes": 712748,
+      "sha256": "a7b237bfb270103cd225b0af5530ae5f78c3e4aac6f70710fd5e4aa89df4bc6f"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/007_deepseek_4-9.json",
+      "bytes": 472,
+      "sha256": "b749646d9a0aafa0f1a46bc11b888f144a283f49bf3a451d6301451f006c51e6"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/007_deepseek_4-9.wav",
+      "bytes": 430124,
+      "sha256": "7587b5323d05e985cf9df0766555a4f88a0c4476e703639e38273971728b874b"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/008_claude_4-10.json",
+      "bytes": 557,
+      "sha256": "8f4a72d6e0c5f9c5d2df743aa517e718a1e80d581c4e82073b160e2789a8bbac"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/008_claude_4-10.wav",
+      "bytes": 929836,
+      "sha256": "2980e35dab58ed1fa58e9210a60c890437449fb384d372cc5e54bce31a090691"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/009_claude_4-11.json",
+      "bytes": 519,
+      "sha256": "dd3d9b977b65888c4f4e42df378b87d9bbd3bb566b7ab7afeab6392bc780a4dc"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/009_claude_4-11.wav",
+      "bytes": 749612,
+      "sha256": "da259caaed63771255204ade6bcd7e813725671056fe17cff98ed8fabb9a2c10"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/010_gemini_4-12.json",
+      "bytes": 514,
+      "sha256": "91dafcb3c73d7b20c5aeb288967a9dd23590df28001d0eeeb9af7482ae966b8f"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/010_gemini_4-12.wav",
+      "bytes": 606252,
+      "sha256": "cec07cf309c47f691a217bcf8f82f25149b6aee57595f5de47d583225f29a82c"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/011_claude_4-13.json",
+      "bytes": 650,
+      "sha256": "8b869a59df1a2a5f5ca74e68f00e6ae8d0985fe2985e41d5f4e37b8940931cff"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/011_claude_4-13.wav",
+      "bytes": 1478700,
+      "sha256": "b8d413279dd7d90df24ababb96c9a7191855387ce79b825e56f426091c9d0bdc"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/012_claude_4-14.json",
+      "bytes": 608,
+      "sha256": "5cbd6738a4d99a12f7604fce27cc5ed4883333d108efdb970fc79f6f30500357"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/012_claude_4-14.wav",
+      "bytes": 1310764,
+      "sha256": "7436300f765529ac8a5cf67bef54d166d14d32ce9daf3d16a0374cc2f64dd450"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/013_astra_4-15.json",
+      "bytes": 730,
+      "sha256": "7b4bd49ecedaf342dcaa77dbaa52a1e6dc5435c1941585b6505bf7278404c37f"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/013_astra_4-15.wav",
+      "bytes": 1613868,
+      "sha256": "7c157655cc19494ceaae240e9c2ca8ac5975143efb389f93861371379c984da7"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/014_glm_4-17.json",
+      "bytes": 533,
+      "sha256": "db3bf08fcf74ccc76b1a2d3cb99d0742b1860fe85cafe620a340b51f85f0efc3"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/014_glm_4-17.wav",
+      "bytes": 806956,
+      "sha256": "9fc51d705bc78503b31b21ebcec0878778adb5cf8665e2edeb2f4fb10ff5793b"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/015_deepseek_4-18.json",
+      "bytes": 529,
+      "sha256": "3b060b2a1941fe0e37073e8326562806a8dcd5ca573199fa0d61fe6da62a326c"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/015_deepseek_4-18.wav",
+      "bytes": 708652,
+      "sha256": "cfc07004d97050bc0b623a5cb0441f5e7bb14f220e9d75ea0fbb32424c6bf094"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/016_gemini_4-19.json",
+      "bytes": 556,
+      "sha256": "2adca1ed88127637818b78e489083369eca8ccd29cc36f3e7aacd5cb7c72ae8b"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/016_gemini_4-19.wav",
+      "bytes": 831532,
+      "sha256": "ec432a3c45d8d30c766f9fd85ffae758cfef619da52883efe33deb417cc4ae27"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/017_claude_4-20.json",
+      "bytes": 605,
+      "sha256": "d7eae26a6ac2edd5f430ca1d031e8ddfcd88592832b84b7627ecc55522b7e082"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/017_claude_4-20.wav",
+      "bytes": 1069100,
+      "sha256": "10a972dd6bc57d3655d57eed6ee9fb0d99a6bdeb30fc782e528a5dfbf707542b"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/018_claude_4-23.json",
+      "bytes": 687,
+      "sha256": "526af8020b4a4e574c0bf2efbd315c7168e80808153130ca943590391b6c2840"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/018_claude_4-23.wav",
+      "bytes": 1581100,
+      "sha256": "5ef8b4f124e9d661fdf91e6236af5a53ac15cd48e9e56ae3273f13a6b50a59e7"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/019_claude_4-24.json",
+      "bytes": 630,
+      "sha256": "22129ec3576e1cde5cf7d72bd9327c7b1b59e3eea09dfdda4eb498f0444eac57"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/019_claude_4-24.wav",
+      "bytes": 1339436,
+      "sha256": "e0479657962545e6efbb762ae2c92870a3ce5f02eaaa688bd6087662c997cea6"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/020_claude_4-25.json",
+      "bytes": 514,
+      "sha256": "92fc376be7210035c1eff3b433db19c8dd9aea244b77e7890ccef1e3f71317e6"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/020_claude_4-25.wav",
+      "bytes": 548908,
+      "sha256": "4a37349139d1ef67234c51e7c0281628f61a73e4855533a0a5dccdcc90375efb"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/021_claude_4-27.json",
+      "bytes": 660,
+      "sha256": "37bf4831f705dd095a4a5e4b1ba0f04e7b016f010731b0525a60c668e44b5d33"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/021_claude_4-27.wav",
+      "bytes": 1241132,
+      "sha256": "2bdd5d7499e03d91c3c6145a4d2dde834b03eb222881cf1c041b3304043cc270"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/022_claude_4-28.json",
+      "bytes": 577,
+      "sha256": "aac06f3894049059b3d670646cf314e25ffa0f6e9b804f23d43207f008e882bd"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/022_claude_4-28.wav",
+      "bytes": 876588,
+      "sha256": "5b8666d8a3c886fe55dca8577088708c9f7c95af4474d5895e6930ba6c350bbc"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/023_deepseek_4-29.json",
+      "bytes": 587,
+      "sha256": "86052c4bb16814c037d55197fdae3d265dfdbe31a64865d2a8690e4c9dc809ff"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/023_deepseek_4-29.wav",
+      "bytes": 1097772,
+      "sha256": "b9927d734ed5e7a2ddd2cfbe462c509b762842cecf821a3d240889952d6694a6"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/024_glm_4-30.json",
+      "bytes": 566,
+      "sha256": "f78fa0e983a877151aac1bbb26db19a75145939f4b42b43d2adf02c38df9aca0"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/024_glm_4-30.wav",
+      "bytes": 995372,
+      "sha256": "f6e911cb008589b99e85ad6da647169f4ae5fa512034d495579983785c040744"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/025_gemini_4-31.json",
+      "bytes": 706,
+      "sha256": "0806590b66ef96842133aa3b1d70da2020c13ab108564eb502abdc70b8a389ee"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/025_gemini_4-31.wav",
+      "bytes": 1667880,
+      "sha256": "dea552deae4b599d112936ef3151e33087fd284d48aaf0e559b9b9adc87a4cbf"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/026_astra_4-32.json",
+      "bytes": 787,
+      "sha256": "ffb0bf0c4cd8b383200fb68ac06bef71bc137678ec8d400b0f9fa154888c0603"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/026_astra_4-32.wav",
+      "bytes": 1816414,
+      "sha256": "dc75ea248aa010f7d1f934983daa2646343553f955364f26f6b0c755acd39182"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/027_claude_4-33.json",
+      "bytes": 631,
+      "sha256": "4f84d3c014b228ff46b32dfef52b299207eac97b937b00d270e4ba845cde4e9a"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/027_claude_4-33.wav",
+      "bytes": 1310764,
+      "sha256": "ffaf95efa09d1209931b4939af06bb78d6a703bf000b8ac974d088e85a9b2037"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/028_claude_4-34.json",
+      "bytes": 638,
+      "sha256": "895e00553cf1f86895c0c04498729e237949967bf20a0153d607817f66ecf974"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/028_claude_4-34.wav",
+      "bytes": 1355820,
+      "sha256": "15cd6f09759e8a6247cdd647adf66590f4174ab293eb2b677ee6dfbe9722fa9a"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/029_claude_4-36.json",
+      "bytes": 680,
+      "sha256": "c062679ad8048a17ed7e36cbd4c86f0ea0c2a9f909ab4d8d25c4f3494d0be0fc"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/029_claude_4-36.wav",
+      "bytes": 1470508,
+      "sha256": "4d4ee3d546b798cd148bf88f15abc28dc8ee7efc7d4712f50d257a9a5b73c94f"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/manifest.json",
+      "bytes": 16935,
+      "sha256": "d5d60fd6757a35b261842929e7652826041908d2c5737d81a92cf52084c164cd"
+    },
+    {
+      "path": "devlog/音频/暂定配音成片_20261117/voices/第四段/plan.json",
+      "bytes": 14933,
+      "sha256": "8ea21c1b646e6d995ef864a83de66076a271bb8d3c423b5872205d51749a9fdd"
+    }
+  ]
+}

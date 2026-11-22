@@ -1,0 +1,108 @@
+[
+  {
+    "file": "003_astra_3-6.wav",
+    "raw_hash_matches_generation": true,
+    "raw_duration": 10.309659863945578,
+    "dry_duration": 10.309666666666667,
+    "raw_processed_corr": 1.0,
+    "interior_exact_zero_runs_20ms": []
+  },
+  {
+    "file": "004_astra_3-7.wav",
+    "raw_hash_matches_generation": true,
+    "raw_duration": 16.16108843537415,
+    "dry_duration": 16.161104166666668,
+    "raw_processed_corr": 1.0,
+    "interior_exact_zero_runs_20ms": []
+  },
+  {
+    "file": "007_astra_3-11.wav",
+    "raw_hash_matches_generation": true,
+    "raw_duration": 14.257052154195012,
+    "dry_duration": 14.2570625,
+    "raw_processed_corr": 1.0,
+    "interior_exact_zero_runs_20ms": []
+  },
+  {
+    "file": "008_astra_3-12.wav",
+    "raw_hash_matches_generation": true,
+    "raw_duration": 12.631655328798185,
+    "dry_duration": 12.631666666666666,
+    "raw_processed_corr": 1.0,
+    "interior_exact_zero_runs_20ms": []
+  },
+  {
+    "file": "010_astra_3-15.wav",
+    "raw_hash_matches_generation": true,
+    "raw_duration": 12.399455782312925,
+    "dry_duration": 12.399458333333333,
+    "raw_processed_corr": 1.0,
+    "interior_exact_zero_runs_20ms": []
+  },
+  {
+    "file": "011_astra_3-16.wav",
+    "raw_hash_matches_generation": true,
+    "raw_duration": 14.489251700680272,
+    "dry_duration": 14.489270833333334,
+    "raw_processed_corr": 1.0,
+    "interior_exact_zero_runs_20ms": []
+  },
+  {
+    "file": "012_astra_3-17.wav",
+    "raw_hash_matches_generation": true,
+    "raw_duration": 5.479909297052155,
+    "dry_duration": 5.479916666666667,
+    "raw_processed_corr": 1.0,
+    "interior_exact_zero_runs_20ms": []
+  },
+  {
+    "file": "013_astra_3-19.wav",
+    "raw_hash_matches_generation": true,
+    "raw_duration": 20.9021768707483,
+    "dry_duration": 20.9021875,
+    "raw_processed_corr": 1.0,
+    "interior_exact_zero_runs_20ms": [
+      [
+        12.307,
+        0.329
+      ]
+    ]
+  },
+  {
+    "file": "015_astra_3-20.wav",
+    "raw_hash_matches_generation": true,
+    "raw_duration": 21.064285714285713,
+    "dry_duration": 21.064291666666666,
+    "raw_processed_corr": 1.0,
+    "interior_exact_zero_runs_20ms": [
+      [
+        10.774,
+        0.306
+      ]
+    ]
+  },
+  {
+    "file": "016_astra_3-21.wav",
+    "raw_hash_matches_generation": true,
+    "raw_duration": 14.721451247165533,
+    "dry_duration": 14.721458333333333,
+    "raw_processed_corr": 1.0,
+    "interior_exact_zero_runs_20ms": []
+  },
+  {
+    "file": "017_astra_3-22.wav",
+    "raw_hash_matches_generation": true,
+    "raw_duration": 19.040362811791383,
+    "dry_duration": 19.040375,
+    "raw_processed_corr": 1.0,
+    "interior_exact_zero_runs_20ms": []
+  },
+  {
+    "file": "024_astra_3-31.wav",
+    "raw_hash_matches_generation": true,
+    "raw_duration": 19.87628117913832,
+    "dry_duration": 19.876291666666667,
+    "raw_processed_corr": 1.0,
+    "interior_exact_zero_runs_20ms": []
+  }
+]

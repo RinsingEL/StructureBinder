@@ -1,0 +1,79 @@
+[
+  {
+    "time": 74.5,
+    "index": 2,
+    "id": "W3a",
+    "progress": 1,
+    "since": 1.1666666666666572,
+    "scene": 2,
+    "claims": -1,
+    "water": 0,
+    "biome": 0
+  },
+  {
+    "time": 77.5,
+    "index": 3,
+    "id": "W3b",
+    "progress": 1,
+    "since": 0.7066666666666634,
+    "scene": 3,
+    "claims": -1,
+    "water": 1,
+    "biome": 0
+  },
+  {
+    "time": 79.5,
+    "index": 4,
+    "id": "W3c",
+    "progress": 1,
+    "since": 1.1666666666666572,
+    "scene": 4,
+    "claims": -1,
+    "water": 1,
+    "biome": 1
+  },
+  {
+    "time": 196.5,
+    "index": 7,
+    "id": "T3",
+    "progress": 0,
+    "since": -1.5955555555555634,
+    "scene": 7,
+    "claims": -0.001,
+    "water": 1,
+    "biome": 0
+  },
+  {
+    "time": 198.5,
+    "index": 7,
+    "id": "T3",
+    "progress": 0.02789272030651287,
+    "since": 0.4044444444444366,
+    "scene": 7,
+    "claims": 0.030727969348658388,
+    "water": 1,
+    "biome": 0
+  },
+  {
+    "time": 201,
+    "index": 7,
+    "id": "T3",
+    "progress": 0.20030651340996114,
+    "since": 2.9044444444444366,
+    "scene": 7,
+    "claims": 0.22684865900383078,
+    "water": 1,
+    "biome": 0
+  },
+  {
+    "time": 211,
+    "index": 7,
+    "id": "T3",
+    "progress": 0.8899616858237542,
+    "since": 12.904444444444437,
+    "scene": 7,
+    "claims": 0.9999999999999999,
+    "water": 1,
+    "biome": 0
+  }
+]

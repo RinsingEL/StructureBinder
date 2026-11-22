@@ -1,0 +1,115 @@
+{
+  "act": "第五段",
+  "duration": 77.77777777777779,
+  "voice_speed": 1.0,
+  "source_music": "Gemini PR73 full score v6",
+  "bpm": 108,
+  "timing_shifts": [],
+  "voices": [
+    {
+      "id": "5-2",
+      "who": "claude",
+      "file": "001_claude_5-2.wav",
+      "start": 8.88888888888889,
+      "end": 16.783680555555556,
+      "original_start": 8.88888888888889,
+      "duration": 7.894791666666666,
+      "gain_db": 0.879999999999999,
+      "script_match_ratio": 1.0,
+      "subtitle_boundaries": [
+        8.88888888888889,
+        14.0
+      ]
+    },
+    {
+      "id": "5-3",
+      "who": "gemini",
+      "file": "002_gemini_5-3.wav",
+      "start": 17.77777777777778,
+      "end": 32.12771527777778,
+      "original_start": 17.77777777777778,
+      "duration": 14.3499375,
+      "gain_db": 1.3099999999999987,
+      "script_match_ratio": 1.0,
+      "subtitle_boundaries": [
+        17.77777777777778,
+        26.875
+      ]
+    },
+    {
+      "id": "5-4",
+      "who": "deepseek",
+      "file": "003_deepseek_5-4.wav",
+      "start": 34.44444444444444,
+      "end": 42.98940277777778,
+      "original_start": 34.44444444444444,
+      "duration": 8.544958333333334,
+      "gain_db": 2.2600000000000016,
+      "script_match_ratio": 0.9010989010989011,
+      "subtitle_boundaries": [
+        34.44444444444444,
+        38.791666666666664
+      ]
+    },
+    {
+      "id": "5-5",
+      "who": "glm",
+      "file": "004_glm_5-5.wav",
+      "start": 45.55555555555556,
+      "end": 56.05099305555556,
+      "original_start": 45.55555555555556,
+      "duration": 10.4954375,
+      "gain_db": 3.4800000000000004,
+      "script_match_ratio": 1.0,
+      "subtitle_boundaries": [
+        45.55555555555556,
+        49.916666666666664
+      ]
+    },
+    {
+      "id": "5-6",
+      "who": "astra",
+      "file": "005_astra_5-6.wav",
+      "start": 56.66666666666667,
+      "end": 68.23020833333334,
+      "original_start": 56.66666666666667,
+      "duration": 11.563541666666667,
+      "gain_db": 0.10999999999999943,
+      "script_match_ratio": 0.9666666666666667,
+      "subtitle_boundaries": [
+        56.66666666666667,
+        62.041666666666664
+      ]
+    },
+    {
+      "id": "5-7",
+      "who": "all",
+      "file": "006_all_5-7.wav",
+      "start": 70.0,
+      "end": 70.882375,
+      "original_start": 70.0,
+      "duration": 0.882375,
+      "gain_db": 7.149999999999999,
+      "script_match_ratio": 1.0,
+      "subtitle_boundaries": [
+        70.0
+      ]
+    }
+  ],
+  "rin": [
+    {
+      "text": "到这里，我们社团开放日的展示就结束啦，非常感谢大家耐心看完～",
+      "start": 2.2222222222222223,
+      "sound_end": 5.6609977324263046,
+      "card_end": 7.777777777777779,
+      "reading_hold": 2.116780045351474,
+      "pulses": 30
+    }
+  ],
+  "final_loudness": {
+    "input_i": -18.5,
+    "input_tp": -4.65,
+    "input_lra": 6.2
+  },
+  "master_gain_db": 1.0500000000000007
+}

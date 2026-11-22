@@ -55,6 +55,7 @@ async function openAtlas(browser, page) {
       index = i; scene = legacyScene(beats[i][0]); displayMeta();
       const target = beats[i][4], t = ease(Math.max(0, Math.min(1, pr)));
       current = {}; for (const k in target) current[k] = mix(prevT[k] ?? target[k], target[k], t);
+      if(scene===7)current.claims=mix(Math.max(-.001,prevT.claims),1,clamp(pr/.88));
       draw(current, pr);
     };
   });

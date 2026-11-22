@@ -1,0 +1,31 @@
+{
+  "full_video": "社团开放日_全片定稿_20261122.mp4",
+  "nominal_duration": 2260.083333333333,
+  "full_decode": "passed",
+  "size_bytes": 254662977,
+  "sha256": "4ae4eaac3c18defbf40d5488a0440b19edd7b7a20ef14a35df96257adcef29a8",
+  "acts": [
+    {
+      "file": "01_开场_定稿.mp4",
+      "bytes": 19849864
+    },
+    {
+      "file": "02_第二段_定稿.mp4",
+      "bytes": 77671614
+    },
+    {
+      "file": "03_第三段_定稿.mp4",
+      "bytes": 66026843
+    },
+    {
+      "file": "04_第四段_定稿.mp4",
+      "bytes": 76099560
+    },
+    {
+      "file": "05_第五段_定稿.mp4",
+      "bytes": 15021837
+    }
+  ],
+  "subtitle_cards": 339,
+  "draft": "最终剪辑_配乐气泡均为负10dB.json"
+}

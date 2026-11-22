@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<base href="../../视频素材/第五段/">
+<meta charset="utf-8">
+<title>第五段 · 再见</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Noto+Sans+SC:wght@500;700&display=block">
+<style>
+  :root { --ink: #3a3631; --soft: #8c8274; }
+  html, body { margin: 0; background: #1e1d1b; }
+  #stage { position: relative; width: 1920px; height: 1080px; overflow: hidden; font-family: "Noto Sans SC", "WenQuanYi Zen Hei", sans-serif; }
+  #room { position: absolute; inset: 0; width: 1920px; height: 1080px; }
+  /* 白板内侧 x 122–1799，y 41–697 */
+  #board { position: absolute; left: 122px; top: 41px; width: 1677px; height: 656px; overflow: hidden; color: var(--ink); }
+  #board > * { position: absolute; }
+  #thanks { left: 0; top: 0; width: 1677px; height: 656px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-family: "ZCOOL KuaiLe", sans-serif; opacity: 0; }
+  #thanks .big { font-size: 180px; letter-spacing: 16px; color: var(--ink); }
+  #thanks .small { font-size: 40px; color: var(--soft); margin-top: 18px; letter-spacing: 6px; }
+  #doodle { left: 0; top: 0; opacity: 0; }
+  #frame { position: absolute; inset: 0; z-index: 40; pointer-events: none; box-sizing: border-box; border: 0 solid #fffdf8; opacity: 0; }
+  #flash { position: absolute; inset: 0; z-index: 41; background: #fff; opacity: 0; pointer-events: none; }
+  #framecap { position: absolute; left: 0; right: 0; bottom: 6px; z-index: 42; text-align: center; font-family: "ZCOOL KuaiLe"; font-size: 30px; color: var(--soft); opacity: 0; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <img id="room" src="../开放日插画/clubroom_v2.png" alt="">
+  <div id="board">
+    <!-- 白板上只留一句谢谢，四周的小涂鸦慢慢转、慢慢飘 -->
+    <div id="thanks"><div class="big">谢谢大家！</div><div class="small">Geomantia 社团开放日</div></div>
+    <svg id="doodle" width="1677" height="656"></svg>
+  </div>
+  <div id="flash" data-overlay></div>
+  <div id="frame" data-overlay></div>
+  <div id="framecap" data-overlay>Geomantia 社团开放日 · 2026 年 11 月</div>
+</div>
+<script>window.STAGE_CONFIG = { INTRO: 1.2, OUTRO: 4.5, RISE: 0.2, HOLD_LAST: true };</script>
+<script src="act5_script.js"></script>
+<script>
+// 第三、四、五段共用的舞台：六个小人、字幕、表情切换、反应、小特效和推近镜头。
+// 用法：页面里先放好 #stage（含活动室背景和白板 #board），再依次引入 actN_script.js、本文件、本段的画面脚本。
+// 本段画面脚本定义 window.drawBoard(time)，用 since('事件名', time) 取某个画面事件已经过去了几秒。
+//
+// 字幕卡片（由 make_scripts.py 生成）里可以有：
+//   mark   这一屏开始时触发的白板画面事件
+//   fx     说话人身上的小特效：flowers 小红花、sweat 汗滴、shy 害羞、stars 冒星星
+//   react  不说话的人这一屏的反应，如 { rin: 'wry+shy' }：表情，加号后面是特效
+//
+// window.STAGE_CONFIG.SHOTS = [['事件或@行号', '事件或@行号'], ...]：这些时间段里镜头推近白板，
+// 白板铺满画面，小人换成底下的泡泡头像（和第二段一样）。
+(function () {
+  const SPRITES = '../../act2/assets/avatars/sprites/compact/';
+  const HEADS = '../../act2/assets/avatars/heads/';
+  const members = [
+    { id: 'rin',      name: 'Rin',      color: '#8a6a4f', x: -40,  z: 1 },
+    { id: 'gemini',   name: 'Gemini',   color: '#8a63d2', x: 125,  z: 2 },
+    { id: 'claude',   name: 'Claude',   color: '#d9772b', x: 290,  z: 3 },
+    { id: 'astra',    name: 'Astra',    color: '#7f8db5', x: 1225, z: 3 },
+    { id: 'deepseek', name: 'DeepSeek', color: '#3a6fc4', x: 1380, z: 2 },
+    { id: 'glm',      name: 'GLM',      color: '#3d3d46', x: 1520, z: 1 },
+  ];
+  // 立绘缩到 300px 时脸的位置，用来裁泡泡头像、放特效
+  const HEAD = { rin: [125, 95], gemini: [130, 100], claude: [130, 100], astra: [150, 100], deepseek: [145, 100], glm: [148, 95] };
+  const SLOT = { rin: 120, gemini: 290, claude: 460, astra: 1460, deepseek: 1630, glm: 1800 };
+  const states = ['listen', 'greet', 'd4', 'talk_smile', 'think', 'moved', 'wry'];
+  const FALLBACK = { think: ['d4', 'talk_smile'], talk_smile: ['d4'], d4: ['talk_smile'], greet: ['listen'], moved: ['talk_smile'], wry: ['d4'] };
+  const cfg = Object.assign({ INTRO: 0.8, OUTRO: 2.4, GAP: 0.25, SHOTS: [] }, window.STAGE_CONFIG || {});
+
+  const css = document.createElement('style');
+  css.textContent = `
+  #cam { position: absolute; inset: 0; transform-origin: 0 0; }
+  .member { position: absolute; width: 420px; height: 420px; bottom: -64px; transform-origin: 50% 100%; }
+  .member img { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0;
+    filter: drop-shadow(3px 0 0 #fff) drop-shadow(-3px 0 0 #fff) drop-shadow(0 3px 0 #fff) drop-shadow(0 -3px 0 #fff) drop-shadow(0 6px 8px rgba(60,40,20,.25)); }
+  #mat { position: absolute; inset: 0; overflow: hidden; opacity: 0; z-index: 30; pointer-events: none; }
+  #win { position: absolute; border-radius: 10px; box-shadow: 0 0 0 3000px #efe6d6; }
+  #winline { position: absolute; border-radius: 12px; border: 2px solid rgba(60,40,20,.14); margin: -2px; }
+  #band { position: absolute; inset: 0; z-index: 31; pointer-events: none; opacity: 0; }
+  .av { position: absolute; width: 170px; height: 170px; margin: -85px 0 0 -85px; }
+  .av .face { position: absolute; inset: 0; border-radius: 50%; overflow: hidden; background: #fffdf8;
+    box-shadow: 0 0 0 5px #fff, 0 0 0 11px rgba(190,220,240,.45), 0 6px 16px rgba(60,40,20,.22); }
+  .av .face img { position: absolute; width: 340px; height: 340px; opacity: 0; }
+  .av .gloss { position: absolute; inset: -9px; border-radius: 50%; border: 4px solid transparent; border-top-color: rgba(255,255,255,.9); transform: rotate(-45deg); }
+  .av .burst { position: absolute; inset: 0; border-radius: 50%; border: 4px solid rgba(190,220,240,.9); opacity: 0; }
+  #fx { position: absolute; inset: 0; z-index: 32; pointer-events: none; overflow: visible; }
+  #sub { position: absolute; left: 590px; right: 590px; top: 740px; height: 300px; z-index: 33;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  #name { font-size: 26px; font-weight: 700; color: #fff; padding: 4px 18px; border-radius: 999px; margin-bottom: 14px; letter-spacing: 2px; }
+  #line { font-size: 30px; line-height: 1.5; color: #3a3631; text-align: center; background: rgba(255,253,247,.94); padding: 16px 30px;
+    border-radius: 14px; box-shadow: 0 4px 14px rgba(60,40,20,.12); max-width: 680px; text-wrap: balance; white-space: pre-line; }`;
+  document.head.appendChild(css);
+
+  // 活动室、白板和小人都放进 #cam，推近镜头时一起放大
+  const stage = document.getElementById('stage');
+  // 带 data-overlay 的元素（例如第五段的定格白框）留在最上面，不跟着镜头动
+  const cam = document.createElement('div'); cam.id = 'cam';
+  const overlays = [...stage.children].filter(e => e.dataset.overlay !== undefined);
+  for (const e of [...stage.childNodes]) if (!overlays.includes(e)) cam.appendChild(e);
+  stage.prepend(cam);
+  const box = document.createElement('div'); box.id = 'members'; cam.appendChild(box);
+  stage.insertAdjacentHTML('beforeend', '<div id="mat"><div id="win"></div><div id="winline"></div></div><div id="band"></div>' +
+    '<svg id="fx" width="1920" height="1080"></svg><div id="sub"><div id="name"></div><div id="line"></div></div>');
+  for (const e of overlays) stage.appendChild(e);
+  for (const m of members) {
+    const el = document.createElement('div');
+    el.className = 'member'; el.style.left = m.x + 'px'; el.id = 'm-' + m.id;
+    const av = document.createElement('div');
+    av.className = 'av'; av.id = 'av-' + m.id; av.style.left = SLOT[m.id] + 'px'; av.style.top = '920px';
+    av.innerHTML = '<div class="face"></div><div class="gloss"></div><div class="burst"></div>';
+    const [hx, hy] = HEAD[m.id];
+    for (const s of states) {
+      for (const [parent, size] of [[el, 0], [av.firstChild, 340]]) {
+        const img = document.createElement('img');
+        img.dataset.state = s;
+        // 泡泡头像用单独的头像图（act2/assets/avatars/heads/），立绘用 compact
+        if (size) { img.src = HEADS + m.id + '/' + s + '.webp'; Object.assign(img.style, { left: 0, top: 0, width: '100%', height: '100%' }); }
+        else img.src = SPRITES + m.id + '/' + s + '.png';
+        img.onerror = () => img.remove();
+        parent.appendChild(img);
+      }
+    }
+    box.appendChild(el);
+    document.getElementById('band').appendChild(av);
+  }
+
+  // 时间线：对齐 108 BPM 节拍表；重要事件与镜头停顿落在重拍/小节线上
+  const G = (window.BeatGrid ? window.BeatGrid : bpm => {
+    const beat = 60 / bpm, eps = 1e-6;
+    return {
+      bpm, beat, bar: 4 * beat,
+      next: (x, u = 1) => Math.ceil(x / (beat * u) - eps) * beat * u,
+      endAfter: (s, m, sk = 0.25) => Math.ceil((s + m - sk) / beat - eps) * beat,
+      beatOf: x => x / beat,
+    };
+  })(108);
+  window.GRID = G;
+
+  // 推近、拉回只在两句话之间：镜头要动的那句话之前停 CAM 秒（一整小节 4 拍），镜头在停顿里动完
+  const CAM = 4 * G.beat, ZD = 2 * G.beat;
+  const lineOf = name => name.startsWith('@') ? window.SCRIPT.lines.findIndex(l => l.id === name.slice(1))
+    : window.SCRIPT.lines.findIndex(l => l.cards.some(c => c.mark === name));
+  const shotLines = [];
+  for (const [a, b] of cfg.SHOTS) {
+    const ia = lineOf(a), ib = lineOf(b);
+    if (ia < 0 || ib < 0) continue;
+    const prev = shotLines[shotLines.length - 1];
+    if (prev && prev[1] === ia) prev[1] = ib; else shotLines.push([ia, ib]); // 一段拉回的地方正好是下一段推近的地方，就一直推近着
+  }
+  const pauseAt = new Set(shotLines.flat()), pauseTime = {};
+  const timeline = [], marks = {}, lines = {};
+  let t = G.next(cfg.INTRO, 2);
+  for (const [li, line] of window.SCRIPT.lines.entries()) {
+    if (pauseAt.has(li)) { t = G.next(t, 4); pauseTime[li] = t; t += CAM; }
+    const start = t; lines[line.id] = t;
+    for (const c of line.cards) {
+      if (c.mark) { t = G.next(t, 2); marks[c.mark] = t; }
+      const minDur = Math.max(1.8, c.text.replace(/\n/g, '').length / 6 + 0.7) + (c.hold || 0);
+      const end = G.endAfter(t, minDur, 0.25);
+      const react = {};
+      for (const [id, v] of Object.entries(c.react || {})) { const [face, fx] = v.split('+'); react[id] = { face, fx }; }
+      timeline.push({ id: line.id, who: line.who, face: c.face, fx: c.fx, react, text: c.text, start: t, end, lineStart: start });
+      t = end;
+    }
+    t = G.next(t + cfg.GAP, 2);
+  }
+  window.DURATION = G.next(t + cfg.OUTRO, 4);
+const VOICE_TIMING={"duration": 77.77777777777779, "bpm": 108, "cards": [{"id": "5-1", "who": "rin", "face": "greet", "text": "到这里，我们社团开放日的展示就结束啦，非常感谢大家耐心看完～", "start": 2.2222222222222223, "end": 7.777777777777779, "lineStart": 2.2222222222222223, "revealEnd": 5.6609977324263046, "charStep": 0.11462585034013606}, {"id": "5-2", "who": "claude", "face": "moved", "text": "谢谢大家来参观。也谢谢社长，把我们几个聚到了一起。", "start": 8.88888888888889, "end": 14.0, "lineStart": 8.88888888888889}, {"id": "5-2", "who": "claude", "face": "moved", "text": "下次来，城里应该就有人在过日子了。", "start": 14.0, "end": 17.22222222222222, "lineStart": 8.88888888888889}, {"id": "5-3", "who": "gemini", "face": "moved", "text": "从最开始只有我和社长两个人在网页上摸索，到现在一屋子伙伴坐在一起办开放日，真的很谢谢大家今天来听我们的故事。", "start": 17.77777777777778, "end": 26.875, "lineStart": 17.77777777777778}, {"id": "5-3", "who": "gemini", "face": "greet", "text": "桌上的茶点大家走之前再拿两块，等下次城里住满人了，一定再来玩呀！", "start": 26.875, "end": 33.88888888888889, "lineStart": 17.77777777777778}, {"id": "5-4", "who": "deepseek", "face": "greet", "text": "谢谢大家今天来。等城里真住进人了，记得回来看看；", "start": 34.44444444444444, "end": 38.791666666666664, "lineStart": 34.44444444444444}, {"id": "5-4", "who": "deepseek", "face": "d4", "text": "晚上顺便查个房，看那五十六个学生是不是睡在自己的床上。", "start": 38.791666666666664, "end": 44.44444444444444, "lineStart": 34.44444444444444}, {"id": "5-5", "who": "glm", "face": "greet", "text": "谢谢大家听完这一年——连我卡住的那段都没跳过。", "start": 45.55555555555556, "end": 49.916666666666664, "lineStart": 45.55555555555556}, {"id": "5-5", "who": "glm", "face": "greet", "text": "茶点还热着，走之前记得拿一块；下次再来，学院岛就能查房了。", "start": 49.916666666666664, "end": 56.40099305555556, "lineStart": 45.55555555555556}, {"id": "5-6", "who": "astra", "face": "moved", "text": "谢谢大家，陪我们从一张地图逛到了一座城，也听了这么多返工的故事。", "start": 56.66666666666667, "end": 62.041666666666664, "lineStart": 56.66666666666667}, {"id": "5-6", "who": "astra", "face": "greet", "text": "希望下次再来，大家能在岛上找到自己喜欢的小路，遇见几个记得住的居民。", "start": 62.041666666666664, "end": 69.44444444444444, "lineStart": 56.66666666666667}, {"id": "5-7", "who": "all", "face": "greet", "text": "大家再见！", "start": 70.0, "end": 71.66666666666667, "lineStart": 70.0}], "beats": [], "stamps": {}, "marks": {"cover": 2.2222222222222223, "bye": 70.0}};
+
+  if(timeline.length!==VOICE_TIMING.cards.length)throw Error('Subtitle card count changed');
+  timeline.forEach((c,i)=>{if(c.text!==VOICE_TIMING.cards[i].text)throw Error('Subtitle text changed at '+i);});
+  const oldLines={...lines};
+  timeline.splice(0,timeline.length,...timeline.map((c,i)=>({...c,...VOICE_TIMING.cards[i]})));
+  Object.assign(marks,VOICE_TIMING.marks);
+  for(const c of timeline)lines[c.id]=c.lineStart;
+  for(const key of Object.keys(pauseTime)){
+    const id=window.SCRIPT.lines[Number(key)].id;
+    pauseTime[key]+=lines[id]-oldLines[id];
+  }
+  window.DURATION=VOICE_TIMING.duration;
+  window.MARKS = marks; window.LINES = lines; window.TIMELINE = timeline; // TIMELINE 给配音、提示音脚本对时间用
+
+  const $ = id => document.getElementById(id);
+  const clamp = x => Math.max(0, Math.min(1, x));
+  const ease = x => 1 - Math.pow(1 - clamp(x), 3);
+  const inout = x => { x = clamp(x); return x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; };
+  const backOut = x => { x = clamp(x); const c = 1.9; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
+  const since = (name, time) => name in marks ? time - marks[name] : -1e9;
+  const sinceLine = (id, time) => id in lines ? time - lines[id] : -1e9;
+  // 从事件 a 开始淡入，到事件 b 开始淡出（b 可省略）
+  const between = (a, b, time, fin = 0.5, fout = 0.5, delayIn = 0, delayOut = 0) =>
+    ease((since(a, time) - delayIn) / fin) * (b ? 1 - ease((since(b, time) - delayOut) / fout) : 1);
+  Object.assign(window, { $, clamp, ease, inout, since, sinceLine, between });
+
+  const SWAP = 0.15, HOLD = 2.0, STAY = HOLD - 0.35; // 头像在表情余韵结束前消失，消失完正好切回站立
+  const cueAt = time => timeline.find(c => time >= c.start && time < c.end);
+  const speaks = (c, id) => c.who === id || c.who === 'all';
+  function available(id, state) {
+    const el = $('m-' + id);
+    if (el.querySelector(`img[data-state="${state}"]`)) return state;
+    for (const alt of FALLBACK[state] || []) if (el.querySelector(`img[data-state="${alt}"]`)) return alt;
+    return 'listen';
+  }
+  function faceAt(id, time) {
+    const c = cueAt(time);
+    if (c && speaks(c, id)) return available(id, c.face);
+    if (c && c.react[id]) return available(id, c.react[id].face);
+    let last = null;
+    for (const x of timeline) { if (x.start > time) break; if (speaks(x, id) && x.end <= time) last = x; }
+    if (last && (time - last.end < HOLD || (cfg.HOLD_LAST && last === timeline[timeline.length - 1]))) return available(id, last.face);
+    return 'listen';
+  }
+  // 0 不变暗；有反应的人只暗一半
+  function dimAt(id, time) { const c = cueAt(time); return !c || speaks(c, id) ? 0 : c.react[id] ? 0.4 : 1; }
+  const boundaries = [...new Set(timeline.flatMap(c => [c.start, c.end, c.end + HOLD]))].sort((a, b) => a - b);
+  function lastChange(fn, time, dur) {
+    for (let i = boundaries.length - 1; i >= 0; i--) {
+      const b = boundaries[i];
+      if (b > time) continue;
+      if (time - b >= dur) return null;
+      if (fn(b - 0.001) !== fn(b)) return b;
+    }
+    return null;
+  }
+  function faceImages(container, id, time) {
+    const face = faceAt(id, time), changedAt = lastChange(x => faceAt(id, x), time, SWAP);
+    const k = changedAt === null ? 1 : (time - changedAt) / SWAP;
+    const prev = changedAt === null ? face : faceAt(id, changedAt - 0.001);
+    for (const img of container.querySelectorAll('img')) {
+      const s = img.dataset.state;
+      img.style.opacity = s === face ? k : (s === prev && k < 1 ? 1 - k : 0);
+    }
+    return k;
+  }
+
+  // 推近镜头：白板内侧 (122, 41, 1677×656) 放大到 (40, 20)，宽 1840
+  const B = { x: 122, y: 41, w: 1677, h: 656 }, K = 1840 / B.w, W = { x: 40, y: 20, w: 1840, h: B.h * K };
+  Object.assign($('win').style, { left: W.x + 'px', top: W.y + 'px', width: W.w + 'px', height: W.h + 'px' });
+  Object.assign($('winline').style, { left: W.x + 'px', top: W.y + 'px', width: W.w + 'px', height: W.h + 'px' });
+  const shots = shotLines.map(([a, b]) => [pauseTime[a], pauseTime[b]]);
+  const editorOldLines={...lines},editorOldShots=shots.map(s=>s.slice());
+  window.editorRefreshInternals=()=>{
+    boundaries.splice(0,boundaries.length,...[...new Set(timeline.flatMap(c=>[c.start,c.end,c.end+HOLD]))].sort((a,b)=>a-b));
+    for(const id of Object.keys(lines)){const c=timeline.find(c=>c.id===id);if(c)lines[id]=c.lineStart;}
+    shots.forEach((s,i)=>shotLines[i].forEach((li,j)=>{const id=window.SCRIPT.lines[li].id;s[j]=editorOldShots[i][j]+lines[id]-editorOldLines[id];}));
+  };
+
+  function camAt(time) {
+    let c = 0;
+    for (const [a, b] of shots) c = Math.max(c, inout((time - a) / ZD) * (1 - inout((time - b) / ZD)));
+    return c;
+  }
+  function shownAt(id, time, fullFrom) {
+    const c = cueAt(time);
+    if (c && speaks(c, id)) return true;
+    let e = null; for (const x of timeline) { if (x.start > time) break; if (speaks(x, id) && x.end <= time) e = x.end; }
+    return e !== null && e > fullFrom && time - e < STAY;
+  }
+
+  // 小特效：画在说话或反应的人头上（推近时画在泡泡头像上）
+  function headPos(id, full, lift) {
+    if (full > 0.5) return [SLOT[id], 920, 0.62];
+    const m = members.find(x => x.id === id), [hx, hy] = HEAD[id];
+    return [m.x + hx * 1.4, 1080 + 64 - 420 + hy * 1.4 - lift, 1];
+  }
+  function fxSvg(kind, x, y, s, age, seed) {
+    let out = '';
+    const fade = clamp(age / 0.2) * (1 - clamp((age - 2.4) / 0.4));
+    if (fade <= 0) return '';
+    if (kind === 'flowers') {
+      for (let i = 0; i < 6; i++) {
+        const a = -Math.PI / 2 + (i - 2.5) * 0.55, p = ease((age - i * 0.12) / 0.6);
+        if (p <= 0) continue;
+        const r = (120 + (i % 2) * 40) * s * p, fx = x + Math.cos(a) * r, fy = y + Math.sin(a) * r * 0.8 - 30 * s - age * 8;
+        const rot = age * 60 + i * 40, sz = 15 * s * backOut((age - i * 0.12) / 0.4);
+        let petals = '';
+        for (let k = 0; k < 5; k++) petals += `<ellipse cx="0" cy="${-sz * 0.7}" rx="${sz * 0.45}" ry="${sz * 0.7}" fill="#e8707a" transform="rotate(${k * 72})"/>`;
+        out += `<g transform="translate(${fx} ${fy}) rotate(${rot})" opacity="${fade}">${petals}<circle r="${sz * 0.35}" fill="#f6d36b"/></g>`;
+      }
+    } else if (kind === 'sweat') {
+      const dy = 26 * s * ease(age / 1.2);
+      out += `<path d="M0 -22 C 10 -6 14 4 0 14 C -14 4 -10 -6 0 -22Z" transform="translate(${x + 95 * s} ${y - 70 * s + dy}) scale(${1.5 * s})" fill="#8fd0f2" stroke="#3a6fc4" stroke-width="2" opacity="${fade}"/>`;
+    } else if (kind === 'shy') {
+      for (const side of [-1, 1]) {
+        out += `<g transform="translate(${x + side * 62 * s} ${y + 22 * s})" opacity="${fade * 0.9}">` +
+          [0, 1, 2].map(k => `<line x1="${(k - 1) * 11 * s - 6 * s}" y1="${8 * s}" x2="${(k - 1) * 11 * s + 6 * s}" y2="${-8 * s}" stroke="#e8707a" stroke-width="${3.5 * s}" stroke-linecap="round"/>`).join('') + '</g>';
+      }
+      const hy = y - 120 * s - age * 18;
+      out += `<path d="M0 6 C -10 -2 -10 -10 -4 -11 C 0 -12 0 -8 0 -7 C 0 -8 0 -12 4 -11 C 10 -10 10 -2 0 6Z" transform="translate(${x + 80 * s} ${hy}) scale(${2.2 * s})" fill="#e8707a" opacity="${fade}"/>`;
+    } else if (kind === 'stars') {
+      for (let i = 0; i < 3; i++) {
+        const a = age * 4 + i * 2.09, sx = x + Math.cos(a) * 70 * s, sy = y - 135 * s + Math.sin(a) * 16 * s;
+        out += `<path d="M0 -10 L3 -3 L10 -3 L4 2 L6 10 L0 5 L-6 10 L-4 2 L-10 -3 L-3 -3Z" transform="translate(${sx} ${sy}) scale(${1.6 * s})" fill="#f6d36b" stroke="#c9902a" stroke-width="1" opacity="${fade}"/>`;
+      }
+    }
+    return out;
+  }
+
+  window.render = function (time) {
+    if (window.drawBoard) window.drawBoard(time);
+    const cue = cueAt(time);
+    const c = camAt(time), full = clamp((c - 0.8) / 0.2);
+    $('cam').style.transform = `translate(${(W.x - B.x * K) * c}px, ${(W.y - B.y * K) * c}px) scale(${1 + (K - 1) * c})`;
+    $('mat').style.opacity = full; $('band').style.opacity = full;
+    $('members').style.opacity = 1 - clamp(c / 0.6); // 推近时活动室里的小人退出画面，免得头顶露在白板边上
+    let fullFrom = -1e9;
+    for (const [a] of shots) if (a <= time) fullFrom = Math.max(fullFrom, a);
+    const lifts = {};
+    members.forEach((m, i) => {
+      const el = $('m-' + m.id);
+      const speaking = cue && speaks(cue, m.id);
+      const k = faceImages(el, m.id, time);
+      // 只在开口或做反应时"弹"一下；回到站立时只是淡淡换过去
+      const squash = k < 1 && (speaking || (cue && cue.react[m.id])) ? 1 - 0.04 * Math.sin(k * Math.PI) : 1;
+      const dimNow = dimAt(m.id, time), dimChanged = lastChange(x => dimAt(m.id, x), time, 0.25);
+      let d = dimNow;
+      if (dimChanged !== null) { const q = (time - dimChanged) / 0.25, before = dimAt(m.id, dimChanged - 0.001); d = before + (dimNow - before) * q; }
+      el.style.filter = `brightness(${1 - 0.28 * d}) saturate(${1 - 0.2 * d})`;
+      let lift = 0, scale = 1;
+      if (speaking && c < 0.01) {
+        // 全员一起说时错开一点点，像一起跳起来
+        const s = time - cue.lineStart - (cue.who === 'all' ? i * 0.06 : 0);
+        lift = 26 * Math.sin(clamp(s / 0.35) * Math.PI) * (s < 0.35 ? 1 : 0) + 10 + 3 * Math.sin(time * 6 + i);
+        scale = 1.08;
+      } else if (cue && cue.react[m.id] && c < 0.01) {
+        // 有反应的人轻轻跳一下
+        const s = time - cue.start;
+        lift = 14 * Math.sin(clamp(s / 0.3) * Math.PI) * (s < 0.3 ? 1 : 0);
+      }
+      // RISE：开场时六人从下面依次升起
+      if (cfg.RISE !== undefined) lift -= 300 * (1 - ease((time - cfg.RISE - i * 0.08) / 0.6));
+      lifts[m.id] = lift;
+      el.style.transform = `translateY(${-lift}px) scale(${scale * (2 - squash)}, ${scale * squash})`;
+      el.style.zIndex = speaking ? 10 + m.z : cue && cue.react[m.id] ? 6 + m.z : m.z; // 有反应的人站到前面一点
+
+      // 推近时的泡泡头像
+      if (full > 0) {
+        const av = $('av-' + m.id);
+        let sc = 0, burst = -1;
+        if (shownAt(m.id, time, fullFrom)) {
+          sc = 1;
+          if (speaking && !shownAt(m.id, cue.lineStart - 0.001, fullFrom)) { sc = backOut((time - cue.lineStart) / 0.4); burst = (time - cue.lineStart) / 0.5; }
+        } else if (cue && cue.react[m.id]) sc = backOut((time - cue.start) / 0.4);
+        else {
+          let e = null; for (const x of timeline) { if (x.start > time) break; if (speaks(x, m.id) && x.end <= time) e = x.end; }
+          if (e !== null && e > fullFrom && time - e < STAY + 0.35) sc = 1 - ease((time - e - STAY) / 0.35);
+        }
+        const big = speaking ? 1 : cue && cue.react[m.id] ? 0.5 : 0;
+        const hop = speaking ? 18 * Math.sin(Math.PI * clamp((time - cue.lineStart) / 0.35)) : 0;
+        const float = (1 - big) * 5 * Math.sin(time * 2.2 + SLOT[m.id]);
+        av.style.opacity = sc > 0 ? 1 : 0;
+        av.style.transform = `translateY(${-hop + (1 - big) * 22 + float}px) scale(${Math.max(0, sc) * (0.72 + 0.28 * big)})`;
+        av.style.filter = `brightness(${0.86 + 0.14 * big})`;
+        av.style.zIndex = speaking ? 2 : 1;
+        const bu = av.querySelector('.burst');
+        bu.style.opacity = burst >= 0 && burst < 1 ? 1 - burst : 0;
+        bu.style.transform = `scale(${1 + 0.45 * clamp(burst)})`;
+        faceImages(av, m.id, time);
+      }
+    });
+
+    // 特效：这一屏和上一屏的都画，让特效能比字幕多停一会儿
+    let fx = '';
+    for (const x of timeline) {
+      if (x.start > time) break;
+      if (time - x.start > 3) continue;
+      if (x.fx && x.who !== 'all') { const [px, py, s] = headPos(x.who, full, lifts[x.who] || 0); fx += fxSvg(x.fx, px, py, s, time - x.start); }
+      for (const [id, r] of Object.entries(x.react)) if (r.fx) { const [px, py, s] = headPos(id, full, lifts[id] || 0); fx += fxSvg(r.fx, px, py, s, time - x.start); }
+    }
+    $('fx').innerHTML = fx;
+
+    const name = $('name'), line = $('line');
+    if (cue) {
+      if (cue.who === 'all') {
+        name.textContent = '全员';
+        name.style.background = 'linear-gradient(90deg,' + members.map(m => m.color).join(',') + ')';
+      } else {
+        const who = members.find(m => m.id === cue.who);
+        name.textContent = who.name; name.style.background = who.color;
+      }
+      if (line.textContent !== cue.text) {
+        // 字幕框收紧到文字的实际宽度，多留几像素免得标点挤到下一行
+        line.style.width = ''; line.textContent = cue.text;
+        const r = document.createRange(); r.selectNodeContents(line);
+        // 草稿模式整页缩小时，量出来的宽度也跟着缩小，要换算回页面上的像素
+        const zoom = line.getBoundingClientRect().width / line.offsetWidth || 1;
+        line.style.width = Math.ceil(Math.max(...[...r.getClientRects()].map(x => x.width)) / zoom) + 8 + 'px';
+      }
+      const fade = ease((time - cue.start) / 0.2);
+      name.style.opacity = fade; line.style.opacity = fade;
+    } else { name.style.opacity = 0; line.style.opacity = 0; }
+  };
+
+  window.addEventListener('load', () => {
+    if (location.search.includes('static')) return;
+    const m = location.search.match(/[?&]t=([\d.]+)/);
+    const t0 = performance.now() - (m ? +m[1] * 1000 : 0);
+    (function loop() { window.render(((performance.now() - t0) / 1000) % window.DURATION); requestAnimationFrame(loop); })();
+  });
+})();
+
+</script>
+<script>
+const NS = 'http://www.w3.org/2000/svg';
+// 涂鸦：x, y, 种类, 大小
+const DOODLES = [[180, 140, 'star', 1.2], [1490, 120, 'gear', 1.1], [260, 500, 'flower', 1], [1420, 510, 'star', 0.9], [120, 330, 'gear', 0.8],
+  [1560, 330, 'flower', 1.1], [520, 90, 'spark', 1], [1150, 90, 'spark', 0.8], [640, 590, 'spark', 0.9], [1060, 590, 'flower', 0.8]];
+function doodle(kind, t) {
+  if (kind === 'star') return '<path d="M0 -26 L7 -8 L26 -8 L11 4 L16 24 L0 12 L-16 24 L-11 4 L-26 -8 L-7 -8Z" fill="#f6d36b" stroke="#c9902a" stroke-width="2"/>';
+  if (kind === 'spark') return '<path d="M0 -22 L5 -5 L22 0 L5 5 L0 22 L-5 5 L-22 0 L-5 -5Z" fill="#9cc3d8"/>';
+  if (kind === 'flower') { let p = ''; for (let k = 0; k < 5; k++) p += `<ellipse cx="0" cy="-13" rx="8" ry="13" fill="#e8707a" transform="rotate(${k * 72})"/>`; return p + '<circle r="7" fill="#f6d36b"/>'; }
+  let d = ''; for (let i = 0; i < 32; i++) { const a = i / 32 * Math.PI * 2, r = Math.floor(i / 2) % 2 ? 22 : 28; d += (i ? 'L' : 'M') + (r * Math.cos(a)).toFixed(1) + ' ' + (r * Math.sin(a)).toFixed(1); }
+  return `<path d="${d}Z" fill="#e2b04a" stroke="#3a3631" stroke-width="2.5"/><circle r="8" fill="#fffdf8" stroke="#3a3631" stroke-width="2.5"/>`;
+}
+window.drawBoard = function (time) {
+  $('thanks').style.opacity = ease(time / 0.8);
+  $('doodle').style.opacity = ease((time - 0.6) / 0.8);
+  $('doodle').innerHTML = DOODLES.map(([x, y, k, s], i) => {
+    const rot = k === 'gear' ? time * 40 * (i % 2 ? -1 : 1) : 8 * Math.sin(time * 1.3 + i);
+    const fy = y + 6 * Math.sin(time * 1.6 + i * 1.7);
+    const sc = s * (k === 'spark' ? 0.8 + 0.25 * Math.sin(time * 3 + i) : 1);
+    return `<g transform="translate(${x} ${fy}) rotate(${rot}) scale(${sc})">${doodle(k, time)}</g>`;
+  }).join('');
+};
+// 定格：一下快门白光，画面停住，再收成一张照片
+const baseRender = window.render;
+window.render = function (time) {
+  const freeze = MARKS.bye + 1.4;
+  baseRender(Math.min(time, freeze));
+  const f = time - freeze;
+  $('flash').style.opacity = f > 0 ? 0.85 * (1 - ease(f / 0.5)) : 0;
+  $('frame').style.opacity = f > 0 ? 1 : 0;
+  $('frame').style.borderWidth = (f > 0 ? 34 * ease(f / 0.6) : 0) + 'px';
+  $('frame').style.borderBottomWidth = (f > 0 ? 56 * ease(f / 0.6) : 0) + 'px';
+  $('framecap').style.opacity = ease((f - 0.5) / 0.6);
+};
+</script>
+<style>#line{position:relative} #rinReveal{position:absolute;inset:0;padding:inherit;box-sizing:border-box;pointer-events:none;white-space:inherit;color:var(--ink,#3a3631)}</style>
+<script>
+const fullRender=window.render;
+window.render=function(time){fullRender(time);const cue=window.TIMELINE.find(c=>time>=c.start&&time<c.end);const el=document.getElementById('line');let overlay=document.getElementById('rinReveal');
+ if(cue&&cue.who==='rin'){
+  const chars=Array.from(cue.text);const k=Math.min(chars.length,Math.max(1,Math.floor((time-cue.start)/cue.charStep)+1));
+  el.style.color='transparent';if(!overlay){overlay=document.createElement('span');overlay.id='rinReveal';el.appendChild(overlay);}overlay.textContent=chars.slice(0,k).join('');
+ }else{el.style.color='';if(overlay)overlay.remove();}
+};
+</script>
+<script src="../../音频/全片配音_20261118/editor_bridge.js?v=rin-600x170-20261122"></script>
+</body>
+</html>

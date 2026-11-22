@@ -1,11 +1,13 @@
 """Read-only audio/timeline audit; writes separate evidence, never changes the mix."""
 from pathlib import Path
-import sys,json,re,wave,warnings,subprocess,html
+import sys,json,re,wave,warnings,subprocess,html,argparse,os
 HERE=Path(__file__).resolve().parent
 sys.path.insert(0,str(HERE.parents[2]/'.tools/devlog-audio/python'))
 import numpy as np
 from scipy.io import wavfile
-OUT=HERE/'节奏排查';OUT.mkdir(exist_ok=True)
+ap=argparse.ArgumentParser();ap.add_argument('--mix-dir',type=Path,default=HERE);ap.add_argument('--acts',nargs='+',default=['开场','第二段']);args=ap.parse_args();MIX=args.mix_dir.resolve()
+OUT=MIX/'节奏排查';OUT.mkdir(exist_ok=True)
+VOICE_URL=Path(os.path.relpath(HERE/'voices',OUT)).as_posix()
 def load(p):return json.loads(p.read_text(encoding='utf8'))
 def clock(t):return f'{int(t)//60:02}:{t%60:05.2f}'
 def spans(mask):
@@ -29,8 +31,8 @@ def analyze(p):
     pauses=[(a*.01,b*.01) for a,b in spans(~active) if a*.01>first and b*.01<last and b-a>=65]
     return {'first':first,'last':last,'pauses':pauses,'threshold_relative_db':-35}
 all_result={}
-for act in ['开场','第二段']:
-    mix=load(HERE/f'mix_report_{act}.json');manifest=load(HERE/'voices'/act/'manifest.json')
+for act in args.acts:
+    mix=load(MIX/f'mix_report_{act}.json');manifest=load(HERE/'voices'/act/'manifest.json')
     jobs={j['file']:j for j in manifest['lines']};aligned=load(HERE/f'alignment_{act}.json')
     voices=mix['voices'];events=[];internal=[];boundaries=[];rates=[]
     for v in voices:
@@ -56,7 +58,7 @@ for act in ['开场','第二段']:
     print('INTERNAL',json.dumps(sorted(internal,key=lambda x:-x['duration'])[:12],ensure_ascii=False),flush=True)
     print('FAST',json.dumps(sorted(rates,key=lambda x:-x['hanzi_per_second'])[:6],ensure_ascii=False),flush=True)
 (OUT/'audit.json').write_text(json.dumps(all_result,ensure_ascii=False,indent=2),encoding='utf8')
-lines=['# 开场与第二段：配音节奏排查','', '时间使用各自单独视频的时间；合并视频的第二段需加 02:06.67。','', '这是原始 WAV 能量及既有 ASR 时间戳的客观排查，不是逐段人工听审。阈值只用于筛查；呼吸、停顿和演出留白须结合语境判断。ASR 仅供附近台词定位，不替换剧本。未重新生成或改动成片。','']
+lines=['# 全片配音节奏排查','', '表内为幕内时间。全片定位及分类汇总见同目录全片问题清单。','', '这是原始 WAV 能量及既有 ASR 时间戳的客观排查，不是逐段人工听审。阈值只用于筛查；呼吸、停顿和演出留白须结合语境判断。ASR 仅供附近台词定位，不替换剧本。未重新生成或改动成片。','']
 for act,result in all_result.items():
     lines += [f'## {act}','', '### 两个独立 WAV 之间的衔接（全部）','', '| 前句结束 → 后句开始 | 角色 / ID | 可听间隔 | 时间轴外加 / 文件边缘 | 附近台词 |','|---|---|---:|---:|---|']
     for b in result['boundaries']:
@@ -77,7 +79,7 @@ for act,r in all_result.items():
         page.append(f"<tr><td>{clock(b['time'])} → {clock(b['next_time'])}</td><td>{b['who']}<br>{b['gap']:.2f}s · {mark}<br><small>外加 {b['inserted_gap']:.2f}s</small></td><td>{html.escape(b['before'])}<br>→ {html.escape(b['after'])}</td><td>{button(act+' '+clock(b['time']),src,b['time']-3,b['next_time']+4)}</td></tr>")
     page.append('</table><h3>单条录音内部：≥0.65秒低能量停顿</h3><table><tr><th>时间</th><th>角色 / 长度</th><th>附近词（ASR）</th><th>成片与原声</th></tr>')
     for p in r['internal_pauses']:
-        page.append(f"<tr><td>{clock(p['time'])}–{clock(p['end'])}</td><td>{p['who']} / {p['duration']:.2f}s</td><td>{html.escape(p['before'])}<br>→ {html.escape(p['after'])}</td><td>{button('混音 '+clock(p['time']),'../'+act+'_混音.wav',p['time']-2,p['end']+3)} {button('原声 '+p['file'],'../voices/'+act+'/'+p['file'],p['relative_start']-2,p['relative_end']+3)}</td></tr>")
+        page.append(f"<tr><td>{clock(p['time'])}–{clock(p['end'])}</td><td>{p['who']} / {p['duration']:.2f}s</td><td>{html.escape(p['before'])}<br>→ {html.escape(p['after'])}</td><td>{button('混音 '+clock(p['time']),'../'+act+'_混音.wav',p['time']-2,p['end']+3)} {button('原声 '+p['file'],VOICE_URL+'/'+act+'/'+p['file'],p['relative_start']-2,p['relative_end']+3)}</td></tr>")
     page.append('</table>')
 page.append('''<script>const a=document.getElementById('player');let stop=Infinity;function play(src,t,end,label){stop=end;document.getElementById('now').textContent=label;a.src=src;a.onloadedmetadata=()=>{a.currentTime=t;a.play().catch(()=>{});};a.load();}a.ontimeupdate=()=>{if(a.currentTime>=stop)a.pause();};</script></html>''')
 (OUT/'定位试听.html').write_text('\n'.join(page),encoding='utf8')
@@ -85,5 +87,5 @@ import imageio_ffmpeg
 ff=imageio_ffmpeg.get_ffmpeg_exe()
 examples=[('开场_接话等待', '开场',97,108),('第二段_问答等待','第二段',42,55),('第二段_快速接话','第二段',522,532),('第二段_原生停顿','第二段',25,32)]
 for name,act,start,end in examples:
-    subprocess.run([ff,'-y','-v','error','-ss',str(start),'-i',str(HERE/f'{act}_混音.wav'),'-t',str(end-start),'-c:a','pcm_s16le',str(OUT/(name+'.wav'))],check=True)
+    subprocess.run([ff,'-y','-v','error','-ss',str(start),'-i',str(MIX/f'{act}_混音.wav'),'-t',str(end-start),'-c:a','pcm_s16le',str(OUT/(name+'.wav'))],check=True)
 print('REPORT',OUT,flush=True)

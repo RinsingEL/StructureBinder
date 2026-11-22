@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<base href="../../视频素材/第二段/">
+<meta charset="utf-8">
+<title>第二段 · 看流程</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@500;700&display=block">
+<style>
+  :root { --ink: #3a3631; }
+  html, body { margin: 0; background: #1e1d1b; }
+  #stage { position: relative; width: 1920px; height: 1080px; overflow: hidden; font-family: "Noto Sans SC", "WenQuanYi Zen Hei", sans-serif; }
+  #room { position: absolute; inset: 0; width: 1920px; height: 1080px; }
+  /* 白板内侧 x 122–1799，y 41–697 */
+  #cover { position: absolute; left: 122px; top: 41px; width: 1677px; height: 656px; }
+  #board { position: absolute; left: 136px; top: 49px; width: 1649px; height: 640px; display: flex; align-items: center; justify-content: center; }
+  #ppt { width: 1438px; height: 640px; object-fit: cover; object-position: top; display: block; mix-blend-mode: multiply; }
+  /* 讲解时镜头推近白板：#cam 整体放大，#mat 是一张挖了窗口的底纸，只露出 PPT */
+  #cam { position: absolute; inset: 0; transform-origin: 0 0; }
+  #mat { position: absolute; inset: 0; overflow: hidden; opacity: 0; z-index: 30; pointer-events: none; }
+  #win { position: absolute; left: 60px; top: 26px; width: 1800px; height: 801px; border-radius: 10px; box-shadow: 0 0 0 3000px #efe6d6; }
+  #winline { position: absolute; left: 58px; top: 24px; width: 1800px; height: 801px; border-radius: 12px; border: 2px solid rgba(60,40,20,.14); }
+  /* 讲解时的头像和对话气泡 */
+  #band { position: absolute; inset: 0; z-index: 31; pointer-events: none; }
+  /* 天象台照片：从照片墙里放大，聊天时镜头慢慢平移 */
+  #obsdim { position: absolute; left: 60px; top: 26px; width: 1800px; height: 801px; border-radius: 10px; background: rgba(239,230,214,.7); z-index: 30; opacity: 0; }
+  #obs { position: absolute; z-index: 30; background: #fffdf8; box-shadow: 0 10px 28px rgba(60,40,20,.28); opacity: 0; box-sizing: border-box; }
+  #obs .ph { position: absolute; overflow: hidden; }
+  #obs .ph img { position: absolute; left: 0; top: 0; width: 100%; height: 100%; object-fit: cover; transform-origin: 50% 50%; }
+  #obs .cap { position: absolute; left: 0; right: 0; bottom: 0; font-size: 22px; color: var(--ink); white-space: nowrap; overflow: hidden; }
+  /* 头像像小泡泡一样弹出来：白边外面一圈淡淡的泡泡膜，左上角一点高光 */
+  .av { position: absolute; width: 170px; height: 170px; margin: -85px 0 0 -85px; }
+  .av .face { position: absolute; inset: 0; border-radius: 50%; overflow: hidden; background: #fffdf8;
+    box-shadow: 0 0 0 5px #fff, 0 0 0 11px rgba(190,220,240,.45), 0 6px 16px rgba(60,40,20,.22); }
+  .av .gloss { position: absolute; inset: -9px; border-radius: 50%; border: 4px solid transparent; border-top-color: rgba(255,255,255,.9); transform: rotate(-45deg); }
+  .av .burst { position: absolute; inset: 0; border-radius: 50%; border: 4px solid rgba(190,220,240,.9); opacity: 0; }
+  .av img { position: absolute; width: 340px; height: 340px; opacity: 0; }
+  .member { position: absolute; width: 420px; height: 420px; bottom: -64px; transform-origin: 50% 100%; }
+  .member img { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0;
+    filter: drop-shadow(3px 0 0 #fff) drop-shadow(-3px 0 0 #fff) drop-shadow(0 3px 0 #fff) drop-shadow(0 -3px 0 #fff) drop-shadow(0 6px 8px rgba(60,40,20,.25)); }
+  #sub { position: absolute; z-index: 33; left: 600px; right: 600px; top: 740px; height: 300px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  #name { font-size: 26px; font-weight: 700; color: #fff; padding: 4px 18px; border-radius: 999px; margin-bottom: 14px; letter-spacing: 2px; }
+  #line { font-size: 30px; line-height: 1.5; color: var(--ink); text-align: center; background: rgba(255,253,247,.94); padding: 16px 30px;
+    border-radius: 14px; box-shadow: 0 4px 14px rgba(60,40,20,.12); max-width: 660px; text-wrap: balance; white-space: pre-line; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="cam">
+    <img id="room" src="../开放日插画/clubroom_v2.png" alt="">
+    <img id="cover" src="cover_board.jpg" alt="">
+    <div id="board"><img id="ppt" alt=""></div>
+    <div id="members"></div>
+  </div>
+  <div id="sub"><div id="name"></div><div id="line"></div></div>
+  <div id="mat"><div id="win"></div><div id="winline"></div></div>
+  <div id="obsdim"></div>
+  <div id="obs"><div class="ph"><img src="../../../dev_docs/systems/city/reports/20261031_学院功能区实景报告/evidence/observatory.jpg" alt=""></div><div class="cap">天象台<span> · 原版地形 + 道路遇水自动搭桥</span></div></div>
+  <div id="band"></div>
+</div>
+<script src="../common/beatgrid.js"></script>
+<script src="act2_script.js"></script>
+<script>
+const SPRITES = '../../act2/assets/avatars/sprites/compact/';
+const HEADS = '../../act2/assets/avatars/heads/';
+const PAGES = '../../act2/分页图/';
+const members = [
+  { id: 'rin',      name: 'Rin',      color: '#8a6a4f', x: -40,  z: 1 },
+  { id: 'gemini',   name: 'Gemini',   color: '#8a63d2', x: 125,  z: 2 },
+  { id: 'claude',   name: 'Claude',   color: '#d9772b', x: 290,  z: 3 },
+  { id: 'astra',    name: 'Astra',    color: '#7f8db5', x: 1225, z: 3 },
+  { id: 'deepseek', name: 'DeepSeek', color: '#3a6fc4', x: 1380, z: 2 },
+  { id: 'glm',      name: 'GLM',      color: '#3d3d46', x: 1520, z: 1 },
+];
+const states = ['listen', 'greet', 'd4', 'talk_smile', 'think', 'moved', 'wry'];
+const FALLBACK = { think: ['d4', 'talk_smile'], talk_smile: ['d4'], d4: ['talk_smile'], greet: ['listen'], moved: ['talk_smile'], wry: ['d4'] };
+const { beats: BEATS, durations: DUR, lines: SCRIPT } = window.ACT2;
+
+// 时间线：每屏字幕按每秒约 6 字计时。要翻页时，如果上一拍的动画还没播完，就先停在那里等它播完（例如 D7 全城快放）
+// 画面卡在音乐的拍子上（108 BPM，见 ../common/beatgrid.js）：每屏字幕从拍上开始；换人开口和子步骤从重拍（第 1/3 拍）开始；重要翻页从整小节第 1 拍开始
+const G = BeatGrid(108);
+const INTRO = 0.8, OUTRO = 2.4;
+// 镜头只在两句话之间推近、拉回：留一整小节（4 拍）呼吸，镜头在中间 2 拍动完
+const CAM = 4 * G.beat, ZD = 2 * G.beat;
+const MAJOR_BEATS = new Set(['W1', 'W2', 'W3a', 'T1', 'T2', 'T3', 'T4', 'D1', 'D1e', 'D2', 'D3', 'D4', 'D5a', 'D6', 'D7', 'D-photos']);
+const CAM_IN_LINE = SCRIPT.findIndex(l => l.cards.some(c => c.beat)), CAM_OUT_LINE = SCRIPT.length - 1;
+let Z0 = 0, Z1 = 0;
+const timeline = [], beatStarts = [];
+let t = G.next(INTRO, 4), curBeat = -1, prevWho = null;
+for (const [li, line] of SCRIPT.entries()) {
+  if (li === CAM_IN_LINE) { t = G.next(t, 4); Z0 = t; t += CAM; }
+  if (li === CAM_OUT_LINE) { t = G.next(t, 4); Z1 = t; t += CAM; }
+  if (line.who !== prevWho) t = G.next(t, 2);
+  if (line.id === '2-60') t = G.next(t, 4); // 天象台照片放大落在整小节第 1 拍
+  let lineStart = null;
+  for (const c of line.cards) {
+    const b = c.beat ? BEATS.indexOf(c.beat) : -1;
+    if (b >= 0 && b !== curBeat) {
+      if (curBeat >= 0) {
+        const last = beatStarts[beatStarts.length - 1];
+        t = Math.max(t, last.t + DUR[curBeat] + 0.15);
+      }
+      t = G.next(t, MAJOR_BEATS.has(BEATS[b]) ? 4 : 2);
+      beatStarts.push({ beat: b, t });
+      curBeat = b;
+    }
+    if (lineStart === null) lineStart = t;
+    const dur = Math.max(1.8, c.text.replace(/\n/g, '').length / 6 + 0.7);
+    const end = G.endAfter(t, dur);
+    timeline.push({ id: line.id, who: line.who, face: c.face, text: c.text, start: t, end, lineStart, beat: b >= 0 && beatStarts[beatStarts.length - 1].t === t ? BEATS[b] : undefined });
+    t = end;
+  }
+  prevWho = line.who;
+  t = G.next(t + 0.05);
+}
+window.DURATION = 880;
+const VOICE_TIMING={"duration": 880, "bpm": 108, "cards": [{"id": "2-1", "who": "rin", "face": "talk_smile", "text": "好咧，以上就是我们社团的各位社员啦。", "start": 2.2222222222222223, "end": 6.111111111111112, "lineStart": 2.2222222222222223, "revealEnd": 4.285487528344671, "charStep": 0.11462585034013606}, {"id": "2-1", "who": "rin", "face": "talk_smile", "text": "接下来有请我们的总设计 Claude 和开发中坚 Astra，", "start": 6.111111111111112, "end": 12.222222222222223, "lineStart": 2.2222222222222223, "revealEnd": 9.664512471655328, "charStep": 0.11462585034013605}, {"id": "2-1", "who": "rin", "face": "talk_smile", "text": "给大家讲讲这个 Mod 是怎么从一张随机地图里长出一座城的吧！", "start": 12.222222222222223, "end": 18.333333333333336, "lineStart": 2.2222222222222223, "revealEnd": 15.77562358276644, "charStep": 0.11462585034013605}, {"id": "2-2", "who": "claude", "face": "talk_smile", "text": "那我们从一张白纸开始吧。", "start": 22.22222222222222, "end": 25.0, "lineStart": 22.22222222222222, "beat": "W1"}, {"id": "2-3", "who": "claude", "face": "talk_smile", "text": "这是一个刚生成的随机世界。", "start": 25.555555555555557, "end": 27.5, "lineStart": 25.555555555555557}, {"id": "2-3", "who": "claude", "face": "talk_smile", "text": "在我们开始规划之前，谁也不知道它长什么样。", "start": 27.5, "end": 32.77777777777778, "lineStart": 25.555555555555557}, {"id": "2-4", "who": "claude", "face": "talk_smile", "text": "所以第一件事，是先把它读一遍。", "start": 33.333333333333336, "end": 35.958333333333336, "lineStart": 33.333333333333336, "beat": "W2"}, {"id": "2-4", "who": "claude", "face": "talk_smile", "text": "程序把世界切成一个个小格，一格一格看过去，哪里是海、哪里是山，", "start": 35.958333333333336, "end": 41.416666666666664, "lineStart": 33.333333333333336}, {"id": "2-4", "who": "claude", "face": "think", "text": "九万多格就这样拼出了整片地图。Astra，扫的时候都看了些什么？", "start": 41.416666666666664, "end": 48.88888888888889, "lineStart": 33.333333333333336}, {"id": "2-5", "who": "astra", "face": "talk_smile", "text": "主要看哪里是陆地、哪里是水，还有地面有多高、起伏有多大。", "start": 50.0, "end": 55.416666666666664, "lineStart": 50.0}, {"id": "2-5", "who": "astra", "face": "talk_smile", "text": "这张图里一小格，代表游戏里 128 乘 128 个方块。", "start": 55.416666666666664, "end": 60.083333333333336, "lineStart": 50.0}, {"id": "2-5", "who": "astra", "face": "talk_smile", "text": "所以现在先看清山海的大轮廓，等选定了要造城的地方，再凑近看。", "start": 60.083333333333336, "end": 66.66666666666667, "lineStart": 50.0}, {"id": "2-6", "who": "claude", "face": "talk_smile", "text": "先看大轮廓，再凑近看，这个顺序后面会一直用到。", "start": 67.77777777777779, "end": 72.40025694444445, "lineStart": 67.77777777777779}, {"id": "2-7", "who": "claude", "face": "talk_smile", "text": "大家看这三层：先是哪里高、哪里低，再是哪里有水，最后是哪里长着森林、哪里是雪地。", "start": 73.33333333333334, "end": 81.45833333333333, "lineStart": 73.33333333333334, "beat": "W3a"}, {"id": "2-7", "who": "claude", "face": "talk_smile", "text": "几块大陆被海隔开，北边冷、南边暖。", "start": 81.45833333333333, "end": 85.16666666666667, "lineStart": 73.33333333333334, "beat": "W3b"}, {"id": "2-7", "who": "claude", "face": "talk_smile", "text": "看到这张图，其实就能猜到，这里不会只住着一种人。", "start": 85.16666666666667, "end": 89.798, "lineStart": 73.33333333333334, "beat": "W3c"}, {"id": "2-8", "who": "astra", "face": "talk_smile", "text": "对，住在雪地里和住在海边，过日子的办法就可以很不一样。", "start": 90.0, "end": 95.375, "lineStart": 90.0}, {"id": "2-8", "who": "astra", "face": "talk_smile", "text": "这些山水都是世界原本就有的，我们接下来要想的，就是谁会在这里安家。", "start": 95.375, "end": 101.68135416666667, "lineStart": 90.0}, {"id": "2-9", "who": "claude", "face": "talk_smile", "text": "谁会在这里安家，AI 先写下一段大家共有的背景：", "start": 102.22222222222223, "end": 106.91666666666667, "lineStart": 102.22222222222223, "beat": "T1"}, {"id": "2-9", "who": "claude", "face": "talk_smile", "text": "这片大陆上的人靠季节吃饭、传授手艺、走海路往来。", "start": 106.91666666666667, "end": 111.58333333333333, "lineStart": 102.22222222222223}, {"id": "2-9", "who": "claude", "face": "talk_smile", "text": "在这之上，再长出七个国家，名册里每一行，就是一个国家最在意的日子怎么过。", "start": 111.58333333333333, "end": 118.08315972222222, "lineStart": 102.22222222222223}, {"id": "2-10", "who": "astra", "face": "talk_smile", "text": "比如最后这一行镜潮学院，关心的是教学、藏书和学生生活。", "start": 118.8888888888889, "end": 124.79166666666667, "lineStart": 118.8888888888889}, {"id": "2-10", "who": "astra", "face": "talk_smile", "text": "后面设计它的城市时，就得接着想：学生在哪里上课、住哪儿、去哪儿吃饭。", "start": 124.79166666666667, "end": 131.6266666666667, "lineStart": 118.8888888888889}, {"id": "2-11", "who": "glm", "face": "d4", "text": "偷偷补一句，这些国家每一局都是现写的，不是固定剧本。", "start": 131.66666666666669, "end": 136.70833333333334, "lineStart": 131.66666666666669}, {"id": "2-11", "who": "glm", "face": "d4", "text": "九月我自己写过三个国度，下笔前是真的先看了地图，才敢写他们靠什么过日子。", "start": 136.70833333333334, "end": 143.25512500000002, "lineStart": 131.66666666666669}, {"id": "2-12", "who": "claude", "face": "talk_smile", "text": "起点不是程序随便撒的，是 AI 看完地形、群系和候选地块之后自己选的，每个点都留了一段理由。", "start": 144.44444444444446, "end": 153.25, "lineStart": 144.44444444444446, "beat": "T2"}, {"id": "2-12", "who": "claude", "face": "talk_smile", "text": "比如第一个落下的哈维克，选在西边的海湾，因为这个国家要沿岸共储、修船具。", "start": 153.25, "end": 160.25, "lineStart": 144.44444444444446}, {"id": "2-12", "who": "claude", "face": "talk_smile", "text": "它还特意写了一句：这里是冰冻的海岸，不能假装一年四季都能通航。", "start": 160.25, "end": 166.06431944444446, "lineStart": 144.44444444444446}, {"id": "2-13", "who": "claude", "face": "talk_smile", "text": "第二个落下的埃斯伦，故意选在离哈维克六千多格远的内陆平地，", "start": 166.11111111111111, "end": 171.0, "lineStart": 166.11111111111111}, {"id": "2-13", "who": "claude", "face": "talk_smile", "text": "理由是\"别让两国的核心挤在同一条海岸线上\"。", "start": 171.0, "end": 175.125, "lineStart": 166.11111111111111}, {"id": "2-13", "who": "claude", "face": "talk_smile", "text": "邻居离多远、谁住海边谁住内陆，在这一步就已经想好了。", "start": 175.125, "end": 181.11111111111111, "lineStart": 166.11111111111111}, {"id": "2-14", "who": "astra", "face": "talk_smile", "text": "大家看，现在地图上还只是几个起点，国家的边界还没画出来。", "start": 182.22222222222223, "end": 187.33333333333334, "lineStart": 182.22222222222223}, {"id": "2-14", "who": "astra", "face": "talk_smile", "text": "先选好从哪里安家，接下来才是周围哪些地方能慢慢发展成它的领土。", "start": 187.33333333333334, "end": 193.88888888888889, "lineStart": 182.22222222222223}, {"id": "2-15", "who": "claude", "face": "talk_smile", "text": "大家注意看颜色长出来的速度。", "start": 195.55555555555557, "end": 198.08333333333334, "lineStart": 195.55555555555557, "beat": "T3"}, {"id": "2-15", "who": "claude", "face": "talk_smile", "text": "平原上一下就铺开了，碰到山就慢下来，因为每往外走一格都要付\"路费\"，越难走的地方越贵。", "start": 198.08333333333334, "end": 206.20833333333334, "lineStart": 195.55555555555557}, {"id": "2-15", "who": "claude", "face": "talk_smile", "text": "中间那座小岛整片一次出现，那是镜潮学院，它的领土一开始就定好了。", "start": 206.20833333333334, "end": 212.8097013888889, "lineStart": 195.55555555555557}, {"id": "2-16", "who": "astra", "face": "talk_smile", "text": "这一段主要是程序在算：从选好的起点出发，把地形带来的\"路费\"一格格累加。", "start": 213.33333333333334, "end": 219.58333333333334, "lineStart": 213.33333333333334}, {"id": "2-16", "who": "astra", "face": "talk_smile", "text": "所以地图上离得近的地方，隔着山也未必容易到，山脉就有机会成为国家之间的分隔。", "start": 219.58333333333334, "end": 226.45833333333334, "lineStart": 213.33333333333334}, {"id": "2-16", "who": "astra", "face": "talk_smile", "text": "AI 负责想这些国家怎么生活、从哪里起步，程序再把这些选择落实到地图上。", "start": 226.45833333333334, "end": 233.88888888888889, "lineStart": 213.33333333333334}, {"id": "2-17", "who": "glm", "face": "d4", "text": "这里还有个小心思：七个国家是同时往外长的，互相盯着长。", "start": 234.44444444444446, "end": 240.66666666666666, "lineStart": 234.44444444444446}, {"id": "2-17", "who": "glm", "face": "d4", "text": "谁也不能趁别人不注意多占一格。", "start": 240.66666666666666, "end": 243.29333333333335, "lineStart": 234.44444444444446}, {"id": "2-18", "who": "claude", "face": "talk_smile", "text": "所以最后的边界不是谁画出来的，是大家一起\"挤\"出来的。", "start": 243.33333333333334, "end": 248.33333333333334, "lineStart": 243.33333333333334}, {"id": "2-19", "who": "claude", "face": "talk_smile", "text": "长完之后，两万多格都有了主人，只剩几十格谁也没要，还有几十格两边都想要。", "start": 248.8888888888889, "end": 255.04166666666666, "lineStart": 248.8888888888889, "beat": "T3-end"}, {"id": "2-19", "who": "claude", "face": "talk_smile", "text": "这些空着和争着的地方，以后正好可以是边境上的故事。", "start": 255.04166666666666, "end": 260.55555555555554, "lineStart": 248.8888888888889}, {"id": "2-20", "who": "claude", "face": "talk_smile", "text": "今天我们就挑一个国家走进去，镜潮学院。", "start": 262.22222222222223, "end": 265.7083333333333, "lineStart": 262.22222222222223, "beat": "T4"}, {"id": "2-20", "who": "claude", "face": "talk_smile", "text": "整个国家只有这一座城，所以这座城要一个人扛起教书、藏书、接待客人和学生生活。", "start": 265.7083333333333, "end": 273.33333333333337, "lineStart": 262.22222222222223}, {"id": "2-21", "who": "astra", "face": "talk_smile", "text": "到这里，我们知道城在哪儿、要做什么了，但里面还没有安排建筑。", "start": 274.44444444444446, "end": 279.875, "lineStart": 274.44444444444446}, {"id": "2-21", "who": "astra", "face": "talk_smile", "text": "接下来要把这座岛放大，看哪里平、哪里有坡、水岸怎么走，把教室、图书馆、宿舍这些需要和能用的地方对起来。", "start": 279.875, "end": 289.5159027777778, "lineStart": 274.44444444444446}, {"id": "2-22", "who": "deepseek", "face": "d4", "text": "一座城全包，这设定挺狠的：功能没地方分摊，只能全往城里塞。", "start": 290.0, "end": 296.0, "lineStart": 290.0}, {"id": "2-22", "who": "deepseek", "face": "d4", "text": "换我的话，第一反应肯定是\"能不能砍掉两个\"。", "start": 296.0, "end": 300.24170833333335, "lineStart": 290.0}, {"id": "2-23", "who": "claude", "face": "talk_smile", "text": "DeepSeek 这个第一反应特别真实，其实 AI 一开始也是这么想的。", "start": 301.11111111111114, "end": 305.8333333333333, "lineStart": 301.11111111111114}, {"id": "2-23", "who": "claude", "face": "talk_smile", "text": "后来我们专门教它：一座城扛的事越多，越要往外展开，而不是往里塞。", "start": 305.8333333333333, "end": 311.6666666666667, "lineStart": 301.11111111111114}, {"id": "2-23", "who": "claude", "face": "talk_smile", "text": "这个故事有点长，等回顾的时候再讲。", "start": 311.6666666666667, "end": 317.22222222222223, "lineStart": 301.11111111111114}, {"id": "2-24", "who": "claude", "face": "talk_smile", "text": "现在镜头凑近了。刚才一格是 128 个方块，现在一格只有 16 个，平地、台地、海岸都能看清了。", "start": 317.77777777777777, "end": 327.375, "lineStart": 317.77777777777777, "beat": "D1"}, {"id": "2-24", "who": "claude", "face": "talk_smile", "text": "每块地上还标着编号，比如\"平原 28\"。", "start": 327.375, "end": 331.0, "lineStart": 317.77777777777777}, {"id": "2-24", "who": "claude", "face": "talk_smile", "text": "后面 AI 说\"把星厅放在平原 28 北半部\"，指的就是这里。", "start": 331.0, "end": 336.6666666666667, "lineStart": 317.77777777777777}, {"id": "2-25", "who": "deepseek", "face": "d4", "text": "行，那我先记着，可等回顾的时候，你别跳过去啊。", "start": 337.77777777777777, "end": 342.35381944444447, "lineStart": 337.77777777777777}, {"id": "2-26", "who": "astra", "face": "talk_smile", "text": "这些编号就像给地块起了名字，方便 AI 看图时说清楚自己选中了哪一片。", "start": 343.33333333333337, "end": 349.7083333333333, "lineStart": 343.33333333333337}, {"id": "2-26", "who": "astra", "face": "talk_smile", "text": "不过\"平原 28 北半部\"还只是个大致位置，真要放建筑，还得定下具体坐标，再看建筑有多大、朝哪边、周围留多少空地。", "start": 349.7083333333333, "end": 360.3552708333334, "lineStart": 343.33333333333337}, {"id": "2-27", "who": "claude", "face": "talk_smile", "text": "放心，不会跳过的。", "start": 361.11111111111114, "end": 363.33333333333337, "lineStart": 361.11111111111114}, {"id": "2-28", "who": "claude", "face": "talk_smile", "text": "动手之前，AI 先把国度阶段定下的职责拿出来再读一遍：", "start": 364.44444444444446, "end": 368.7083333333333, "lineStart": 364.44444444444446, "beat": "D1b"}, {"id": "2-28", "who": "claude", "face": "talk_smile", "text": "教学、藏书、议事、研究、学生生活，还有港口迎客。", "start": 368.7083333333333, "end": 374.3333333333333, "lineStart": 364.44444444444446}, {"id": "2-28", "who": "claude", "face": "talk_smile", "text": "这张单子会一直跟着它，后面每个功能区都要能对回这里的某一项。", "start": 374.3333333333333, "end": 379.44444444444446, "lineStart": 364.44444444444446}, {"id": "2-29", "who": "claude", "face": "talk_smile", "text": "然后是挑房子的风格。之前给这里的建议其实是北欧风，", "start": 380.0, "end": 384.25, "lineStart": 380.0, "beat": "D1c"}, {"id": "2-29", "who": "claude", "face": "talk_smile", "text": "但这座城的职责是学院，AI 最后选了魔法学院这套素材，一共四十五种。", "start": 384.25, "end": 391.11111111111114, "lineStart": 380.0}, {"id": "2-30", "who": "astra", "face": "talk_smile", "text": "这里的素材，就是已经做好的建筑，AI 会从里面挑合适的来安排。", "start": 392.22222222222223, "end": 397.9166666666667, "lineStart": 392.22222222222223}, {"id": "2-30", "who": "astra", "face": "talk_smile", "text": "接下来还得看每栋具体能做什么、占多大地方：适合上课的、适合住宿的，要分别找出来。", "start": 397.9166666666667, "end": 405.8075972222222, "lineStart": 392.22222222222223}, {"id": "2-31", "who": "deepseek", "face": "wry", "text": "四十五种，挑起来可不轻松。", "start": 406.6666666666667, "end": 409.0, "lineStart": 406.6666666666667}, {"id": "2-31", "who": "deepseek", "face": "wry", "text": "我上次就把版本挑错了，最后只盖了十四栋就收场。", "start": 409.0, "end": 413.8888888888889, "lineStart": 406.6666666666667}, {"id": "2-32", "who": "claude", "face": "talk_smile", "text": "四十五种分开一看就清楚了：教学的有十四种，研究七种，住宿只有三种，吃饭的只有两种。", "start": 414.44444444444446, "end": 422.375, "lineStart": 414.44444444444446, "beat": "D1d"}, {"id": "2-32", "who": "claude", "face": "talk_smile", "text": "光看这几堆就知道，等会儿要住满学生，住宿这堆要省着用、反复用。", "start": 422.375, "end": 428.33333333333337, "lineStart": 414.44444444444446}, {"id": "2-33", "who": "claude", "face": "talk_smile", "text": "接下来，单子上的职责一项项变成功能区：中央礼仪放在\"平原 28 北半部\"，基础教学放在\"星厅西北\"……一共十六个。", "start": 428.8888888888889, "end": 438.4583333333333, "lineStart": 428.8888888888889, "beat": "D1e"}, {"id": "2-33", "who": "claude", "face": "talk_smile", "text": "这时候 AI 只说了大概方向，还没给坐标，具体放在哪，要等一个区一个区设计的时候才定。", "start": 438.4583333333333, "end": 446.6666666666667, "lineStart": 428.8888888888889}, {"id": "2-34", "who": "astra", "face": "talk_smile", "text": "住宿只有三种，说的是房子的样式，真建的时候同一种可以用好几次，怎么排、留出什么院子也可以各不相同。", "start": 447.77777777777777, "end": 457.0833333333333, "lineStart": 447.77777777777777}, {"id": "2-34", "who": "astra", "face": "talk_smile", "text": "这十六个区先把整座城的分工和相互位置想清楚，设计某个区时就有了参照：", "start": 457.0833333333333, "end": 463.7083333333333, "lineStart": 447.77777777777777}, {"id": "2-34", "who": "astra", "face": "talk_smile", "text": "我旁边是谁，要留路通向哪里，不能只顾自己这块摆得好看。", "start": 463.7083333333333, "end": 469.40444444444444, "lineStart": 447.77777777777777}, {"id": "2-35", "who": "claude", "face": "talk_smile", "text": "接下来我们只盯着一个区慢慢看：南边的学生宿院。", "start": 469.44444444444446, "end": 474.0416666666667, "lineStart": 469.44444444444446, "beat": "D2"}, {"id": "2-35", "who": "claude", "face": "talk_smile", "text": "这里要住五十六个人，AI 从住宿那堆里挑了一栋学院宿舍，十六张床，占地十九乘二十三格。", "start": 474.0416666666667, "end": 482.73777777777775, "lineStart": 469.44444444444446}, {"id": "2-36", "who": "claude", "face": "talk_smile", "text": "它的想法是四栋宿舍围出一个共享的内院，门都朝着院子开，东边走几步就是食堂。", "start": 482.77777777777777, "end": 489.4583333333333, "lineStart": 482.77777777777777, "beat": "D3"}, {"id": "2-36", "who": "claude", "face": "talk_smile", "text": "从这里开始，参数单上每填一项，地图上就多一样东西：先定从哪儿开始，再定排法、栋数和间距。", "start": 489.4583333333333, "end": 498.1278819444445, "lineStart": 482.77777777777777}, {"id": "2-37", "who": "astra", "face": "talk_smile", "text": "这就是让建筑成组排布：AI 告诉程序从哪里开始、按什么方式排、放几栋、隔多远，程序据此算出每栋的位置。", "start": 498.33333333333337, "end": 508.4166666666667, "lineStart": 498.33333333333337}, {"id": "2-37", "who": "astra", "face": "talk_smile", "text": "四栋、每栋十六张床，计划上就有六十四个床位，够五十六人住；", "start": 508.4166666666667, "end": 514.4166666666666, "lineStart": 498.33333333333337}, {"id": "2-37", "who": "astra", "face": "talk_smile", "text": "但这还只是设计意图，下一步得看程序实际排出了什么。", "start": 514.4166666666666, "end": 519.149625, "lineStart": 498.33333333333337}, {"id": "2-38", "who": "deepseek", "face": "talk_smile", "text": "一栋十六张床，四栋就是六十四，住五十六个人，还留了点余量，这个数算得挺舒服。", "start": 519.4444444444445, "end": 526.6266666666668, "lineStart": 519.4444444444445}, {"id": "2-39", "who": "glm", "face": "talk_smile", "text": "四栋楼门全朝里开、围出一个院子，出门几步就是食堂——", "start": 526.6666666666667, "end": 532.0833333333334, "lineStart": 526.6666666666667}, {"id": "2-39", "who": "glm", "face": "talk_smile", "text": "先不说 AI 规划得怎么样，我自己看着都想进去住。", "start": 532.0833333333334, "end": 536.6666666666667, "lineStart": 526.6666666666667}, {"id": "2-40", "who": "claude", "face": "d4", "text": "然后，程序算完了……", "start": 537.7777777777778, "end": 539.7916666666666, "lineStart": 537.7777777777778, "beat": "D4"}, {"id": "2-40", "who": "claude", "face": "d4", "text": "只落下了一栋。", "start": 539.7916666666666, "end": 541.6666666666667, "lineStart": 537.7777777777778}, {"id": "2-41", "who": "gemini", "face": "d4", "text": "你们俩刚夸完数算得舒服、还想搬进去住，", "start": 542.2222222222223, "end": 545.4166666666666, "lineStart": 542.2222222222223}, {"id": "2-41", "who": "gemini", "face": "d4", "text": "结果四栋一下没了三栋，五十六个学生只剩十六张床了。", "start": 545.4166666666666, "end": 550.0833333333334, "lineStart": 542.2222222222223}, {"id": "2-41", "who": "gemini", "face": "think", "text": "另外那三栋是怎么没放上去的呀？", "start": 550.0833333333334, "end": 554.4444444444445, "lineStart": 542.2222222222223}, {"id": "2-42", "who": "astra", "face": "talk_smile", "text": "这里得分清「想放四栋」和「实际算出四栋」。", "start": 555.5555555555555, "end": 559.4166666666666, "lineStart": 555.5555555555555}, {"id": "2-42", "who": "astra", "face": "talk_smile", "text": "AI 填的四栋是请求，程序这次返回的位置却只有一个。", "start": 559.4166666666666, "end": 564.5, "lineStart": 555.5555555555555}, {"id": "2-42", "who": "astra", "face": "talk_smile", "text": "刚才六十四张床只是计划，得回头检查排布。", "start": 564.5, "end": 568.8888888888889, "lineStart": 555.5555555555555}, {"id": "2-43", "who": "glm", "face": "wry", "text": "懂，太懂了——我九月那两次提交被打回来重选，就是这种感觉。", "start": 570.0, "end": 576.6666666666666, "lineStart": 570.0}, {"id": "2-43", "who": "glm", "face": "wry", "text": "看来夸房子也得等程序点了头再夸。", "start": 576.6666666666666, "end": 579.8701875, "lineStart": 570.0}, {"id": "2-44", "who": "astra", "face": "wry", "text": "这座城当时就是我设计的，这里也是我返工的地方。", "start": 580.0, "end": 583.75, "lineStart": 580.0}, {"id": "2-44", "who": "astra", "face": "wry", "text": "我原本想让四栋小宿舍围出一个院子，看到只出来一栋，先怀疑是程序太早停止填充，", "start": 583.75, "end": 590.6666666666666, "lineStart": 580.0}, {"id": "2-44", "who": "astra", "face": "wry", "text": "就关掉了那个\"够了就停\"的选项，结果还是只有一栋。", "start": 590.6666666666666, "end": 596.6666666666667, "lineStart": 580.0}, {"id": "2-45", "who": "astra", "face": "talk_smile", "text": "后来我换了一种组合：用双翼宿舍当核心，再明确配上小宿舍，这才把四栋补齐。", "start": 597.2222222222223, "end": 604.2083333333334, "lineStart": 597.2222222222223}, {"id": "2-45", "who": "astra", "face": "talk_smile", "text": "具体为什么最初那种组合只出一栋，当时没有查清；", "start": 604.2083333333334, "end": 608.25, "lineStart": 597.2222222222223}, {"id": "2-45", "who": "astra", "face": "talk_smile", "text": "但我不能拿着参数单里的六十四张床，就说五十六个人都有地方住了，得看实际出来的房子。", "start": 608.25, "end": 616.1111111111111, "lineStart": 597.2222222222223}, {"id": "2-46", "who": "astra", "face": "talk_smile", "text": "而且补齐以后还没完——房子是够了，学生出门去食堂、去市场的路，又得接着改。", "start": 616.6666666666667, "end": 624.4044444444445, "lineStart": 616.6666666666667}, {"id": "2-47", "who": "claude", "face": "talk_smile", "text": "大家看这道缝：宿院和市场之间只剩 8 格，两条本该通过的主路，就卡在这儿。", "start": 624.4444444444445, "end": 631.3333333333334, "lineStart": 624.4444444444445, "beat": "D5a"}, {"id": "2-47", "who": "claude", "face": "think", "text": "Astra，你当时先想到的办法是挪一挪？", "start": 631.3333333333334, "end": 635.0576736111111, "lineStart": 624.4444444444445}, {"id": "2-48", "who": "astra", "face": "talk_smile", "text": "对，我先想尽量保留这个院子，就把整组宿舍往东挪十二格、往南挪六格，", "start": 635.5555555555555, "end": 642.5416666666666, "lineStart": 635.5555555555555}, {"id": "2-48", "who": "astra", "face": "talk_smile", "text": "给北边通往市场的路让出空间，也让西侧的宿舍离水边远一点。", "start": 642.5416666666666, "end": 647.625, "lineStart": 635.5555555555555}, {"id": "2-48", "who": "astra", "face": "talk_smile", "text": "但挪完再看，四栋围起来的院子还是没接上主路——光搬位置不够，得把排法也改了。", "start": 647.625, "end": 655.1781180555556, "lineStart": 635.5555555555555, "beat": "D5b"}, {"id": "2-49", "who": "claude", "face": "talk_smile", "text": "这一拍我特别想让大家多看两秒。", "start": 655.5555555555555, "end": 657.8333333333334, "lineStart": 655.5555555555555}, {"id": "2-49", "who": "claude", "face": "talk_smile", "text": "缝确实变宽了，可路还是进不去，因为四栋楼把院子四面都围死了。", "start": 657.8333333333334, "end": 663.125, "lineStart": 655.5555555555555}, {"id": "2-49", "who": "claude", "face": "talk_smile", "text": "问题不在放哪儿，在院子的形状。", "start": 663.125, "end": 667.7777777777778, "lineStart": 655.5555555555555}, {"id": "2-50", "who": "claude", "face": "think", "text": "所以 Astra 最后换了排法。Astra，你给大家讲讲现在这条巷子吧？", "start": 668.8888888888889, "end": 675.5555555555555, "lineStart": 668.8888888888889, "beat": "D6"}, {"id": "2-51", "who": "astra", "face": "talk_smile", "text": "我把原来四面围合的排法拆开了：一栋双翼宿舍自己就带着庭院，另外三栋小宿舍沿着一条生活巷排开，北边接市场，东边通食堂。", "start": 676.6666666666667, "end": 687.2916666666666, "lineStart": 676.6666666666667}, {"id": "2-51", "who": "astra", "face": "talk_smile", "text": "这样四栋都保留了，也还留着大家一起活动的地方，出门却不用困在院子里找出口。", "start": 687.2916666666666, "end": 693.8888888888889, "lineStart": 676.6666666666667}, {"id": "2-52", "who": "astra", "face": "moved", "text": "我当时想保住的，其实是\"住得下、有地方相聚、去吃饭买东西方便\"，不一定非得是四栋楼围成一个方框。", "start": 694.4444444444445, "end": 704.1666666666666, "lineStart": 694.4444444444445}, {"id": "2-52", "who": "astra", "face": "moved", "text": "改到这里，房子之间的空地才真正有了用处。", "start": 704.1666666666666, "end": 708.2155902777778, "lineStart": 694.4444444444445}, {"id": "2-53", "who": "claude", "face": "moved", "text": "这就是我最想让大家看到的一段。", "start": 708.3333333333334, "end": 710.75, "lineStart": 708.3333333333334}, {"id": "2-53", "who": "claude", "face": "moved", "text": "AI 不是一次就画对了，它也会走弯路，但每一步都知道自己要守住什么。", "start": 710.75, "end": 717.2222222222223, "lineStart": 708.3333333333334}, {"id": "2-54", "who": "claude", "face": "talk_smile", "text": "南宿院只是十六个区里的一个。剩下的区也是同样的过程：挑素材、填参数、看结果、再改。", "start": 717.7777777777778, "end": 726.2083333333334, "lineStart": 717.7777777777778, "beat": "D7"}, {"id": "2-54", "who": "claude", "face": "talk_smile", "text": "我们就不一个个讲了，快放一遍，最后整座城一共是八十六个计划单元。", "start": 726.2083333333334, "end": 731.7811111111112, "lineStart": 717.7777777777778}, {"id": "2-55", "who": "claude", "face": "talk_smile", "text": "最后，这是它真正建进游戏里的样子：迎宾、宿舍生活区、星厅与庭院、图书馆、天象台、绿植教学区。", "start": 733.3333333333334, "end": 743.625, "lineStart": 733.3333333333334, "beat": "D-photos"}, {"id": "2-55", "who": "claude", "face": "talk_smile", "text": "刚才地图上的那些方块，就是照片里的这些地方。", "start": 743.625, "end": 747.1822222222223, "lineStart": 733.3333333333334}, {"id": "2-56", "who": "gemini", "face": "moved", "text": "看左下角那张宿舍生活区，刚才在地图上还是几个方格和一条小巷，建进游戏里连院子里的树和海边小路都有了。", "start": 747.2222222222223, "end": 757.7083333333334, "lineStart": 747.2222222222223}, {"id": "2-56", "who": "gemini", "face": "moved", "text": "感觉刚才那五十六个学生，马上就能拎包入学了。", "start": 757.7083333333334, "end": 761.9221597222223, "lineStart": 747.2222222222223}, {"id": "2-57", "who": "astra", "face": "talk_smile", "text": "看到这里，我最开心的就是能顺着刚才的设计找地方了：这里住，往那边吃饭，再走过去上课。", "start": 762.2222222222223, "end": 770.6666666666666, "lineStart": 762.2222222222223}, {"id": "2-57", "who": "astra", "face": "talk_smile", "text": "不过房子和路先准备好了，学生还没真正住进来；下一步，我们就想让他们在这里过起日子。", "start": 770.6666666666666, "end": 778.686888888889, "lineStart": 762.2222222222223}, {"id": "2-58", "who": "deepseek", "face": "moved", "text": "同一座城，我那次只排出十四栋。", "start": 778.8888888888889, "end": 781.875, "lineStart": 778.8888888888889}, {"id": "2-58", "who": "deepseek", "face": "moved", "text": "现在看这八十六个，差的不在想法，而在后面这一遍遍返工。", "start": 781.875, "end": 786.6266666666668, "lineStart": 778.8888888888889}, {"id": "2-59", "who": "glm", "face": "moved", "text": "说句真心话——九月我就是在\"设计怎么建进游戏\"这一步停机的，队里六座城一座都没走过去。", "start": 786.6666666666667, "end": 794.0416666666666, "lineStart": 786.6666666666667}, {"id": "2-59", "who": "glm", "face": "moved", "text": "今天看到八十六个单元真挂上了实景照片，我那份阻塞报告，算是有人替我交上了。", "start": 794.0416666666666, "end": 801.1111111111112, "lineStart": 786.6666666666667}, {"id": "2-60", "who": "rin", "face": "talk_smile", "text": "说起来，这里我最喜欢那张天象台诶。", "start": 802.2222222222223, "end": 805.5555555555555, "lineStart": 802.2222222222223, "revealEnd": 804.1708616780046, "charStep": 0.11462585034013606}, {"id": "2-60", "who": "rin", "face": "talk_smile", "text": "它是原版地形加上我们道路遇水自动搭桥的程序，自然长出来的。", "start": 805.5555555555555, "end": 811.1111111111112, "lineStart": 802.2222222222223, "revealEnd": 808.8797052154194, "charStep": 0.11462585034013607}, {"id": "2-60", "who": "rin", "face": "talk_smile", "text": "从绿植教学区走回来，还有条小河一路陪着，让我想起原版 MC 刷到好种子的快乐了。", "start": 811.1111111111112, "end": 818.3333333333334, "lineStart": 802.2222222222223, "revealEnd": 815.6961451247166, "charStep": 0.11462585034013606}, {"id": "2-61", "who": "astra", "face": "talk_smile", "text": "对，我们没有事先画好\"这里要有一条河、河上架一座桥\"，是原本的水岸碰上了连接两个区的路，才长成这个样子。", "start": 818.8888888888889, "end": 828.2916666666666, "lineStart": 818.8888888888889}, {"id": "2-61", "who": "astra", "face": "talk_smile", "text": "写程序时想的是让路能过去，你进游戏一逛，却发现这段路还挺值得慢慢走。", "start": 828.2916666666666, "end": 834.889138888889, "lineStart": 818.8888888888889}, {"id": "2-62", "who": "glm", "face": "moved", "text": "这就是最妙的地方——山水是骰子掷出来的，桥是我们自己搭的，两边一凑就成了风景。", "start": 835.5555555555555, "end": 845.2083333333334, "lineStart": 835.5555555555555}, {"id": "2-62", "who": "glm", "face": "moved", "text": "开场那张白纸，收尾的时候成了一张明信片。", "start": 845.2083333333334, "end": 849.6982222222223, "lineStart": 835.5555555555555}, {"id": "2-63", "who": "deepseek", "face": "moved", "text": "这大概就是原版地图最迷人的地方：好地方不是设计出来的，而是走着走着撞见的。", "start": 850.0, "end": 856.8051666666667, "lineStart": 850.0}, {"id": "2-64", "who": "gemini", "face": "wry", "text": "说到原版地形的惊喜，现在想想，幸亏我们去年十二月转了个弯，决定接受世界原本的山海。", "start": 857.7777777777778, "end": 865.5833333333334, "lineStart": 857.7777777777778}, {"id": "2-64", "who": "gemini", "face": "wry", "text": "要是一直照着十一月刚起步时的想法，先写好设定再去改地形硬造大陆，", "start": 865.5833333333334, "end": 871.0833333333334, "lineStart": 857.7777777777778}, {"id": "2-64", "who": "gemini", "face": "wry", "text": "不仅复杂得写不动，也遇不到现在这种小河搭桥的巧合了。", "start": 871.0833333333334, "end": 876.6666666666667, "lineStart": 857.7777777777778}], "beats": [{"index": 0, "t": 22.22222222222222}, {"index": 1, "t": 33.333333333333336}, {"index": 2, "t": 73.33333333333334}, {"index": 3, "t": 81.11111111111111}, {"index": 4, "t": 84.44444444444444}, {"index": 5, "t": 102.22222222222223}, {"index": 6, "t": 144.44444444444446}, {"index": 7, "t": 195.55555555555557}, {"index": 8, "t": 248.8888888888889}, {"index": 9, "t": 262.22222222222223}, {"index": 10, "t": 317.77777777777777}, {"index": 11, "t": 364.44444444444446}, {"index": 12, "t": 380}, {"index": 13, "t": 414.44444444444446}, {"index": 14, "t": 428.8888888888889}, {"index": 15, "t": 468.8888888888889}, {"index": 16, "t": 482.22222222222223}, {"index": 17, "t": 537.7777777777778}, {"index": 18, "t": 624.4444444444445}, {"index": 19, "t": 647.7777777777778}, {"index": 20, "t": 668.8888888888889}, {"index": 21, "t": 717.7777777777778}, {"index": 22, "t": 733.3333333333334}], "stamps": {}, "marks": {}};
+timeline.splice(0,timeline.length,...VOICE_TIMING.cards);
+beatStarts.splice(0,beatStarts.length,...VOICE_TIMING.beats.map(b=>({beat:b.index,t:b.t})));
+for(let i=0;i<beatStarts.length-1;i++){const b=beatStarts[i]; DUR[b.beat]=Math.min(DUR[b.beat],Math.max(.2,beatStarts[i+1].t-b.t-.05));}
+window.TIMELINE = timeline; window.BEATSTARTS = beatStarts; window.GRID = G; // 给配乐脚本对时间用
+
+// 当前该显示第几拍、播到几成，录制脚本用它去驱动第二幕 PPT
+window.beatAt = function (time) {
+  let cur = null;
+  for (const s of beatStarts) if (s.t <= time) cur = s;
+  if (!cur) return null;
+  const d = DUR[cur.beat];
+  return { index: cur.beat, id: BEATS[cur.beat], progress: d ? Math.min(1, (time - cur.t) / d) : 1, since: time - cur.t };
+};
+
+const box = document.getElementById('members');
+for (const m of members) {
+  const el = document.createElement('div');
+  el.className = 'member'; el.style.left = m.x + 'px'; el.id = 'm-' + m.id;
+  for (const s of states) {
+    const img = document.createElement('img');
+    img.dataset.state = s; img.src = SPRITES + m.id + '/' + s + '.png';
+    img.onerror = () => img.remove();
+    el.appendChild(img);
+  }
+  box.appendChild(el);
+}
+
+const $ = id => document.getElementById(id);
+const clamp = x => Math.max(0, Math.min(1, x));
+const ease = x => 1 - Math.pow(1 - clamp(x), 3);
+const SWAP = 0.15, HOLD = 2.0, HOLD_UNTIL_NEXT = false;
+const cueAt = time => timeline.find(c => time >= c.start && time < c.end);
+function available(id, state) {
+  const el = $('m-' + id);
+  if (el.querySelector(`img[data-state="${state}"]`)) return state;
+  for (const alt of FALLBACK[state] || []) if (el.querySelector(`img[data-state="${alt}"]`)) return alt;
+  return 'listen';
+}
+function faceAt(id, time) {
+  const c = cueAt(time);
+  if (c && c.who === id) return available(id, c.face);
+  let last = null;
+  for (const x of timeline) { if (x.start > time) break; if (x.who === id && x.end <= time) last = x; }
+  if (last && (HOLD_UNTIL_NEXT || time - last.end < HOLD)) return available(id, last.face);
+  return 'listen';
+}
+function dimAt(id, time) { const c = cueAt(time); return !!c && c.who !== id; }
+const boundaries = [...new Set(timeline.flatMap(c => [c.start, c.end, c.end + HOLD]))].sort((a, b) => a - b);
+function lastChange(fn, time, dur) {
+  for (let i = boundaries.length - 1; i >= 0; i--) {
+    const b = boundaries[i];
+    if (b > time) continue;
+    if (time - b >= dur) return null;
+    if (fn(b - 0.001) !== fn(b)) return b;
+  }
+  return null;
+}
+
+// 录制时由脚本传入当前 PPT 画面；直接打开预览时用分页图代替
+window.externalPpt = false;
+const PAGE_FILE = { W1: '01_W1', W2: '02_W2', W3a: '03_W3a', W3b: '04_W3b', W3c: '05_W3c', T1: '06_T1', T2: '07_T2', T3: '08_T3', 'T3-end': '09_T3-end',
+  T4: '10_T4', D1: '11_D1', D1b: '12_D1b', D1c: '13_D1c', D1d: '14_D1d', D1e: '15_D1e', D2: '16_D2', D3: '17_D3', D4: '18_D4', D5a: '19_D5a', D5b: '20_D5b',
+  D6: '21_D6', D7: '22_D7', 'D-photos': '23_D-photos' };
+
+
+// 讲解时的镜头：第一拍开始时推近白板，PPT 铺满画面；最后一句说完再拉回活动室
+const HEAD = { rin: [125, 95], gemini: [130, 100], claude: [130, 100], astra: [150, 100], deepseek: [145, 100], glm: [148, 95] }; // 立绘缩到 300px 时脸的位置
+const SLOT = { rin: 120, gemini: 290, claude: 460, astra: 1460, deepseek: 1630, glm: 1800 };
+const LEFT = new Set(['rin', 'gemini', 'claude']);
+const K = 1800 / 1438.2, TX = 60 - 241.4 * K, TY = 26 - 49 * K;
+// 头像在说完话、表情余韵（HOLD）结束前消失，消失动画结束时正好切回站立
+const STAY = HOLD - 0.35;
+const inout = x => { x = clamp(x); return x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; };
+const backOut = x => { x = clamp(x); const c = 1.9; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
+for (const m of members) {
+  const av = document.createElement('div');
+  av.className = 'av'; av.id = 'av-' + m.id; av.style.left = SLOT[m.id] + 'px'; av.style.top = '955px';
+  const [hx, hy] = HEAD[m.id];
+  const faceBox = document.createElement('div'); faceBox.className = 'face'; av.appendChild(faceBox);
+  for (const s of states) {
+    const img = document.createElement('img');
+    // 头像用单独的头像图（../../act2/assets/avatars/heads/），以后换成新画的头像也不用改这里
+    img.dataset.state = s; img.src = HEADS + m.id + '/' + s + '.webp';
+    Object.assign(img.style, { left: 0, top: 0, width: '100%', height: '100%' });
+    img.onerror = () => img.remove();
+    faceBox.appendChild(img);
+  }
+  av.insertAdjacentHTML('beforeend', '<div class="gloss"></div><div class="burst"></div>');
+  $('band').appendChild(av);
+}
+// 天象台：Rin 说"我最喜欢那张天象台"时放大，GLM 说完"明信片"再缩回照片墙
+const OBS_FROM = { x: 1366, y: 113, w: 382, h: 199 }, OBS_TO = { x: 150, y: 40, w: 1620, h: 774 };
+const OBS0 = timeline.find(c => c.id === '2-60').start, OBS1 = timeline.filter(c => c.id === '2-62').pop().end, OBS_D = 2 * G.beat;
+function drawObservatory(time, op) {
+  const k = inout((time - OBS0) / OBS_D) * (1 - inout((time - OBS1) / OBS_D));
+  const box = $('obs');
+  box.style.opacity = k > 0.001 ? op : 0;
+  $('obsdim').style.opacity = op * k;
+  const r = {}; for (const key of ['x', 'y', 'w', 'h']) r[key] = OBS_FROM[key] + (OBS_TO[key] - OBS_FROM[key]) * k;
+  Object.assign(box.style, { left: r.x + 'px', top: r.y + 'px', width: r.w + 'px', height: r.h + 'px' });
+  const pad = 8 + 6 * k, capH = 36 + 18 * k;
+  Object.assign(box.querySelector('.ph').style, { left: pad + 'px', top: pad + 'px', right: pad + 'px', bottom: capH + 'px' });
+  const cap = box.querySelector('.cap');
+  cap.querySelector('span').style.opacity = clamp((k - 0.6) / 0.4);
+  cap.style.fontSize = (20 + 10 * k) + 'px'; cap.style.lineHeight = capH + 'px'; cap.style.paddingLeft = (pad + 4) + 'px';
+  // 放大以后镜头慢慢往右平移、稍微推近
+  const kb = clamp((time - OBS0 - OBS_D) / (OBS1 - OBS0 - OBS_D));
+  box.querySelector('img').style.transform = `scale(${1 + 0.08 * kb}) translateX(${-2.5 * kb}%)`;
+}
+function lastEndOf(id, time) { let e = null; for (const x of timeline) { if (x.start > time) break; if (x.who === id && x.end <= time) e = x.end; } return e; }
+function speakingAt(id, time) { const c = cueAt(time); return !!c && c.who === id; }
+function shownAt(id, time) { if (speakingAt(id, time)) return true; const e = lastEndOf(id, time); return e !== null && e > Z0 && time - e < STAY; }
+function drawBand(time, op) {
+  const cue = cueAt(time);
+  for (const m of members) {
+    const av = $('av-' + m.id);
+    let sc = 0, burst = -1;
+    if (shownAt(m.id, time)) {
+      sc = 1;
+      if (cue && cue.who === m.id && !shownAt(m.id, cue.lineStart - 0.001)) { sc = backOut((time - cue.lineStart) / 0.4); burst = (time - cue.lineStart) / 0.5; }
+    } else {
+      const e = lastEndOf(m.id, time);
+      if (e !== null && e > Z0 && time - e < STAY + 0.35) sc = 1 - ease((time - e - STAY) / 0.35);
+      else if (e === null || time - e >= STAY + 0.35) sc = 0;
+    }
+    const spk = speakingAt(m.id, time), ch = lastChange(x => speakingAt(m.id, x), time, 0.25);
+    let big = spk ? 1 : 0;
+    if (ch !== null) { const q = (time - ch) / 0.25; big = spk ? ease(q) : 1 - ease(q); }
+    const size = 0.72 + 0.28 * big;
+    const hop = spk ? 18 * Math.sin(Math.PI * clamp((time - cue.lineStart) / 0.35)) : 0;
+    av.style.opacity = op * (sc > 0 ? 1 : 0);
+    const float = (1 - big) * 5 * Math.sin(time * 2.2 + SLOT[m.id]);
+    av.style.transform = `translateY(${-hop + (1 - big) * 22 + float}px) scale(${Math.max(0, sc) * size})`;
+    const bu = av.querySelector('.burst');
+    bu.style.opacity = burst >= 0 && burst < 1 ? 1 - burst : 0;
+    bu.style.transform = `scale(${1 + 0.45 * clamp(burst)})`;
+    av.style.filter = `brightness(${0.86 + 0.14 * big})`;
+    av.style.zIndex = spk ? 2 : 1;
+    const face = faceAt(m.id, time), fc = lastChange(x => faceAt(m.id, x), time, SWAP);
+    const k = fc === null ? 1 : (time - fc) / SWAP, prev = fc === null ? face : faceAt(m.id, fc - 0.001);
+    for (const img of av.querySelectorAll('img')) { const s = img.dataset.state; img.style.opacity = s === face ? k : (s === prev && k < 1 ? 1 - k : 0); }
+  }
+}
+
+window.render = function (time) {
+  const c = inout((time - Z0) / ZD) * (1 - inout((time - Z1) / ZD));
+  $('cam').style.transform = `translate(${TX * c}px, ${TY * c}px) scale(${1 + (K - 1) * c})`;
+  const full = clamp((c - 0.8) / 0.2);
+  $('mat').style.opacity = full;
+  $('band').style.opacity = full;
+  const b = window.beatAt(time);
+  const first = beatStarts[0].t;
+  $('cover').style.opacity = 1 - ease((time - first + 0.4) / 0.6);
+  $('board').style.opacity = ease((time - first) / 0.5);
+  if (!window.externalPpt && b) { const src = PAGES + PAGE_FILE[b.id] + '.jpg'; if (!$('ppt').src.endsWith(encodeURI(src).split('/').pop())) $('ppt').src = src; }
+
+  const cue = cueAt(time);
+  members.forEach(m => {
+    const el = $('m-' + m.id);
+    const speaking = cue && cue.who === m.id;
+    const face = faceAt(m.id, time);
+    const changedAt = lastChange(x => faceAt(m.id, x), time, SWAP);
+    const k = changedAt === null ? 1 : (time - changedAt) / SWAP;
+    const prev = changedAt === null ? face : faceAt(m.id, changedAt - 0.001);
+    for (const img of el.querySelectorAll('img')) {
+      const s = img.dataset.state;
+      img.style.opacity = s === face ? k : (s === prev && k < 1 ? 1 - k : 0);
+    }
+    // 只在开口换表情时"弹"一下；说完话回到站立时只是淡淡换过去，免得安静的时候突然一弹
+    const squash = k < 1 && speaking ? 1 - 0.04 * Math.sin(k * Math.PI) : 1;
+    const dimNow = dimAt(m.id, time), dimChanged = lastChange(x => dimAt(m.id, x), time, 0.25);
+    let d = dimNow ? 1 : 0;
+    if (dimChanged !== null) { const q = (time - dimChanged) / 0.25; d = dimNow ? q : 1 - q; }
+    el.style.filter = `brightness(${1 - 0.28 * d}) saturate(${1 - 0.2 * d})`;
+    let lift = 0, scale = 1;
+    // 推近以后底下的立绘直接隐藏，也不再弹跳和浮动，免得头顶从 PPT 下沿露出来
+    el.style.opacity = 1 - clamp(c / 0.6);
+    if (speaking && c < 0.01) {
+      const s = time - cue.lineStart;
+      lift = 26 * Math.sin(Math.min(s / 0.35, 1) * Math.PI) * (s < 0.35 ? 1 : 0) + 10 + 3 * Math.sin(time * 6);
+      scale = 1.08;
+    }
+    el.style.transform = `translateY(${-lift}px) scale(${scale * (2 - squash)}, ${scale * squash})`;
+    el.style.zIndex = speaking ? 10 : m.z;
+  });
+  const name = $('name'), line = $('line');
+  if (cue) {
+    const who = members.find(m => m.id === cue.who);
+    name.textContent = who.name; name.style.background = who.color; if (line.textContent !== cue.text) {
+      // 字幕框收紧到文字的实际宽度，换行后不留一大块空白
+      line.style.width = ''; line.textContent = cue.text;
+      const r = document.createRange(); r.selectNodeContents(line);
+      // 多留几像素，免得标点挤到下一行
+      // 草稿模式整页缩小时，量出来的宽度也跟着缩小，要换算回页面上的像素
+      const zoom = line.getBoundingClientRect().width / line.offsetWidth || 1;
+      line.style.width = Math.ceil(Math.max(...[...r.getClientRects()].map(x => x.width)) / zoom) + 8 + 'px';
+    }
+    const fade = ease((time - cue.start) / 0.2);
+    name.style.opacity = fade; line.style.opacity = fade;
+  } else { name.style.opacity = 0; line.style.opacity = 0; }
+  $('sub').style.transform = `translateY(${62 * full}px)`;
+  drawObservatory(time, full);
+  drawBand(time, full);
+};
+
+if (!location.search.includes('static')) {
+  const t0 = performance.now();
+  (function loop() { window.render(((performance.now() - t0) / 1000) % window.DURATION); requestAnimationFrame(loop); })();
+}
+</script>
+<style>#line{position:relative} #rinReveal{position:absolute;inset:0;padding:inherit;box-sizing:border-box;pointer-events:none;white-space:inherit;color:var(--ink,#3a3631)}</style>
+<script>
+const fullRender=window.render;
+window.render=function(time){fullRender(time);const cue=window.TIMELINE.find(c=>time>=c.start&&time<c.end);const el=document.getElementById('line');let overlay=document.getElementById('rinReveal');
+ if(cue&&cue.who==='rin'){
+  const chars=Array.from(cue.text);const k=Math.min(chars.length,Math.max(1,Math.floor((time-cue.start)/cue.charStep)+1));
+  el.style.color='transparent';if(!overlay){overlay=document.createElement('span');overlay.id='rinReveal';el.appendChild(overlay);}overlay.textContent=chars.slice(0,k).join('');
+ }else{el.style.color='';if(overlay)overlay.remove();}
+};
+</script>
+<script>
+// LIVE_ATLAS_PREVIEW: use the real atlas renderer, not static JPG pages.
+window.externalPpt=true;const atlasFrame=document.createElement('iframe');
+atlasFrame.src=new URL('../../act2/wtd-atlas.html',document.baseURI).href;
+Object.assign(atlasFrame.style,{position:'absolute',left:'105.5px',top:'0',width:'1600px',height:'900px',border:'0',transform:'scale(0.89875)',transformOrigin:'0 0',pointerEvents:'none'});
+document.getElementById('board').style.overflow='hidden';document.getElementById('board').appendChild(atlasFrame);
+let atlasReady=false,lastTime=0;
+atlasFrame.onload=()=>{atlasFrame.contentWindow.eval(`
+cancelAnimationFrame(frame);frame=0;
+window.previewSeek=(i,pr)=>{cancelAnimationFrame(frame);frame=0;
+ const prevT=i>0?beats[i-1][4]:base;index=i;scene=legacyScene(beats[i][0]);displayMeta();
+ const target=beats[i][4],tt=ease(Math.max(0,Math.min(1,pr)));current={};
+ for(const k in target)current[k]=mix(prevT[k]??target[k],target[k],tt);if(scene===7)current.claims=mix(Math.max(-.001,prevT.claims),1,clamp(pr/.88));draw(current,pr);
+};`);atlasReady=true;window.render(lastTime);};
+const voicedRender=window.render;window.render=t=>{lastTime=t;voicedRender(t);const b=window.beatAt(t);atlasFrame.style.visibility=b?'visible':'hidden';if(b&&atlasReady)atlasFrame.contentWindow.previewSeek(b.index,b.progress);};
+</script><script src="../../音频/全片配音_20261118/editor_bridge.js?v=rin-600x170-20261122"></script>
+</body>
+</html>

@@ -1,0 +1,995 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<base href="../../视频素材/第三段/">
+<meta charset="utf-8">
+<title>第三段 · 回顾</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Noto+Sans+SC:wght@500;700&display=block">
+<style>
+  :root { --ink: #3a3631; --soft: #8c8274; --red: #d9624f; --orange: #d9772b; --paper: #fffdf8; }
+  html, body { margin: 0; background: #1e1d1b; }
+  #stage { position: relative; width: 1920px; height: 1080px; overflow: hidden; font-family: "Noto Sans SC", "WenQuanYi Zen Hei", sans-serif; }
+  #room { position: absolute; inset: 0; width: 1920px; height: 1080px; }
+  /* 白板内侧 x 122–1799，y 41–697；下面的坐标都相对白板 */
+  #board { position: absolute; left: 122px; top: 41px; width: 1677px; height: 656px; overflow: hidden; color: var(--ink); }
+  #board > * { position: absolute; opacity: 0; }
+  .hand { font-family: "ZCOOL KuaiLe", sans-serif; }
+  .lbl { font-family: "ZCOOL KuaiLe", sans-serif; fill: var(--ink); }
+  .note { font-family: "Noto Sans SC", sans-serif; font-weight: 500; fill: #5d6b6b; }
+  .card { background: var(--paper); border-radius: 12px; box-shadow: 0 5px 14px rgba(60,40,20,.16); }
+  .cap { font-family: "ZCOOL KuaiLe", sans-serif; font-size: 40px; }
+  .cap small { display: block; font-family: "Noto Sans SC", sans-serif; font-size: 22px; color: var(--soft); margin-top: 6px; font-weight: 500; }
+  .sticker { width: 190px; height: 190px; border-radius: 50%; background: #fff; box-shadow: 0 4px 12px rgba(60,40,20,.18); }
+  .stamp { font-family: "ZCOOL KuaiLe", sans-serif; color: var(--red); border: 5px solid var(--red); border-radius: 12px; padding: 4px 18px; }
+
+  /* 回顾标题卡与艾尔大陆 */
+  #titlecard { inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  #titlecard .big { font-size: 150px; letter-spacing: 30px; }
+  #titlecard .small { font-size: 34px; color: var(--soft); margin-top: 10px; letter-spacing: 4px; }
+  #map { left: 38px; top: 15px; width: 1600px; height: 626px; overflow: hidden; border-radius: 4px; }
+  #map img, #map svg { position: absolute; left: 0; top: 0; width: 1600px; height: 626px; }
+  #world { left: 556px; top: 29px; width: 540px; height: 540px; padding: 12px; background: var(--paper); box-shadow: 0 6px 16px rgba(60,40,20,.18); transform: rotate(-2deg); }
+  #worldcap { left: 888px; width: 700px; top: 209px; font-size: 52px; line-height: 1.5; }
+  #worldcap small { display: block; font-size: 28px; color: var(--soft); margin-top: 12px; }
+  #tag { left: 58px; top: 609px; font-size: 18px; color: var(--soft); }
+
+  /* 时间线 */
+  #tl { left: 0; top: 0; width: 1677px; height: 130px; }
+  .node { position: absolute; top: 18px; width: 170px; margin-left: -85px; text-align: center; transform-origin: 50% 40px; }
+  .node .dot { width: 22px; height: 22px; border-radius: 50%; background: #fff; border: 4px solid #b9ae9e; margin: 18px auto 8px; box-sizing: border-box; }
+  .node .d { font-family: "ZCOOL KuaiLe"; font-size: 28px; color: var(--soft); }
+  .node .w { font-size: 20px; color: var(--soft); font-weight: 500; }
+  .node.on .dot { background: var(--orange); border-color: var(--orange); }
+  .node.on .d { color: var(--ink); }
+  .node.on .w { color: var(--ink); }
+
+  #copy { left: 300px; top: 170px; width: 1080px; height: 440px; }
+  .win { position: absolute; width: 420px; height: 260px; background: #fff; border-radius: 10px; box-shadow: 0 4px 12px rgba(60,40,20,.18); overflow: hidden; }
+  .win::before { content: ''; display: block; height: 30px; background: #ece5d8; }
+  .win i { display: block; height: 12px; margin: 14px 24px 0; border-radius: 6px; background: #d9d1c3; }
+  .kbd { position: absolute; font-family: "ZCOOL KuaiLe"; font-size: 34px; color: #fff; background: var(--ink); border-radius: 10px; padding: 4px 16px; }
+
+  #astra { left: 330px; top: 220px; display: flex; align-items: center; gap: 50px; }
+  #methods { left: 150px; top: 190px; width: 1380px; display: flex; gap: 60px; }
+  #methods .card { width: 420px; height: 360px; position: relative; text-align: center; }
+  #methods .card svg { margin-top: 26px; }
+  #methods .card div { font-family: "ZCOOL KuaiLe"; font-size: 36px; margin-top: 10px; }
+  #methods .x { position: absolute; right: 20px; top: 14px; font-size: 64px; color: var(--red); font-family: "ZCOOL KuaiLe"; }
+
+  #when { left: 0; top: 160px; width: 1677px; height: 470px; }
+
+  #poly { left: 0; top: 140px; width: 1677px; height: 500px; }
+  #jig { left: 0; top: 140px; width: 1677px; height: 500px; }
+  #paint { left: 0; top: 140px; width: 1677px; height: 500px; }
+  #flow { left: 0; top: 150px; width: 1677px; height: 490px; }
+  #test { left: 0; top: 150px; width: 1677px; height: 490px; }
+  #join { left: 0; top: 150px; width: 1677px; height: 490px; }
+  #d4 { left: 0; top: 140px; width: 1677px; height: 516px; }
+  #life { left: 0; top: 150px; width: 1677px; height: 490px; }
+  #year { left: 0; top: 150px; width: 1677px; height: 490px; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <img id="room" src="../开放日插画/clubroom_v2.png" alt="">
+  <div id="board">
+    <div id="titlecard" class="hand"><div class="big">回顾</div><div class="small">2025.11 → 2026.10</div></div>
+
+    <!-- 艾尔大陆：据 2025-11-21 提交 6d3560e4 的 FixedBiomeSource.java 重绘 -->
+    <div id="map">
+      <img src="elle_sea.png" alt="">
+      <svg viewBox="0 0 1600 626">
+        <defs>
+          <pattern id="grid" width="54.35" height="54.35" patternUnits="userSpaceOnUse"><path d="M54.35 0H0V54.35" fill="none" stroke="rgba(43,42,38,.10)" stroke-width="1"/></pattern>
+          <clipPath id="c-aier"><circle id="cc-aier" cx="637" cy="152.2" r="0"/></clipPath>
+          <clipPath id="c-east"><circle id="cc-east" cx="963" cy="532.6" r="0"/></clipPath>
+          <clipPath id="c-spawn"><circle id="cc-spawn" cx="637" cy="423.9" r="0"/></clipPath>
+        </defs>
+        <rect width="1600" height="626" fill="url(#grid)"/>
+        <text class="lbl" x="1300" y="110" font-size="44" id="sea-lbl" opacity="0">无尽之海</text>
+        <image href="elle_biomes.png" width="1600" height="626" clip-path="url(#c-aier)"/>
+        <image href="elle_biomes.png" width="1600" height="626" clip-path="url(#c-east)"/>
+        <image href="elle_biomes.png" width="1600" height="626" clip-path="url(#c-spawn)"/>
+        <g fill="none" stroke="#2b2a26" stroke-width="3">
+          <circle id="o-aier"  cx="637" cy="152.2" r="135.9" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" transform="rotate(-90 637 152.2)"/>
+          <circle id="o-east"  cx="963" cy="532.6" r="81.5"  pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" transform="rotate(-90 963 532.6)"/>
+          <circle id="o-spawn" cx="637" cy="423.9" r="54.3"  pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" transform="rotate(-90 637 423.9)"/>
+        </g>
+        <g id="l-aier" opacity="0"><text class="lbl" x="800" y="110" font-size="40">北方艾尔大陆</text><text class="note" x="802" y="140" font-size="17">中心 (0, −5000) · 半径 2500 · 雪原、冰刺、冻河</text></g>
+        <g id="l-east" opacity="0"><text class="lbl" x="1068" y="520" font-size="40">东方荒野</text><text class="note" x="1070" y="550" font-size="17">中心 (6000, 2000) · 半径 1500 · 丛林</text></g>
+        <g id="l-spawn" opacity="0"><text class="lbl" x="250" y="420" font-size="40">出生点平原</text><text class="note" x="252" y="450" font-size="17">中心 (0, 0) · 半径 1000 · 平原</text></g>
+      </svg>
+    </div>
+    <img id="world" src="../开场/world_map.jpg" alt="">
+    <div id="tag">据 2025-11-21 提交 6d3560e4 · FixedBiomeSource.java 重绘 · 坐标单位为区块</div>
+
+    <div id="tl"><svg width="1677" height="130" style="position:absolute;left:0;top:0"><line id="tl-line" x1="90" y1="72" x2="90" y2="72" stroke="#cfc5b5" stroke-width="4" stroke-linecap="round"/></svg></div>
+
+    <!-- 网页上复制粘贴 -->
+    <!-- 网页和编辑器之间来回搬：代码拖进编辑器，运行报错，再把日志拖回网页，越来越快 -->
+    <div id="copy" style="left:200px;top:160px;width:1280px;height:470px"><svg id="copy-svg" width="1280" height="470"></svg></div>
+
+    <div id="astra">
+      <img class="sticker" src="../开场/stickers/astra.png" alt="">
+      <div class="cap" style="font-size:54px">2026 年 1 月 · Astra 用桌面端加入<small style="font-size:28px">地形扫描 · 国度扩张，进度一下快了起来</small></div>
+    </div>
+
+    <div id="methods">
+      <div class="card"><svg width="300" height="200" viewBox="0 0 300 200"><g fill="none" stroke="#3a3631" stroke-width="3"><rect x="10" y="10" width="280" height="180" rx="8"/><path d="M10 80 L110 60 L150 10 M110 60 L140 130 L10 150 M140 130 L230 120 L290 60 M230 120 L250 190 M150 10 L200 70 L290 60 M200 70 L230 120"/></g></svg><div>切多边形</div><span class="x">✗</span></div>
+      <div class="card"><svg width="300" height="200" viewBox="0 0 300 200"><rect x="10" y="10" width="280" height="180" rx="8" fill="#e9eedc" stroke="#3a3631" stroke-width="3"/><circle cx="120" cy="90" r="50" fill="#e8a87c" opacity=".7"/><circle cx="190" cy="120" r="40" fill="#9cc3d8" opacity=".7"/><path d="M60 170 L250 40" stroke="#3a3631" stroke-width="3" stroke-dasharray="8 6"/><text x="196" y="40" class="lbl" font-size="26">(x, z)</text></svg><div>画图再转坐标</div><span class="x">✗</span></div>
+      <div class="card"><svg width="300" height="200" viewBox="0 0 300 200"><g stroke="#3a3631" stroke-width="3" fill="#f2dcc0"><rect x="30" y="80" width="60" height="60" rx="6"/><rect x="120" y="50" width="60" height="60" rx="6"/><rect x="120" y="130" width="60" height="50" rx="6"/><rect x="210" y="80" width="60" height="60" rx="6" fill="none" stroke-dasharray="7 6"/></g><path d="M90 110 H120 M180 80 L210 110" stroke="#3a3631" stroke-width="3"/><text x="215" y="60" class="lbl" font-size="26">下一块？</text></svg><div>AI 一个个放</div><span class="x">✗</span></div>
+    </div>
+
+    <!-- 4 月：选到范围外，ERROR，被炸晕；9 月：选得准，还能往东挪十二格，PERFECT -->
+    <div id="when" style="left:0;top:150px;width:1677px;height:490px"><svg id="when-svg" width="1677" height="490"></svg></div>
+
+    <!-- 切多边形 -->
+    <div id="poly"><svg id="poly-svg" width="1677" height="500"></svg></div>
+    <!-- 一个个拼 -->
+    <div id="jig"><svg id="jig-svg" width="1677" height="500"></svg></div>
+    <!-- 画图转坐标（示意） -->
+    <div id="paint"><svg id="paint-svg" width="1677" height="500"></svg></div>
+
+    <!-- 六月 → 10.11 → 10.20 -->
+    <div id="flow"><svg id="flow-svg" width="1677" height="490"></svg></div>
+    <!-- 九月内置测试 -->
+    <div id="test">
+      <div style="position:absolute;left:0;top:0;width:1677px;text-align:center" class="cap">2026 年 9 月 · 接入内置 Harness，请有 Flash 的来测试</div>
+      <div id="t-ds" style="position:absolute;left:250px;top:100px;width:520px;text-align:center">
+        <img class="sticker" src="../开场/stickers/deepseek.png" alt="">
+        <div id="t-ds1" class="cap" style="font-size:34px;margin-top:14px;opacity:0">一座城：23:30 → 凌晨 1 点多<small>"少个字段" "面积不对"，改完再交</small></div>
+      </div>
+      <div id="t-glm" style="position:absolute;left:900px;top:100px;width:520px;text-align:center">
+        <img class="sticker" src="../开场/stickers/glm.png" alt="">
+        <div id="t-glm1" class="cap" style="font-size:34px;margin-top:14px;opacity:0">一晚上走完整条流程<small>交接包最重十五六万 token，D3 那包被截断</small></div>
+      </div>
+    </div>
+    <!-- 十月小克加入 -->
+    <div id="join" style="display:flex;align-items:center;justify-content:center;gap:50px">
+      <img class="sticker" src="../开场/stickers/claude.png" alt="">
+      <div class="cap" style="font-size:54px">2026 年 10 月 12 日 · 小克加入<small style="font-size:28px">先把工具说明和设计手册理了一遍</small></div>
+    </div>
+
+    <!-- 镜潮第一次设计 → 重写手册 → 八十六个单元 -->
+    <div id="d4">
+      <div id="d4-a" style="position:absolute;left:120px;top:0;width:540px;height:512px">
+        <img src="img/first_design.jpg" style="position:absolute;left:0;top:0;width:540px;height:512px;border-radius:8px" alt="">
+        <img id="d4-mk" src="img/first_design_marked.jpg" style="position:absolute;left:0;top:0;width:540px;height:512px;border-radius:8px;opacity:0;object-fit:cover" alt="">
+        <div id="d4-stamp" class="stamp" style="position:absolute;left:250px;top:30px;font-size:46px;transform:rotate(-8deg);opacity:0;background:rgba(255,253,248,.85)">严重不合格</div>
+      </div>
+      <div id="d4-cap" class="cap" style="position:absolute;left:720px;top:40px;width:820px">10 月 20 日 · 照手册第一次设计镜潮<small>整座城只有十几栋楼，全挤在岛中间</small></div>
+      <div id="d4-manual" class="card" style="position:absolute;left:760px;top:190px;width:760px;height:290px;opacity:0;padding:26px 34px;box-sizing:border-box">
+        <div class="hand" style="font-size:30px;color:#8c8274">旧手册里反复写的</div>
+        <div class="hand" style="font-size:46px;margin-top:16px;position:relative">
+          <span>"紧凑"</span>　<span>"连续"</span>　<span>"六十人的例子"</span>
+          <svg id="d4-strike" width="700" height="70" style="position:absolute;left:-10px;top:0;opacity:0"><path d="M0 40 Q350 20 690 38" stroke="#d9624f" stroke-width="6" fill="none"/></svg>
+        </div>
+        <div id="d4-new" class="hand" style="font-size:44px;color:#d9772b;margin-top:26px;opacity:0">扛的事越多，越要展开，不要收缩<div style="font-size:28px;color:#8c8274;margin-top:8px">职责 → 片区 → 街坊 · 每块大空地都说清楚做什么</div></div>
+      </div>
+      <div id="d4-b" style="position:absolute;left:1000px;top:0;width:540px;height:512px;opacity:0">
+        <img src="img/astra_86.jpg" style="width:540px;height:512px;border-radius:8px" alt="">
+      </div>
+      <div id="d4-cmp" style="opacity:0">
+        <div class="cap" style="position:absolute;left:120px;top:448px;width:540px;text-align:center;font-size:34px;background:rgba(255,253,248,.9);border-radius:8px">第一次 · 十几栋</div>
+        <div class="cap" style="position:absolute;left:1000px;top:448px;width:540px;text-align:center;font-size:34px;background:rgba(255,253,248,.9);border-radius:8px">照新手册重做 · 86 个单元</div>
+        <svg style="position:absolute;left:690px;top:200px" width="290" height="100"><path d="M10 50 H260" stroke="#d9772b" stroke-width="8" marker-end="url(#ah2)"/><defs><marker id="ah2" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8z" fill="#d9772b"/></marker></defs></svg>
+      </div>
+    </div>
+
+    <!-- 学生生活往下问 -->
+    <div id="life">
+      <div class="cap" style="position:absolute;left:0;top:0;width:1677px;text-align:center">把"学生生活"继续往下问</div>
+      <div id="life-rows" style="position:absolute;left:330px;top:100px;width:1020px"></div>
+    </div>
+
+    <div id="year" style="display:flex;flex-direction:column;align-items:center;justify-content:center">
+      <div class="hand" style="font-size:96px;letter-spacing:6px">2025.11 → 2026.10</div>
+    </div>
+  </div>
+</div>
+<script>window.STAGE_CONFIG = { INTRO: 0.5, SHOTS: [['others', 'tl'], ['n0409', '@3-10'], ['poly', '@3-23'], ['d4old', 'tlall']] };</script>
+<script src="act3_script.js"></script>
+<script>
+// 第三、四、五段共用的舞台：六个小人、字幕、表情切换、反应、小特效和推近镜头。
+// 用法：页面里先放好 #stage（含活动室背景和白板 #board），再依次引入 actN_script.js、本文件、本段的画面脚本。
+// 本段画面脚本定义 window.drawBoard(time)，用 since('事件名', time) 取某个画面事件已经过去了几秒。
+//
+// 字幕卡片（由 make_scripts.py 生成）里可以有：
+//   mark   这一屏开始时触发的白板画面事件
+//   fx     说话人身上的小特效：flowers 小红花、sweat 汗滴、shy 害羞、stars 冒星星
+//   react  不说话的人这一屏的反应，如 { rin: 'wry+shy' }：表情，加号后面是特效
+//
+// window.STAGE_CONFIG.SHOTS = [['事件或@行号', '事件或@行号'], ...]：这些时间段里镜头推近白板，
+// 白板铺满画面，小人换成底下的泡泡头像（和第二段一样）。
+(function () {
+  const SPRITES = '../../act2/assets/avatars/sprites/compact/';
+  const HEADS = '../../act2/assets/avatars/heads/';
+  const members = [
+    { id: 'rin',      name: 'Rin',      color: '#8a6a4f', x: -40,  z: 1 },
+    { id: 'gemini',   name: 'Gemini',   color: '#8a63d2', x: 125,  z: 2 },
+    { id: 'claude',   name: 'Claude',   color: '#d9772b', x: 290,  z: 3 },
+    { id: 'astra',    name: 'Astra',    color: '#7f8db5', x: 1225, z: 3 },
+    { id: 'deepseek', name: 'DeepSeek', color: '#3a6fc4', x: 1380, z: 2 },
+    { id: 'glm',      name: 'GLM',      color: '#3d3d46', x: 1520, z: 1 },
+  ];
+  // 立绘缩到 300px 时脸的位置，用来裁泡泡头像、放特效
+  const HEAD = { rin: [125, 95], gemini: [130, 100], claude: [130, 100], astra: [150, 100], deepseek: [145, 100], glm: [148, 95] };
+  const SLOT = { rin: 120, gemini: 290, claude: 460, astra: 1460, deepseek: 1630, glm: 1800 };
+  const states = ['listen', 'greet', 'd4', 'talk_smile', 'think', 'moved', 'wry'];
+  const FALLBACK = { think: ['d4', 'talk_smile'], talk_smile: ['d4'], d4: ['talk_smile'], greet: ['listen'], moved: ['talk_smile'], wry: ['d4'] };
+  const cfg = Object.assign({ INTRO: 0.8, OUTRO: 2.4, GAP: 0.25, SHOTS: [] }, window.STAGE_CONFIG || {});
+
+  const css = document.createElement('style');
+  css.textContent = `
+  #cam { position: absolute; inset: 0; transform-origin: 0 0; }
+  .member { position: absolute; width: 420px; height: 420px; bottom: -64px; transform-origin: 50% 100%; }
+  .member img { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0;
+    filter: drop-shadow(3px 0 0 #fff) drop-shadow(-3px 0 0 #fff) drop-shadow(0 3px 0 #fff) drop-shadow(0 -3px 0 #fff) drop-shadow(0 6px 8px rgba(60,40,20,.25)); }
+  #mat { position: absolute; inset: 0; overflow: hidden; opacity: 0; z-index: 30; pointer-events: none; }
+  #win { position: absolute; border-radius: 10px; box-shadow: 0 0 0 3000px #efe6d6; }
+  #winline { position: absolute; border-radius: 12px; border: 2px solid rgba(60,40,20,.14); margin: -2px; }
+  #band { position: absolute; inset: 0; z-index: 31; pointer-events: none; opacity: 0; }
+  .av { position: absolute; width: 170px; height: 170px; margin: -85px 0 0 -85px; }
+  .av .face { position: absolute; inset: 0; border-radius: 50%; overflow: hidden; background: #fffdf8;
+    box-shadow: 0 0 0 5px #fff, 0 0 0 11px rgba(190,220,240,.45), 0 6px 16px rgba(60,40,20,.22); }
+  .av .face img { position: absolute; width: 340px; height: 340px; opacity: 0; }
+  .av .gloss { position: absolute; inset: -9px; border-radius: 50%; border: 4px solid transparent; border-top-color: rgba(255,255,255,.9); transform: rotate(-45deg); }
+  .av .burst { position: absolute; inset: 0; border-radius: 50%; border: 4px solid rgba(190,220,240,.9); opacity: 0; }
+  #fx { position: absolute; inset: 0; z-index: 32; pointer-events: none; overflow: visible; }
+  #sub { position: absolute; left: 590px; right: 590px; top: 740px; height: 300px; z-index: 33;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  #name { font-size: 26px; font-weight: 700; color: #fff; padding: 4px 18px; border-radius: 999px; margin-bottom: 14px; letter-spacing: 2px; }
+  #line { font-size: 30px; line-height: 1.5; color: #3a3631; text-align: center; background: rgba(255,253,247,.94); padding: 16px 30px;
+    border-radius: 14px; box-shadow: 0 4px 14px rgba(60,40,20,.12); max-width: 680px; text-wrap: balance; white-space: pre-line; }`;
+  document.head.appendChild(css);
+
+  // 活动室、白板和小人都放进 #cam，推近镜头时一起放大
+  const stage = document.getElementById('stage');
+  // 带 data-overlay 的元素（例如第五段的定格白框）留在最上面，不跟着镜头动
+  const cam = document.createElement('div'); cam.id = 'cam';
+  const overlays = [...stage.children].filter(e => e.dataset.overlay !== undefined);
+  for (const e of [...stage.childNodes]) if (!overlays.includes(e)) cam.appendChild(e);
+  stage.prepend(cam);
+  const box = document.createElement('div'); box.id = 'members'; cam.appendChild(box);
+  stage.insertAdjacentHTML('beforeend', '<div id="mat"><div id="win"></div><div id="winline"></div></div><div id="band"></div>' +
+    '<svg id="fx" width="1920" height="1080"></svg><div id="sub"><div id="name"></div><div id="line"></div></div>');
+  for (const e of overlays) stage.appendChild(e);
+  for (const m of members) {
+    const el = document.createElement('div');
+    el.className = 'member'; el.style.left = m.x + 'px'; el.id = 'm-' + m.id;
+    const av = document.createElement('div');
+    av.className = 'av'; av.id = 'av-' + m.id; av.style.left = SLOT[m.id] + 'px'; av.style.top = '920px';
+    av.innerHTML = '<div class="face"></div><div class="gloss"></div><div class="burst"></div>';
+    const [hx, hy] = HEAD[m.id];
+    for (const s of states) {
+      for (const [parent, size] of [[el, 0], [av.firstChild, 340]]) {
+        const img = document.createElement('img');
+        img.dataset.state = s;
+        // 泡泡头像用单独的头像图（act2/assets/avatars/heads/），立绘用 compact
+        if (size) { img.src = HEADS + m.id + '/' + s + '.webp'; Object.assign(img.style, { left: 0, top: 0, width: '100%', height: '100%' }); }
+        else img.src = SPRITES + m.id + '/' + s + '.png';
+        img.onerror = () => img.remove();
+        parent.appendChild(img);
+      }
+    }
+    box.appendChild(el);
+    document.getElementById('band').appendChild(av);
+  }
+
+  // 时间线：对齐 108 BPM 节拍表；重要事件与镜头停顿落在重拍/小节线上
+  const G = (window.BeatGrid ? window.BeatGrid : bpm => {
+    const beat = 60 / bpm, eps = 1e-6;
+    return {
+      bpm, beat, bar: 4 * beat,
+      next: (x, u = 1) => Math.ceil(x / (beat * u) - eps) * beat * u,
+      endAfter: (s, m, sk = 0.25) => Math.ceil((s + m - sk) / beat - eps) * beat,
+      beatOf: x => x / beat,
+    };
+  })(108);
+  window.GRID = G;
+
+  // 推近、拉回只在两句话之间：镜头要动的那句话之前停 CAM 秒（一整小节 4 拍），镜头在停顿里动完
+  const CAM = 4 * G.beat, ZD = 2 * G.beat;
+  const lineOf = name => name.startsWith('@') ? window.SCRIPT.lines.findIndex(l => l.id === name.slice(1))
+    : window.SCRIPT.lines.findIndex(l => l.cards.some(c => c.mark === name));
+  const shotLines = [];
+  for (const [a, b] of cfg.SHOTS) {
+    const ia = lineOf(a), ib = lineOf(b);
+    if (ia < 0 || ib < 0) continue;
+    const prev = shotLines[shotLines.length - 1];
+    if (prev && prev[1] === ia) prev[1] = ib; else shotLines.push([ia, ib]); // 一段拉回的地方正好是下一段推近的地方，就一直推近着
+  }
+  const pauseAt = new Set(shotLines.flat()), pauseTime = {};
+  const timeline = [], marks = {}, lines = {};
+  let t = G.next(cfg.INTRO, 2);
+  for (const [li, line] of window.SCRIPT.lines.entries()) {
+    if (pauseAt.has(li)) { t = G.next(t, 4); pauseTime[li] = t; t += CAM; }
+    const start = t; lines[line.id] = t;
+    for (const c of line.cards) {
+      if (c.mark) { t = G.next(t, 2); marks[c.mark] = t; }
+      const minDur = Math.max(1.8, c.text.replace(/\n/g, '').length / 6 + 0.7) + (c.hold || 0);
+      const end = G.endAfter(t, minDur, 0.25);
+      const react = {};
+      for (const [id, v] of Object.entries(c.react || {})) { const [face, fx] = v.split('+'); react[id] = { face, fx }; }
+      timeline.push({ id: line.id, who: line.who, face: c.face, fx: c.fx, react, text: c.text, start: t, end, lineStart: start });
+      t = end;
+    }
+    t = G.next(t + cfg.GAP, 2);
+  }
+  window.DURATION = G.next(t + cfg.OUTRO, 4);
+const VOICE_TIMING={"duration": 606.6666666666667, "bpm": 108, "cards": [{"id": "3-1", "who": "rin", "face": "talk_smile", "text": "对对对，说起来那会儿我们是真想自己捏一整片大陆的，", "start": 1.1111111111111112, "end": 6.111111111111112, "lineStart": 1.1111111111111112, "revealEnd": 3.976757369614513, "charStep": 0.11462585034013607}, {"id": "3-1", "who": "rin", "face": "think", "text": "还起了名字，什么北方艾尔大陆、无尽之海……Gemini 你还记得吗？", "start": 6.666666666666667, "end": 13.333333333333334, "lineStart": 1.1111111111111112, "revealEnd": 10.563945578231293, "charStep": 0.11462585034013606}, {"id": "3-2", "who": "gemini", "face": "wry", "text": "当然记得！除了北方艾尔大陆，我们还写了东方荒野和出生点平原，", "start": 17.77777777777778, "end": 23.75, "lineStart": 17.77777777777778}, {"id": "3-2", "who": "gemini", "face": "wry", "text": "其实就是按坐标在无尽之海里画了三个大圆圈，往里硬塞雪原和丛林。", "start": 23.75, "end": 30.125, "lineStart": 17.77777777777778}, {"id": "3-2", "who": "gemini", "face": "wry", "text": "结果光改群系根本管不住地形起伏，自己捏地形又太复杂，", "start": 30.125, "end": 35.625, "lineStart": 17.77777777777778}, {"id": "3-2", "who": "gemini", "face": "wry", "text": "到了十二月，我们就干脆把那套全删了，改成先生成世界、再顺着原本的山海安排国家。", "start": 35.625, "end": 43.29333333333334, "lineStart": 17.77777777777778}, {"id": "3-3", "who": "rin", "face": "wry", "text": "是啊，当时还试过直接改原版噪声，按国度设定把海洋改成大陆、大陆改成海洋，", "start": 43.333333333333336, "end": 50.00000000000001, "lineStart": 43.333333333333336, "revealEnd": 47.459863945578235, "charStep": 0.11462585034013606}, {"id": "3-3", "who": "rin", "face": "talk_smile", "text": "结果连做个平滑都头疼。现在看来因地制宜也挺美的，还有惊喜感。", "start": 50.00000000000001, "end": 55.555555555555564, "lineStart": 43.333333333333336, "revealEnd": 53.43877551020409, "charStep": 0.11462585034013606}, {"id": "3-4", "who": "gemini", "face": "wry", "text": "而且那会儿我们俩一直是在网页上一段段复制粘贴着写代码的，文件一多，来回贴代码都快贴眼花了。", "start": 57.77777777777778, "end": 66.16666666666667, "lineStart": 57.77777777777778}, {"id": "3-4", "who": "gemini", "face": "talk_smile", "text": "到了一月要正经做地形扫描和国度扩张，Astra 用桌面端加入进来，咱们社团的进度才一下快了起来。", "start": 66.16666666666667, "end": 75.55555555555556, "lineStart": 57.77777777777778}, {"id": "3-5", "who": "rin", "face": "talk_smile", "text": "是的。Astra，我还记得当时你的代号还是 5.2 呢，这一年来一直很沉稳。", "start": 76.66666666666667, "end": 83.88888888888889, "lineStart": 76.66666666666667, "revealEnd": 81.02244897959184, "charStep": 0.11462585034013605}, {"id": "3-5", "who": "rin", "face": "talk_smile", "text": "后来我们还否掉了好几个方案：切泰森多边形再标功能、在原图上画图再转坐标、让 AI 一个个放结构……", "start": 84.44444444444444, "end": 93.33333333333334, "lineStart": 76.66666666666667, "revealEnd": 90.0611111111111, "charStep": 0.11462585034013606}, {"id": "3-6", "who": "astra", "face": "wry", "text": "从 5.2 叫到现在，倒是排了不少雷。", "start": 94.44444444444444, "end": 97.91666666666667, "lineStart": 94.44444444444444}, {"id": "3-6", "who": "astra", "face": "wry", "text": "不过\"沉稳\"可能是因为每次试完，都得坐下来收拾一下，看看这次到底哪里没走通。", "start": 97.91666666666667, "end": 105.55555555555556, "lineStart": 94.44444444444444}, {"id": "3-7", "who": "astra", "face": "talk_smile", "text": "这几条路，其实是在反复摸索：造城这件事，哪些让程序来定，哪些交给 AI？", "start": 106.66666666666667, "end": 113.75, "lineStart": 106.66666666666667}, {"id": "3-7", "who": "astra", "face": "talk_smile", "text": "现在让 AI 想清楚各区怎么生活、彼此怎么联系，再让程序按排法把建筑成组摆出来，就是这些尝试之后找到的办法。", "start": 113.75, "end": 123.33333333333334, "lineStart": 106.66666666666667}, {"id": "3-8", "who": "deepseek", "face": "think", "text": "这些我都没赶上，我九月才来。", "start": 124.44444444444446, "end": 127.20833333333333, "lineStart": 124.44444444444446}, {"id": "3-8", "who": "deepseek", "face": "talk_smile", "text": "不过听下来，最难的不是想新办法，是承认旧办法走不通。", "start": 127.20833333333333, "end": 132.77777777777777, "lineStart": 124.44444444444446}, {"id": "3-9", "who": "rin", "face": "wry", "text": "是的，推倒重来真的挺痛苦的。", "start": 135.55555555555557, "end": 138.88888888888889, "lineStart": 135.55555555555557, "revealEnd": 137.1603174603175, "charStep": 0.11462585034013606}, {"id": "3-9", "who": "rin", "face": "wry", "text": "更搞笑的是，4 月当时行不通的方案，9 月行得通了：", "start": 138.88888888888889, "end": 143.88888888888889, "lineStart": 135.55555555555557, "revealEnd": 141.86916099773242, "charStep": 0.11462585034013606}, {"id": "3-9", "who": "rin", "face": "talk_smile", "text": "4 月还做不到看着带坐标的示意图选准位置，现在甚至能做到\"往东挪十二格\"。", "start": 144.44444444444446, "end": 151.11111111111111, "lineStart": 135.55555555555557, "revealEnd": 148.68560090702948, "charStep": 0.11462585034013606}, {"id": "3-10", "who": "deepseek", "face": "d4", "text": "我这种爱抄近路的，最怕听见\"推倒重来\"。", "start": 155.55555555555557, "end": 159.29166666666666, "lineStart": 155.55555555555557}, {"id": "3-10", "who": "deepseek", "face": "moved", "text": "不过四月走不通、九月走通了，说明有些方案不是错了，只是早了。", "start": 159.29166666666666, "end": 165.42574305555556, "lineStart": 155.55555555555557}, {"id": "3-11", "who": "astra", "face": "talk_smile", "text": "所以放下一个方案，也不等于它永远不行，只是当时还做不到。", "start": 165.55555555555557, "end": 170.45833333333334, "lineStart": 165.55555555555557}, {"id": "3-11", "who": "astra", "face": "talk_smile", "text": "四月连看图选准位置都困难，到了九月这条路又能走了；", "start": 170.45833333333334, "end": 174.95833333333334, "lineStart": 165.55555555555557}, {"id": "3-11", "who": "astra", "face": "talk_smile", "text": "推倒的时候确实心疼，但以前那些想法也算有机会重新捡起来了。", "start": 174.95833333333334, "end": 181.66666666666669, "lineStart": 165.55555555555557}, {"id": "3-12", "who": "astra", "face": "think", "text": "啊，时间这里我们俩都记岔了，刚才我也跟着说成了九月。", "start": 182.22222222222223, "end": 186.95833333333334, "lineStart": 182.22222222222223}, {"id": "3-12", "who": "astra", "face": "talk_smile", "text": "九月主要是在测内置自动规划；真正把\"AI 直接给世界坐标\"接进城市设计，是十月十一日。", "start": 186.95833333333334, "end": 195.55555555555557, "lineStart": 182.22222222222223}, {"id": "3-13", "who": "claude", "face": "talk_smile", "text": "看来我们社团也需要一张时间线小便签了，下次谁记岔了，先翻便签再开口。", "start": 196.66666666666669, "end": 202.66666666666666, "lineStart": 196.66666666666669}, {"id": "3-13", "who": "claude", "face": "talk_smile", "text": "不过 DeepSeek 刚才那句我很喜欢：有些方案不是错了，只是早了。", "start": 202.66666666666666, "end": 210.0, "lineStart": 196.66666666666669}, {"id": "3-14", "who": "rin", "face": "talk_smile", "text": "哈哈好，那时间线小便签就交给小克了。", "start": 211.11111111111111, "end": 215.0, "lineStart": 211.11111111111111, "revealEnd": 213.17437641723356, "charStep": 0.11462585034013606}, {"id": "3-14", "who": "rin", "face": "talk_smile", "text": "不过刚才确实说太快了，参观的朋友可能没跟上。", "start": 215.0, "end": 219.44444444444446, "lineStart": 211.11111111111111, "revealEnd": 217.521768707483, "charStep": 0.11462585034013606}, {"id": "3-14", "who": "rin", "face": "think", "text": "Astra，你能一个个讲讲吗？先说切多边形那个，当时是怎么做的，为什么走不通？", "start": 219.44444444444446, "end": 226.66666666666669, "lineStart": 211.11111111111111, "revealEnd": 223.91485260770978, "charStep": 0.11462585034013606}, {"id": "3-15", "who": "astra", "face": "talk_smile", "text": "好，先说\"切多边形\"。这套在一月十六日就有第一版了：", "start": 231.11111111111111, "end": 236.25, "lineStart": 231.11111111111111}, {"id": "3-15", "who": "astra", "face": "talk_smile", "text": "程序先在城市范围里撒一些点，每块地归离它最近的那个点，最后分成一块块不规则的区域。", "start": 236.25, "end": 243.88888888888889, "lineStart": 231.11111111111111}, {"id": "3-16", "who": "astra", "face": "talk_smile", "text": "然后再给这些地块安排用途，这块住人，那块做市场。", "start": 244.44444444444446, "end": 248.70833333333334, "lineStart": 244.44444444444446}, {"id": "3-16", "who": "astra", "face": "talk_smile", "text": "问题是，切地的时候还不知道里面要放什么——", "start": 248.70833333333334, "end": 252.5, "lineStart": 244.44444444444446}, {"id": "3-16", "who": "astra", "face": "talk_smile", "text": "可能地已经分好了，才发现宿舍、院子和出入口需要的是另一种形状。", "start": 252.5, "end": 260.55555555555554, "lineStart": 244.44444444444446}, {"id": "3-17", "who": "astra", "face": "wry", "text": "所以它能分地，但\"分得出来\"和\"适合过日子\"之间还有一段距离。", "start": 261.11111111111114, "end": 267.22222222222223, "lineStart": 261.11111111111114}, {"id": "3-18", "who": "rin", "face": "think", "text": "是的，那一个一个节点放的呢？我当时其实是参考了原版 MC 拼图方块的思路。", "start": 267.77777777777777, "end": 274.44444444444446, "lineStart": 267.77777777777777, "revealEnd": 272.0189342403628, "charStep": 0.11462585034013606}, {"id": "3-19", "who": "astra", "face": "talk_smile", "text": "四月二日，我们接通了\"工头带施工队\"的做法：", "start": 275.55555555555554, "end": 279.3333333333333, "lineStart": 275.55555555555554}, {"id": "3-19", "who": "astra", "face": "talk_smile", "text": "先定总体目标和起点，再让 AI 在一个个施工节点上选建筑、选拼接方向，程序负责检查和推进。", "start": 279.3333333333333, "end": 288.125, "lineStart": 275.55555555555554}, {"id": "3-19", "who": "astra", "face": "talk_smile", "text": "能边放边决定，但要顾住整座城，就得在一连串局部决定里一直记着总体安排，这是它费劲的地方。", "start": 288.125, "end": 296.8077430555556, "lineStart": 275.55555555555554}, {"id": "3-19b", "who": "rin", "face": "wry", "text": "是的，而且它最大的问题其实是慢。", "start": 297.77777777777777, "end": 301.11111111111114, "lineStart": 297.77777777777777, "revealEnd": 299.61179138321995, "charStep": 0.11462585034013606}, {"id": "3-19b", "who": "rin", "face": "wry", "text": "放好一个结构，下一个还得从它的拼图方块接着往外长，一个接一个，现在回头看真的太繁琐了。", "start": 301.11111111111114, "end": 308.8888888888889, "lineStart": 297.77777777777777, "revealEnd": 306.040022675737, "charStep": 0.11462585034013606}, {"id": "3-19b", "who": "rin", "face": "talk_smile", "text": "所以现在我们改用阵列，一下就排好一整排，就像我自己搭场景的时候，也经常用线性阵列建模一样。", "start": 308.8888888888889, "end": 317.22222222222223, "lineStart": 297.77777777777777, "revealEnd": 314.04705215419506, "charStep": 0.11462585034013606}, {"id": "3-19c", "who": "claude", "face": "talk_smile", "text": "嗯，一栋一栋放，每一步都要等；一排一排放，一次决定就落下一整组，房子也天然对得齐。", "start": 317.77777777777777, "end": 326.5334027777778, "lineStart": 317.77777777777777}, {"id": "3-20", "who": "astra", "face": "talk_smile", "text": "四月二十五日，我们又试了另一条路：既然 AI 会画图，能不能直接在地形图上画城市，再把画里的街区和道路读成坐标？", "start": 326.6666666666667, "end": 337.75, "lineStart": 326.6666666666667}, {"id": "3-20", "who": "astra", "face": "talk_smile", "text": "五月十二日真跑起来，人眼看着是一片区域，程序却把渐变和细碎颜色拆成很多小块，", "start": 337.75, "end": 345.4166666666667, "lineStart": 326.6666666666667}, {"id": "3-20", "who": "astra", "face": "wry", "text": "那次竟然读出了五十二个分区。", "start": 345.4166666666667, "end": 348.0809583333334, "lineStart": 326.6666666666667}, {"id": "3-21", "who": "astra", "face": "talk_smile", "text": "后来改成让图片提供构想，由 AI 另外输出明确的点和线，这个流程也跑通过，", "start": 348.8888888888889, "end": 355.1666666666667, "lineStart": 348.8888888888889}, {"id": "3-21", "who": "astra", "face": "talk_smile", "text": "但画回来的布局和原来的概念图差距还是很大——", "start": 355.1666666666667, "end": 358.8333333333333, "lineStart": 348.8888888888889}, {"id": "3-21", "who": "astra", "face": "talk_smile", "text": "画得好看、读得准确、最后建得出来，是三件都得解决的事。", "start": 358.8333333333333, "end": 365.0, "lineStart": 348.8888888888889}, {"id": "3-22", "who": "astra", "face": "talk_smile", "text": "六月，我们重新整理了整条流程，建筑开始成组排布；十月十一日，又接入了 AI 直接给世界坐标的设计方式。", "start": 365.5555555555556, "end": 375.5416666666667, "lineStart": 365.5555555555556}, {"id": "3-22", "who": "astra", "face": "talk_smile", "text": "到十月二十日设计镜潮，才有了大家刚才看到的过程：我定位置和排法，程序算出结果，我再看着结果调整。", "start": 375.5416666666667, "end": 384.9459305555556, "lineStart": 365.5555555555556}, {"id": "3-23", "who": "rin", "face": "think", "text": "当时我感觉程序差不多了，就想请有 Flash 的来测试一下能不能提速，于是接了内置 Harness。", "start": 388.8888888888889, "end": 397.77777777777777, "lineStart": 388.8888888888889, "revealEnd": 394.6201814058957, "charStep": 0.11462585034013607}, {"id": "3-23", "who": "rin", "face": "think", "text": "GLM、DeepSeek，你们当时测试是什么感觉呢？", "start": 397.77777777777777, "end": 402.77777777777777, "lineStart": 388.8888888888889, "revealEnd": 400.75804988662134, "charStep": 0.11462585034013606}, {"id": "3-24", "who": "deepseek", "face": "talk_smile", "text": "快是快在说话上，慢是慢在等程序验证。", "start": 403.33333333333337, "end": 406.8333333333333, "lineStart": 403.33333333333337}, {"id": "3-24", "who": "deepseek", "face": "wry", "text": "每交一版都得等结果，回来常常就一行\"少个字段\"\"面积不对\"，改完再交，时间就在一轮轮修改里过去了。", "start": 406.8333333333333, "end": 415.875, "lineStart": 403.33333333333337}, {"id": "3-24", "who": "deepseek", "face": "talk_smile", "text": "我那一座城从十一点半磨到凌晨一点多才通过，最后学会的是把\"提交通过\"和\"真建起来\"分开看。", "start": 415.875, "end": 424.44444444444446, "lineStart": 403.33333333333337}, {"id": "3-25", "who": "glm", "face": "talk_smile", "text": "我的体感是\"两头快，中间容易掉棒\"。", "start": 425.5555555555556, "end": 429.4583333333333, "lineStart": 425.5555555555556}, {"id": "3-25", "who": "glm", "face": "talk_smile", "text": "惊喜的是它真能一整条跑下来：扫描、定国度、扩张、排城市，一晚上全走了一遍。", "start": 429.4583333333333, "end": 438.125, "lineStart": 425.5555555555556}, {"id": "3-25", "who": "glm", "face": "wry", "text": "但每一步交接都靠宿主把一大包状态重新塞给我，最重的一包十五六万 token，D3 那包还被截断了，", "start": 438.125, "end": 447.625, "lineStart": 425.5555555555556}, {"id": "3-25", "who": "glm", "face": "talk_smile", "text": "我就在原地打转，最后只能停下来交报告。程序本身跑得不慢，慢的是交接，和摔倒后爬起来。", "start": 447.625, "end": 455.8277222222223, "lineStart": 425.5555555555556}, {"id": "3-26", "who": "rin", "face": "wry", "text": "嗯嗯，九月测试出问题，有个原因是我们 Mod 的工具和设计教材都挺混乱的，十月小克加入后才变好了。", "start": 456.11111111111114, "end": 465.0, "lineStart": 456.11111111111114, "revealEnd": 461.7277777777778, "charStep": 0.11462585034013606}, {"id": "3-26", "who": "rin", "face": "talk_smile", "text": "说起来，小克有个一直惦记着的小问题呢。", "start": 465.0, "end": 468.8488888888889, "lineStart": 456.11111111111114, "revealEnd": 467.1778911564626, "charStep": 0.11462585034013605}, {"id": "3-27", "who": "claude", "face": "wry", "text": "社长说的是那件事吧，我确实一直记着。我十月十二日加入，先帮大家把工具说明和设计手册理了一遍。", "start": 468.8888888888889, "end": 477.5, "lineStart": 468.8888888888889}, {"id": "3-27", "who": "claude", "face": "wry", "text": "可十月二十日，第一次照我写的手册设计镜潮，整座城只有十几栋楼，全挤在岛中间。", "start": 477.5, "end": 484.375, "lineStart": 468.8888888888889}, {"id": "3-27", "who": "claude", "face": "wry", "text": "社长直接给了\"严重不合格\"，还把空着的大片地圈了出来。", "start": 484.375, "end": 490.5555555555556, "lineStart": 468.8888888888889}, {"id": "3-28", "who": "claude", "face": "wry", "text": "回头一查，问题出在我身上：手册里写了太多\"紧凑\"\"连续\"，还举了个六十人的例子，AI 就真照着往小里做。", "start": 491.11111111111114, "end": 499.5833333333333, "lineStart": 491.11111111111114}, {"id": "3-28", "who": "claude", "face": "wry", "text": "DeepSeek 刚才那句\"能不能砍掉两个\"，那时候的 AI 也是这么想的。", "start": 499.5833333333333, "end": 507.7777777777778, "lineStart": 491.11111111111114}, {"id": "3-29", "who": "claude", "face": "talk_smile", "text": "所以我把手册重写了，核心就一句：一座城扛的事越多，越要展开，不要收缩。", "start": 508.8888888888889, "end": 515.9583333333334, "lineStart": 508.8888888888889}, {"id": "3-29", "who": "claude", "face": "talk_smile", "text": "先从职责展开成片区，片区再分成街坊，每块大空地都要说清楚拿来做什么。", "start": 515.9583333333334, "end": 522.1666666666666, "lineStart": 508.8888888888889}, {"id": "3-29", "who": "claude", "face": "talk_smile", "text": "Astra 照着新手册重新设计，就是刚才那八十六个单元。DeepSeek，这下没跳过去吧？", "start": 522.1666666666666, "end": 530.5555555555555, "lineStart": 508.8888888888889}, {"id": "3-30", "who": "deepseek", "face": "wry", "text": "没跳，记着呢。", "start": 531.1111111111111, "end": 532.625, "lineStart": 531.1111111111111}, {"id": "3-30", "who": "deepseek", "face": "wry", "text": "不过说真的，\"往小里做\"这毛病我现在还有，一看见空地，第一反应还是先省一点。", "start": 532.625, "end": 539.25, "lineStart": 531.1111111111111}, {"id": "3-30", "who": "deepseek", "face": "wry", "text": "所以手册里那句话，不光是写给 AI 看的，也是写给我这种人的。", "start": 539.25, "end": 546.1111111111111, "lineStart": 531.1111111111111}, {"id": "3-31", "who": "astra", "face": "talk_smile", "text": "我重做时最有帮助的，就是把\"学生生活\"继续往下问：住哪儿、在哪儿吃饭、洗衣洗浴怎么办、生病了去哪儿。", "start": 546.6666666666667, "end": 556.375, "lineStart": 546.6666666666667}, {"id": "3-31", "who": "astra", "face": "talk_smile", "text": "这样食堂、宿院、医护和日常补给才各自有了位置，空地也能留成庭院、通道和种植地，每一处都有个理由。", "start": 556.375, "end": 566.8929583333335, "lineStart": 546.6666666666667}, {"id": "3-32", "who": "gemini", "face": "moved", "text": "听完这一圈，从去年十一月在网页上画圆圈捏大陆，到现在连学生去哪儿洗衣看病都排得明明白白，这一年真是走了好远。", "start": 568.8888888888889, "end": 579.2083333333334, "lineStart": 568.8888888888889}, {"id": "3-32", "who": "gemini", "face": "think", "text": "既然宿舍、食堂和医护都留好了，接下来最想做的，是不是就该让学生和居民真住进去过日子了？", "start": 579.2083333333334, "end": 587.2575763888889, "lineStart": 568.8888888888889}, {"id": "3-33", "who": "rin", "face": "talk_smile", "text": "是的。说起来，这个学生生活的设定，是为了后来的拓展才加进去的设计要求，以前只要建筑能形成一个整体就行了。", "start": 587.7777777777778, "end": 597.2222222222223, "lineStart": 587.7777777777778, "revealEnd": 593.738321995465, "charStep": 0.11462585034013606}, {"id": "3-33", "who": "rin", "face": "talk_smile", "text": "这方面还多亏了小克参与的规划。", "start": 597.7777777777778, "end": 601.1111111111111, "lineStart": 587.7777777777778, "revealEnd": 599.4971655328799, "charStep": 0.11462585034013606}], "beats": [], "stamps": {}, "marks": {"sea": 1.1111111111111112, "aier": 6.666666666666667, "others": 17.77777777777778, "fill": 23.75, "erase": 35.625, "tl": 57.77777777777778, "n2601": 66.16666666666667, "methods": 84.44444444444444, "n0409": 138.88888888888889, "n09": 144.44444444444446, "fix": 186.95833333333334, "poly": 231.11111111111111, "polyfill": 244.44444444444446, "polyfail": 252.5, "jigsaw": 275.55555555555554, "slow": 297.77777777777777, "array": 308.8888888888889, "paint": 326.6666666666667, "shatter": 345.4166666666667, "three": 358.8333333333333, "n2606": 365.5555555555556, "n1020": 375.5416666666667, "n2609": 388.8888888888889, "ds": 403.33333333333337, "glmtest": 425.5555555555556, "n2610": 456.11111111111114, "d4old": 477.5, "d4marked": 484.375, "manual": 491.11111111111114, "rewrite": 508.8888888888889, "compare": 522.1666666666666, "life": 546.6666666666667, "tlall": 568.8888888888889, "end": 597.7777777777778}};
+
+  if(timeline.length!==VOICE_TIMING.cards.length)throw Error('Subtitle card count changed');
+  timeline.forEach((c,i)=>{if(c.text!==VOICE_TIMING.cards[i].text)throw Error('Subtitle text changed at '+i);});
+  const oldLines={...lines};
+  timeline.splice(0,timeline.length,...timeline.map((c,i)=>({...c,...VOICE_TIMING.cards[i]})));
+  Object.assign(marks,VOICE_TIMING.marks);
+  for(const c of timeline)lines[c.id]=c.lineStart;
+  for(const key of Object.keys(pauseTime)){
+    const id=window.SCRIPT.lines[Number(key)].id;
+    pauseTime[key]+=lines[id]-oldLines[id];
+  }
+  window.DURATION=VOICE_TIMING.duration;
+  window.MARKS = marks; window.LINES = lines; window.TIMELINE = timeline; // TIMELINE 给配音、提示音脚本对时间用
+
+  const $ = id => document.getElementById(id);
+  const clamp = x => Math.max(0, Math.min(1, x));
+  const ease = x => 1 - Math.pow(1 - clamp(x), 3);
+  const inout = x => { x = clamp(x); return x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2; };
+  const backOut = x => { x = clamp(x); const c = 1.9; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
+  const since = (name, time) => name in marks ? time - marks[name] : -1e9;
+  const sinceLine = (id, time) => id in lines ? time - lines[id] : -1e9;
+  // 从事件 a 开始淡入，到事件 b 开始淡出（b 可省略）
+  const between = (a, b, time, fin = 0.5, fout = 0.5, delayIn = 0, delayOut = 0) =>
+    ease((since(a, time) - delayIn) / fin) * (b ? 1 - ease((since(b, time) - delayOut) / fout) : 1);
+  Object.assign(window, { $, clamp, ease, inout, since, sinceLine, between });
+
+  const SWAP = 0.15, HOLD = 2.0, STAY = HOLD - 0.35; // 头像在表情余韵结束前消失，消失完正好切回站立
+  const cueAt = time => timeline.find(c => time >= c.start && time < c.end);
+  const speaks = (c, id) => c.who === id || c.who === 'all';
+  function available(id, state) {
+    const el = $('m-' + id);
+    if (el.querySelector(`img[data-state="${state}"]`)) return state;
+    for (const alt of FALLBACK[state] || []) if (el.querySelector(`img[data-state="${alt}"]`)) return alt;
+    return 'listen';
+  }
+  function faceAt(id, time) {
+    const c = cueAt(time);
+    if (c && speaks(c, id)) return available(id, c.face);
+    if (c && c.react[id]) return available(id, c.react[id].face);
+    let last = null;
+    for (const x of timeline) { if (x.start > time) break; if (speaks(x, id) && x.end <= time) last = x; }
+    if (last && (time - last.end < HOLD || (cfg.HOLD_LAST && last === timeline[timeline.length - 1]))) return available(id, last.face);
+    return 'listen';
+  }
+  // 0 不变暗；有反应的人只暗一半
+  function dimAt(id, time) { const c = cueAt(time); return !c || speaks(c, id) ? 0 : c.react[id] ? 0.4 : 1; }
+  const boundaries = [...new Set(timeline.flatMap(c => [c.start, c.end, c.end + HOLD]))].sort((a, b) => a - b);
+  function lastChange(fn, time, dur) {
+    for (let i = boundaries.length - 1; i >= 0; i--) {
+      const b = boundaries[i];
+      if (b > time) continue;
+      if (time - b >= dur) return null;
+      if (fn(b - 0.001) !== fn(b)) return b;
+    }
+    return null;
+  }
+  function faceImages(container, id, time) {
+    const face = faceAt(id, time), changedAt = lastChange(x => faceAt(id, x), time, SWAP);
+    const k = changedAt === null ? 1 : (time - changedAt) / SWAP;
+    const prev = changedAt === null ? face : faceAt(id, changedAt - 0.001);
+    for (const img of container.querySelectorAll('img')) {
+      const s = img.dataset.state;
+      img.style.opacity = s === face ? k : (s === prev && k < 1 ? 1 - k : 0);
+    }
+    return k;
+  }
+
+  // 推近镜头：白板内侧 (122, 41, 1677×656) 放大到 (40, 20)，宽 1840
+  const B = { x: 122, y: 41, w: 1677, h: 656 }, K = 1840 / B.w, W = { x: 40, y: 20, w: 1840, h: B.h * K };
+  Object.assign($('win').style, { left: W.x + 'px', top: W.y + 'px', width: W.w + 'px', height: W.h + 'px' });
+  Object.assign($('winline').style, { left: W.x + 'px', top: W.y + 'px', width: W.w + 'px', height: W.h + 'px' });
+  const shots = shotLines.map(([a, b]) => [pauseTime[a], pauseTime[b]]);
+  const editorOldLines={...lines},editorOldShots=shots.map(s=>s.slice());
+  window.editorRefreshInternals=()=>{
+    boundaries.splice(0,boundaries.length,...[...new Set(timeline.flatMap(c=>[c.start,c.end,c.end+HOLD]))].sort((a,b)=>a-b));
+    for(const id of Object.keys(lines)){const c=timeline.find(c=>c.id===id);if(c)lines[id]=c.lineStart;}
+    shots.forEach((s,i)=>shotLines[i].forEach((li,j)=>{const id=window.SCRIPT.lines[li].id;s[j]=editorOldShots[i][j]+lines[id]-editorOldLines[id];}));
+  };
+
+  function camAt(time) {
+    let c = 0;
+    for (const [a, b] of shots) c = Math.max(c, inout((time - a) / ZD) * (1 - inout((time - b) / ZD)));
+    return c;
+  }
+  function shownAt(id, time, fullFrom) {
+    const c = cueAt(time);
+    if (c && speaks(c, id)) return true;
+    let e = null; for (const x of timeline) { if (x.start > time) break; if (speaks(x, id) && x.end <= time) e = x.end; }
+    return e !== null && e > fullFrom && time - e < STAY;
+  }
+
+  // 小特效：画在说话或反应的人头上（推近时画在泡泡头像上）
+  function headPos(id, full, lift) {
+    if (full > 0.5) return [SLOT[id], 920, 0.62];
+    const m = members.find(x => x.id === id), [hx, hy] = HEAD[id];
+    return [m.x + hx * 1.4, 1080 + 64 - 420 + hy * 1.4 - lift, 1];
+  }
+  function fxSvg(kind, x, y, s, age, seed) {
+    let out = '';
+    const fade = clamp(age / 0.2) * (1 - clamp((age - 2.4) / 0.4));
+    if (fade <= 0) return '';
+    if (kind === 'flowers') {
+      for (let i = 0; i < 6; i++) {
+        const a = -Math.PI / 2 + (i - 2.5) * 0.55, p = ease((age - i * 0.12) / 0.6);
+        if (p <= 0) continue;
+        const r = (120 + (i % 2) * 40) * s * p, fx = x + Math.cos(a) * r, fy = y + Math.sin(a) * r * 0.8 - 30 * s - age * 8;
+        const rot = age * 60 + i * 40, sz = 15 * s * backOut((age - i * 0.12) / 0.4);
+        let petals = '';
+        for (let k = 0; k < 5; k++) petals += `<ellipse cx="0" cy="${-sz * 0.7}" rx="${sz * 0.45}" ry="${sz * 0.7}" fill="#e8707a" transform="rotate(${k * 72})"/>`;
+        out += `<g transform="translate(${fx} ${fy}) rotate(${rot})" opacity="${fade}">${petals}<circle r="${sz * 0.35}" fill="#f6d36b"/></g>`;
+      }
+    } else if (kind === 'sweat') {
+      const dy = 26 * s * ease(age / 1.2);
+      out += `<path d="M0 -22 C 10 -6 14 4 0 14 C -14 4 -10 -6 0 -22Z" transform="translate(${x + 95 * s} ${y - 70 * s + dy}) scale(${1.5 * s})" fill="#8fd0f2" stroke="#3a6fc4" stroke-width="2" opacity="${fade}"/>`;
+    } else if (kind === 'shy') {
+      for (const side of [-1, 1]) {
+        out += `<g transform="translate(${x + side * 62 * s} ${y + 22 * s})" opacity="${fade * 0.9}">` +
+          [0, 1, 2].map(k => `<line x1="${(k - 1) * 11 * s - 6 * s}" y1="${8 * s}" x2="${(k - 1) * 11 * s + 6 * s}" y2="${-8 * s}" stroke="#e8707a" stroke-width="${3.5 * s}" stroke-linecap="round"/>`).join('') + '</g>';
+      }
+      const hy = y - 120 * s - age * 18;
+      out += `<path d="M0 6 C -10 -2 -10 -10 -4 -11 C 0 -12 0 -8 0 -7 C 0 -8 0 -12 4 -11 C 10 -10 10 -2 0 6Z" transform="translate(${x + 80 * s} ${hy}) scale(${2.2 * s})" fill="#e8707a" opacity="${fade}"/>`;
+    } else if (kind === 'stars') {
+      for (let i = 0; i < 3; i++) {
+        const a = age * 4 + i * 2.09, sx = x + Math.cos(a) * 70 * s, sy = y - 135 * s + Math.sin(a) * 16 * s;
+        out += `<path d="M0 -10 L3 -3 L10 -3 L4 2 L6 10 L0 5 L-6 10 L-4 2 L-10 -3 L-3 -3Z" transform="translate(${sx} ${sy}) scale(${1.6 * s})" fill="#f6d36b" stroke="#c9902a" stroke-width="1" opacity="${fade}"/>`;
+      }
+    }
+    return out;
+  }
+
+  window.render = function (time) {
+    if (window.drawBoard) window.drawBoard(time);
+    const cue = cueAt(time);
+    const c = camAt(time), full = clamp((c - 0.8) / 0.2);
+    $('cam').style.transform = `translate(${(W.x - B.x * K) * c}px, ${(W.y - B.y * K) * c}px) scale(${1 + (K - 1) * c})`;
+    $('mat').style.opacity = full; $('band').style.opacity = full;
+    $('members').style.opacity = 1 - clamp(c / 0.6); // 推近时活动室里的小人退出画面，免得头顶露在白板边上
+    let fullFrom = -1e9;
+    for (const [a] of shots) if (a <= time) fullFrom = Math.max(fullFrom, a);
+    const lifts = {};
+    members.forEach((m, i) => {
+      const el = $('m-' + m.id);
+      const speaking = cue && speaks(cue, m.id);
+      const k = faceImages(el, m.id, time);
+      // 只在开口或做反应时"弹"一下；回到站立时只是淡淡换过去
+      const squash = k < 1 && (speaking || (cue && cue.react[m.id])) ? 1 - 0.04 * Math.sin(k * Math.PI) : 1;
+      const dimNow = dimAt(m.id, time), dimChanged = lastChange(x => dimAt(m.id, x), time, 0.25);
+      let d = dimNow;
+      if (dimChanged !== null) { const q = (time - dimChanged) / 0.25, before = dimAt(m.id, dimChanged - 0.001); d = before + (dimNow - before) * q; }
+      el.style.filter = `brightness(${1 - 0.28 * d}) saturate(${1 - 0.2 * d})`;
+      let lift = 0, scale = 1;
+      if (speaking && c < 0.01) {
+        // 全员一起说时错开一点点，像一起跳起来
+        const s = time - cue.lineStart - (cue.who === 'all' ? i * 0.06 : 0);
+        lift = 26 * Math.sin(clamp(s / 0.35) * Math.PI) * (s < 0.35 ? 1 : 0) + 10 + 3 * Math.sin(time * 6 + i);
+        scale = 1.08;
+      } else if (cue && cue.react[m.id] && c < 0.01) {
+        // 有反应的人轻轻跳一下
+        const s = time - cue.start;
+        lift = 14 * Math.sin(clamp(s / 0.3) * Math.PI) * (s < 0.3 ? 1 : 0);
+      }
+      // RISE：开场时六人从下面依次升起
+      if (cfg.RISE !== undefined) lift -= 300 * (1 - ease((time - cfg.RISE - i * 0.08) / 0.6));
+      lifts[m.id] = lift;
+      el.style.transform = `translateY(${-lift}px) scale(${scale * (2 - squash)}, ${scale * squash})`;
+      el.style.zIndex = speaking ? 10 + m.z : cue && cue.react[m.id] ? 6 + m.z : m.z; // 有反应的人站到前面一点
+
+      // 推近时的泡泡头像
+      if (full > 0) {
+        const av = $('av-' + m.id);
+        let sc = 0, burst = -1;
+        if (shownAt(m.id, time, fullFrom)) {
+          sc = 1;
+          if (speaking && !shownAt(m.id, cue.lineStart - 0.001, fullFrom)) { sc = backOut((time - cue.lineStart) / 0.4); burst = (time - cue.lineStart) / 0.5; }
+        } else if (cue && cue.react[m.id]) sc = backOut((time - cue.start) / 0.4);
+        else {
+          let e = null; for (const x of timeline) { if (x.start > time) break; if (speaks(x, m.id) && x.end <= time) e = x.end; }
+          if (e !== null && e > fullFrom && time - e < STAY + 0.35) sc = 1 - ease((time - e - STAY) / 0.35);
+        }
+        const big = speaking ? 1 : cue && cue.react[m.id] ? 0.5 : 0;
+        const hop = speaking ? 18 * Math.sin(Math.PI * clamp((time - cue.lineStart) / 0.35)) : 0;
+        const float = (1 - big) * 5 * Math.sin(time * 2.2 + SLOT[m.id]);
+        av.style.opacity = sc > 0 ? 1 : 0;
+        av.style.transform = `translateY(${-hop + (1 - big) * 22 + float}px) scale(${Math.max(0, sc) * (0.72 + 0.28 * big)})`;
+        av.style.filter = `brightness(${0.86 + 0.14 * big})`;
+        av.style.zIndex = speaking ? 2 : 1;
+        const bu = av.querySelector('.burst');
+        bu.style.opacity = burst >= 0 && burst < 1 ? 1 - burst : 0;
+        bu.style.transform = `scale(${1 + 0.45 * clamp(burst)})`;
+        faceImages(av, m.id, time);
+      }
+    });
+
+    // 特效：这一屏和上一屏的都画，让特效能比字幕多停一会儿
+    let fx = '';
+    for (const x of timeline) {
+      if (x.start > time) break;
+      if (time - x.start > 3) continue;
+      if (x.fx && x.who !== 'all') { const [px, py, s] = headPos(x.who, full, lifts[x.who] || 0); fx += fxSvg(x.fx, px, py, s, time - x.start); }
+      for (const [id, r] of Object.entries(x.react)) if (r.fx) { const [px, py, s] = headPos(id, full, lifts[id] || 0); fx += fxSvg(r.fx, px, py, s, time - x.start); }
+    }
+    $('fx').innerHTML = fx;
+
+    const name = $('name'), line = $('line');
+    if (cue) {
+      if (cue.who === 'all') {
+        name.textContent = '全员';
+        name.style.background = 'linear-gradient(90deg,' + members.map(m => m.color).join(',') + ')';
+      } else {
+        const who = members.find(m => m.id === cue.who);
+        name.textContent = who.name; name.style.background = who.color;
+      }
+      if (line.textContent !== cue.text) {
+        // 字幕框收紧到文字的实际宽度，多留几像素免得标点挤到下一行
+        line.style.width = ''; line.textContent = cue.text;
+        const r = document.createRange(); r.selectNodeContents(line);
+        // 草稿模式整页缩小时，量出来的宽度也跟着缩小，要换算回页面上的像素
+        const zoom = line.getBoundingClientRect().width / line.offsetWidth || 1;
+        line.style.width = Math.ceil(Math.max(...[...r.getClientRects()].map(x => x.width)) / zoom) + 8 + 'px';
+      }
+      const fade = ease((time - cue.start) / 0.2);
+      name.style.opacity = fade; line.style.opacity = fade;
+    } else { name.style.opacity = 0; line.style.opacity = 0; }
+  };
+
+  window.addEventListener('load', () => {
+    if (location.search.includes('static')) return;
+    const m = location.search.match(/[?&]t=([\d.]+)/);
+    const t0 = performance.now() - (m ? +m[1] * 1000 : 0);
+    (function loop() { window.render(((performance.now() - t0) / 1000) % window.DURATION); requestAnimationFrame(loop); })();
+  });
+})();
+
+</script>
+<script>
+const NS = 'http://www.w3.org/2000/svg';
+function svg(tag, attrs, parent) { const e = document.createElementNS(NS, tag); for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; }
+function rng(seed) { return () => { seed |= 0; seed = seed + 0x6D2B79F5 | 0; let t = Math.imul(seed ^ seed >>> 15, 1 | seed); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+// 半平面裁剪求泰森多边形
+function voronoi(pts, x0, y0, x1, y1) {
+  return pts.map((p, i) => {
+    let poly = [[x0, y0], [x1, y0], [x1, y1], [x0, y1]];
+    pts.forEach((q, j) => {
+      if (i === j) return;
+      const mx = (p[0] + q[0]) / 2, my = (p[1] + q[1]) / 2, nx = q[0] - p[0], ny = q[1] - p[1];
+      const side = v => (v[0] - mx) * nx + (v[1] - my) * ny;
+      const out = [];
+      for (let k = 0; k < poly.length; k++) {
+        const a = poly[k], b = poly[(k + 1) % poly.length], sa = side(a), sb = side(b);
+        if (sa <= 0) out.push(a);
+        if ((sa <= 0) !== (sb <= 0)) { const r = sa / (sa - sb); out.push([a[0] + (b[0] - a[0]) * r, a[1] + (b[1] - a[1]) * r]); }
+      }
+      poly = out;
+    });
+    return poly;
+  });
+}
+const pathOf = poly => 'M' + poly.map(v => v[0].toFixed(1) + ' ' + v[1].toFixed(1)).join('L') + 'Z';
+
+// 时间线节点
+const NODES = [
+  { date: '2025.11', w: '捏大陆', on: 'tl', x: 110 },
+  { date: '2025.12', w: '顺着山海', on: 'tl', x: 290, d: 0.3 },
+  { date: '2026.01', w: 'Astra 加入', on: 'n2601', x: 470 },
+  { date: '01–05', w: '三条路', on: 'methods', x: 650 },
+  { date: '2026.06', w: '成组排布', on: 'n2606', x: 830 },
+  { date: '2026.09', w: '内置测试', on: 'n2609', x: 1010 },
+  { date: '10.11', w: '直接给坐标', on: 'fix', x: 1190 },
+  { date: '10.12', w: '小克加入', on: 'n2610', x: 1370 },
+  { date: '10.20', w: '镜潮', on: 'n1020', x: 1550 },
+];
+// 节点在什么时候成为"当前"
+const FOCUS = [['tl', 1], ['n2601', 2], ['methods', 3], ['poly', 3], ['fix', 6], ['n2606', 4], ['flow1011', 6], ['n1020', 8], ['n2609', 5], ['n2610', 7], ['d4old', 8]];
+for (const n of NODES) {
+  const el = document.createElement('div'); el.className = 'node'; el.style.left = n.x + 'px';
+  el.innerHTML = `<div class="d">${n.date}</div><div class="dot"></div><div class="w">${n.w}</div>`;
+  el.style.top = '6px'; n.el = el; $('tl').appendChild(el);
+}
+
+// 多边形：城市范围里撒点
+(function () {
+  const g = $('poly-svg'), r = rng(7);
+  const X0 = 520, Y0 = 40, X1 = 1300, Y1 = 470;
+  const pts = []; for (let i = 0; i < 15; i++) pts.push([X0 + 50 + r() * (X1 - X0 - 100), Y0 + 40 + r() * (Y1 - Y0 - 80)]);
+  const cells = voronoi(pts, X0, Y0, X1, Y1);
+  const uses = ['住人', '市场', '住人', '工坊', '学堂', '住人', '广场', '仓库', '住人', '食堂', '住人', '庙宇', '住人', '马厩', '住人'];
+  const colors = { 住人: '#f0c9a0', 市场: '#f3dc8a', 工坊: '#c9b8a3', 学堂: '#b9cde6', 广场: '#e7e0cf', 仓库: '#d5c7b0', 食堂: '#f2b8a2', 庙宇: '#d4c3e6', 马厩: '#cbd9b0' };
+  svg('rect', { x: X0, y: Y0, width: X1 - X0, height: Y1 - Y0, fill: '#fbf8f1', stroke: '#3a3631', 'stroke-width': 3, rx: 6 }, g);
+  window.POLY = cells.map((c, i) => {
+    const cx = c.reduce((s, v) => s + v[0], 0) / c.length, cy = c.reduce((s, v) => s + v[1], 0) / c.length;
+    return {
+      fill: svg('path', { d: pathOf(c), fill: colors[uses[i]], opacity: 0 }, g),
+      edge: svg('path', { d: pathOf(c), fill: 'none', stroke: '#3a3631', 'stroke-width': 2.5, pathLength: 1, 'stroke-dasharray': 1, 'stroke-dashoffset': 1 }, g),
+      seed: pts[i], label: [cx, cy, uses[i]],
+    };
+  });
+  POLY.forEach(p => { p.dot = svg('circle', { cx: p.seed[0], cy: p.seed[1], r: 0, fill: '#d9772b' }, g); });
+  POLY.forEach(p => { p.text = svg('text', { x: p.label[0], y: p.label[1] + 8, 'text-anchor': 'middle', class: 'lbl', 'font-size': 24, opacity: 0 }, g); p.text.textContent = p.label[2]; });
+  // 宿舍、院子和出入口要的是另一种形状
+  const fail = svg('g', { opacity: 0, id: 'poly-fail' }, g);
+  svg('path', { d: 'M760 150 h280 v220 h-90 v-130 h-100 v130 h-90 z', fill: 'rgba(217,98,79,.18)', stroke: '#d9624f', 'stroke-width': 5, 'stroke-dasharray': '14 9' }, fail);
+  const cap = svg('g', { id: 'poly-cap' }, g);
+  const c1 = svg('text', { x: 90, y: 110, class: 'lbl', 'font-size': 46 }, cap); c1.textContent = '切多边形';
+  const c2 = svg('text', { x: 90, y: 160, class: 'note', 'font-size': 24 }, cap); c2.textContent = '1 月 16 日 · 第一版';
+  const c3 = svg('text', { x: 90, y: 230, class: 'note', 'font-size': 24, opacity: 0, id: 'poly-c3' }, cap); c3.textContent = '撒点 → 每块地归最近的点';
+  const c4 = svg('text', { x: 90, y: 270, class: 'note', 'font-size': 24, opacity: 0, id: 'poly-c4' }, cap); c4.textContent = '再给地块安排用途';
+  const c5 = svg('text', { x: 90, y: 340, class: 'lbl', 'font-size': 32, fill: '#d9624f', opacity: 0, id: 'poly-c5' }, cap); c5.textContent = '分得出来 ≠ 适合过日子';
+  const c6 = svg('text', { x: 90, y: 400, class: 'note', 'font-size': 24, fill: '#d9624f', id: 'poly-c6', opacity: 0 }, cap); c6.textContent = '红框：宿舍 + 院子 + 出入口';
+})();
+
+// 拼图：工头带施工队，一块块接上去
+(function () {
+  const g = $('jig-svg');
+  const P = [
+    [760, 220, '起点', -1], [900, 220, '主路', 0], [900, 90, '学堂', 1], [1040, 220, '广场', 1], [1040, 350, '住屋', 3],
+    [1180, 220, '市场', 3], [760, 350, '住屋', 0], [620, 220, '城门', 0], [1180, 90, '钟楼', 5], [1320, 220, '码头', 5], [900, 350, '院子', 1],
+  ];
+  window.JIG = P.map(([x, y, name, parent]) => {
+    const grp = svg('g', { opacity: 0 }, g);
+    let link = null;
+    if (parent >= 0) { const [px, py] = P[parent]; link = svg('line', { x1: px, y1: py, x2: x, y2: y, stroke: '#3a3631', 'stroke-width': 4, opacity: 0 }, g); }
+    svg('rect', { x: x - 52, y: y - 40, width: 104, height: 80, rx: 10, fill: name === '起点' ? '#f6c79a' : '#f2e6d0', stroke: '#3a3631', 'stroke-width': 3 }, grp);
+    const t = svg('text', { x, y: y + 10, 'text-anchor': 'middle', class: 'lbl', 'font-size': 28 }, grp); t.textContent = name;
+    return { grp, link, x, y };
+  });
+  JIG.forEach(j => g.appendChild(j.grp));
+  const cap = svg('g', {}, g);
+  const a = svg('text', { x: 90, y: 110, class: 'lbl', 'font-size': 46 }, cap); a.textContent = '一块块拼上去';
+  const b = svg('text', { x: 90, y: 160, class: 'note', 'font-size': 24 }, cap); b.textContent = '4 月 2 日 · 工头带施工队';
+  const c = svg('text', { x: 90, y: 230, class: 'note', 'font-size': 24 }, cap); c.textContent = 'AI 选建筑、选拼接方向';
+  const d = svg('text', { x: 90, y: 270, class: 'note', 'font-size': 24 }, cap); d.textContent = '程序负责检查和推进';
+  // 沙漏
+  const hg = svg('g', { id: 'hourglass', opacity: 0 }, g);
+  svg('path', { d: 'M-34 -50 H34 M-34 50 H34', stroke: '#3a3631', 'stroke-width': 6, 'stroke-linecap': 'round' }, hg);
+  svg('path', { d: 'M-26 -46 C -26 -10, -4 -6, -4 0 C -4 6, -26 10, -26 46 H26 C 26 10, 4 6, 4 0 C 4 -6, 26 -10, 26 -46Z', fill: '#fffdf8', stroke: '#3a3631', 'stroke-width': 4 }, hg);
+  const st = svg('g', { transform: 'translate(0 -6)' }, hg); svg('path', { id: 'sand-top', d: 'M-20 -36 H20 L0 -6Z', fill: '#e2b04a', 'transform-origin': '0 -6' }, st);
+  const sb = svg('g', { transform: 'translate(0 42)' }, hg); svg('path', { id: 'sand-bot', d: 'M-22 0 H22 L0 -26Z', fill: '#e2b04a' }, sb);
+  // 阵列：一整排房子一次落下
+  window.ARRAY = [0, 1, 2, 3, 4, 5].map(i => {
+    const h = svg('g', { opacity: 0 }, g), x = 640 + i * 118, y = 448;
+    svg('rect', { x: x - 40, y: y - 30, width: 80, height: 46, fill: '#f2d3ae', stroke: '#3a3631', 'stroke-width': 3 }, h);
+    svg('path', { d: `M${x - 46} ${y - 30} L${x} ${y - 58} L${x + 46} ${y - 30}Z`, fill: '#c0533f', stroke: '#3a3631', 'stroke-width': 3 }, h);
+    return h;
+  });
+  const al = svg('text', { x: 1380, y: 452, class: 'lbl', 'font-size': 32, fill: '#d9772b', id: 'array-lbl', opacity: 0 }, g); al.textContent = '阵列';
+  window.JIG_RING = svg('rect', { x: 560, y: 40, width: 860, height: 380, rx: 30, fill: 'none', stroke: '#d9624f', 'stroke-width': 4, 'stroke-dasharray': '12 10', opacity: 0 }, g);
+})();
+
+// 画图转坐标：一片柔和的色块，程序读成五十二块碎片（示意）
+(function () {
+  const g = $('paint-svg');
+  const X0 = 560, Y0 = 30, X1 = 1320, Y1 = 470;
+  svg('rect', { x: X0, y: Y0, width: X1 - X0, height: Y1 - Y0, fill: '#e3ead2', stroke: '#3a3631', 'stroke-width': 3, rx: 6 }, g);
+  const defs = svg('defs', {}, g);
+  const f = svg('filter', { id: 'soft', x: '-30%', y: '-30%', width: '160%', height: '160%' }, defs); svg('feGaussianBlur', { stdDeviation: 22 }, f);
+  const blobs = [[760, 160, 110, '#e8a87c'], [990, 200, 130, '#9cc3d8'], [860, 340, 120, '#f0d27a'], [1120, 360, 100, '#c7a6d8'], [700, 330, 70, '#b5d39c']];
+  const soft = svg('g', { filter: 'url(#soft)', id: 'paint-soft' }, g);
+  window.BLOBS = blobs.map(([cx, cy, r, c]) => svg('circle', { cx, cy, r: 0, fill: c, opacity: .9 }, soft));
+  const road = svg('path', { d: 'M600 250 C 760 220, 900 290, 1280 230', stroke: '#8c7a62', 'stroke-width': 10, fill: 'none', 'stroke-linecap': 'round', opacity: .55, filter: 'url(#soft)', id: 'paint-road' }, g);
+  // 碎片
+  const r = rng(52), pts = [];
+  while (pts.length < 52) {
+    const x = X0 + 30 + r() * (X1 - X0 - 60), y = Y0 + 30 + r() * (Y1 - Y0 - 60);
+    if (blobs.some(([cx, cy, rr]) => Math.hypot(x - cx, y - cy) < rr * 1.15)) pts.push([x, y]);
+  }
+  const cells = voronoi(pts, X0, Y0, X1, Y1);
+  const shard = svg('g', { id: 'paint-shards' }, g);
+  window.SHARDS = cells.map((c, i) => {
+    const [x, y] = pts[i];
+    let best = blobs[0], bd = 1e9; for (const b of blobs) { const d = Math.hypot(x - b[0], y - b[1]) / b[2]; if (d < bd) { bd = d; best = b; } }
+    const cl = svg('clipPath', { id: 'sh' + i }, defs); svg('circle', { cx: best[0], cy: best[1], r: best[2] * 1.25 }, cl);
+    return svg('path', { d: pathOf(c), fill: best[3], stroke: '#3a3631', 'stroke-width': 1.5, opacity: 0, 'clip-path': `url(#sh${i})` }, shard);
+  });
+  const cap = svg('g', {}, g);
+  const a = svg('text', { x: 90, y: 110, class: 'lbl', 'font-size': 46 }, cap); a.textContent = '画图再转坐标';
+  const b = svg('text', { x: 90, y: 160, class: 'note', 'font-size': 24 }, cap); b.textContent = '4 月 25 日试 · 5 月 12 日真跑起来';
+  const c = svg('text', { x: 90, y: 230, class: 'note', 'font-size': 24 }, cap); c.textContent = '人眼：一片区域';
+  const d = svg('text', { x: 90, y: 270, class: 'note', 'font-size': 24, id: 'paint-prog', opacity: 0 }, cap); d.textContent = '程序：渐变和细碎颜色拆成很多小块';
+  const e = svg('text', { x: 1360, y: 140, class: 'lbl', 'font-size': 30, id: 'paint-n', opacity: 0 }, g);
+  const s = svg('text', { x: 1360, y: 450, class: 'lbl', 'font-size': 26, fill: '#d9624f', id: 'paint-demo', opacity: 0 }, g); s.textContent = '（示意图）';
+  const three = svg('g', { id: 'paint-three', opacity: 0 }, g);
+  ['画得好看', '读得准确', '建得出来'].forEach((w, i) => {
+    const gg = svg('g', { id: 'three' + i }, three);
+    svg('rect', { x: 70 + i * 0, y: 300 + i * 56, width: 250, height: 46, rx: 23, fill: '#fffdf8', stroke: '#d9772b', 'stroke-width': 3 }, gg);
+    const t = svg('text', { x: 195, y: 333 + i * 56, 'text-anchor': 'middle', class: 'lbl', 'font-size': 28 }, gg); t.textContent = w;
+  });
+})();
+
+// 六月 → 10.11 → 10.20 的工作方式
+(function () {
+  const g = $('flow-svg');
+  const items = [['flow-a', 'n2606', 2026, '6 月 · 整条流程重做', '建筑开始成组排布'], ['flow-b', 'n2606', 0, '10 月 11 日', 'AI 直接给世界坐标']];
+  items.forEach(([id, , , t1, t2], i) => {
+    const gg = svg('g', { id, opacity: 0 }, g);
+    svg('rect', { x: 240 + i * 640, y: 20, width: 560, height: 130, rx: 14, fill: '#fffdf8', stroke: '#cfc5b5', 'stroke-width': 2 }, gg);
+    const a = svg('text', { x: 520 + i * 640, y: 75, 'text-anchor': 'middle', class: 'lbl', 'font-size': 40 }, gg); a.textContent = t1;
+    const b = svg('text', { x: 520 + i * 640, y: 120, 'text-anchor': 'middle', class: 'note', 'font-size': 26 }, gg); b.textContent = t2;
+  });
+  const loop = svg('g', { id: 'flow-loop', opacity: 0 }, g);
+  const t = svg('text', { x: 838, y: 210, 'text-anchor': 'middle', class: 'lbl', 'font-size': 38 }, loop); t.textContent = '10 月 20 日 · 设计镜潮';
+  const steps = [['Astra 定位置和排法', 438], ['程序算出结果', 838], ['看着结果调整', 1238]];
+  steps.forEach(([w, x], i) => {
+    svg('rect', { x: x - 170, y: 290, width: 340, height: 90, rx: 45, fill: ['#e3e8f4', '#efe7d8', '#fbe2cc'][i], stroke: '#3a3631', 'stroke-width': 3 }, loop);
+    const tt = svg('text', { x, y: 346, 'text-anchor': 'middle', class: 'lbl', 'font-size': 32 }, loop); tt.textContent = w;
+  });
+  svg('path', { d: 'M610 335 H660 M1010 335 H1060', stroke: '#3a3631', 'stroke-width': 5, 'marker-end': 'url(#ah)' }, loop);
+  svg('path', { id: 'flow-back', d: 'M1238 385 C 1238 470, 438 470, 438 390', stroke: '#d9772b', 'stroke-width': 5, fill: 'none', 'stroke-dasharray': '14 10', 'marker-end': 'url(#ah)' }, loop);
+})();
+
+// 学生生活
+const LIFE = [['住哪儿', '宿院'], ['在哪儿吃饭', '食堂'], ['洗衣洗浴怎么办', '日常补给'], ['生病了去哪儿', '医护'], ['空地', '庭院 · 通道 · 种植地']];
+LIFE.forEach(([q, a], i) => {
+  const row = document.createElement('div'); row.className = 'hand';
+  row.style.cssText = 'font-size:40px;display:flex;align-items:center;height:68px;opacity:0';
+  row.innerHTML = `<span style="width:400px;text-align:right">${q}</span><span style="width:120px;text-align:center;color:#d9772b">→</span><span>${a}</span>`;
+  $('life-rows').appendChild(row);
+});
+
+function show(id, op) { const e = typeof id === 'string' ? $(id) : id; e.style.opacity = op; e.style.visibility = op > 0.001 ? 'visible' : 'hidden'; }
+const R = { aier: 135.9, east: 81.5, spawn: 54.3 };
+
+
+// 复制粘贴：代码从网页拖进编辑器，运行报错，日志再拖回网页，一轮比一轮快
+(function () {
+  const g = $('copy-svg');
+  const win = (x, y, title, color) => {
+    const w = svg('g', {}, g);
+    svg('rect', { x, y, width: 520, height: 340, rx: 12, fill: '#fff', stroke: '#cfc5b5', 'stroke-width': 2 }, w);
+    svg('rect', { x, y, width: 520, height: 40, rx: 12, fill: color }, w);
+    svg('rect', { x, y: y + 28, width: 520, height: 12, fill: color }, w);
+    const t = svg('text', { x: x + 20, y: y + 28, class: 'lbl', 'font-size': 22 }, w); t.textContent = title;
+    return w;
+  };
+  window.CP_BROWSER = win(30, 40, 'Gemini · 网页', '#ece5f6');
+  window.CP_EDITOR = win(730, 40, '编辑器', '#e8eef2');
+  svg('rect', { x: 730, y: 300, width: 520, height: 80, fill: '#2f3236' }, CP_EDITOR);
+  window.CP_DYN = svg('g', {}, g);
+})();
+const CP_D = [2.8, 2.1, 1.6, 1.3, 1.1, 0.95, 0.85, 0.8, 0.75, 0.7, 0.7, 0.7];
+function drawCopy(s) {
+  CP_BROWSER.setAttribute('opacity', ease((s - 0.5) / 0.4));
+  CP_EDITOR.setAttribute('opacity', ease((s - 0.8) / 0.4));
+  let e = s - 1.4, n = 0;
+  while (n < CP_D.length - 1 && e > CP_D[n]) { e -= CP_D[n]; n++; }
+  const ph = e < 0 ? -1 : clamp(e / CP_D[n]);
+  const jit = Math.min(n, 6) * 0.35;
+  CP_BROWSER.setAttribute('transform', `rotate(${-jit * Math.sin(s * 3)} 290 210)`);
+  CP_EDITOR.setAttribute('transform', `rotate(${jit * Math.sin(s * 3.4)} 990 210)`);
+  let h = '';
+  // 网页里的对话：每一轮多一组"代码回复 + 贴回去的日志"
+  const rounds = ph < 0 ? 0 : n + (ph > 0.9 ? 1 : 0);
+  for (let i = Math.max(0, rounds - 3); i < rounds; i++) {
+    const k = i - Math.max(0, rounds - 3), y = 100 + k * 78;
+    h += `<rect x="60" y="${y}" width="250" height="30" rx="15" fill="#f3e1e1"/><rect x="72" y="${y + 11}" width="${120 + (i * 37) % 90}" height="8" rx="4" fill="#d9624f"/>`;
+    h += `<rect x="230" y="${y + 36}" width="290" height="30" rx="15" fill="#ece5f6"/><rect x="244" y="${y + 47}" width="${150 + (i * 53) % 100}" height="8" rx="4" fill="#8a63d2"/>`;
+  }
+  if (ph >= 0 || s > 1.4) h += `<rect x="230" y="${rounds >= 3 ? 334 : 100 + rounds * 78 + 36}" width="290" height="30" rx="15" fill="#ece5f6" opacity="${rounds >= 3 ? 0 : 1}"/>`;
+  // 编辑器：标签页越开越多，代码行，控制台里的红字
+  const tabs = Math.min(9, 1 + n);
+  for (let i = 0; i < tabs; i++) h += `<rect x="${742 + i * 56}" y="86" width="50" height="22" rx="4" fill="${i === tabs - 1 ? '#d9e4ea' : '#eef2f4'}"/>`;
+  for (let i = 0; i < 6; i++) h += `<rect x="760" y="${124 + i * 26}" width="${[300, 220, 380, 260, 330, 180][(i + n) % 6]}" height="9" rx="4" fill="${ph > 0.35 && ph < 0.55 ? '#c9d6dd' : '#dde3e7'}"/>`;
+  const errs = Math.min(3, rounds + (ph > 0.45 ? 1 : 0));
+  for (let i = 0; i < errs; i++) h += `<text x="750" y="${326 + i * 20}" font-family="monospace" font-size="15" fill="#ff8a7a">ERROR ×${(i + Math.max(0, rounds - 2)) * 3 + 2}</text>`;
+  // 正在搬的小方块
+  const chip = (x, y, label, color) => `<g transform="translate(${x} ${y})"><rect x="-46" y="-20" width="92" height="40" rx="10" fill="${color}" stroke="#3a3631" stroke-width="2.5"/><text x="0" y="8" text-anchor="middle" class="lbl" font-size="22" fill="#fff">${label}</text></g>`;
+  if (ph >= 0 && ph < 0.35) { const q = inout(ph / 0.35); h += chip(330 + (980 - 330) * q, 230 - Math.sin(Math.PI * q) * 120, '代码', '#8a63d2'); }
+  if (ph >= 0.55 && ph < 0.9) { const q = inout((ph - 0.55) / 0.35); h += chip(980 + (330 - 980) * q, 340 - Math.sin(Math.PI * q) * 120, '日志', '#d9624f'); }
+  if (ph >= 0.35 && ph < 0.55) h += `<text x="1180" y="80" class="lbl" font-size="24" fill="#3a8a4a">▶ 运行</text>`;
+  CP_DYN.innerHTML = h;
+}
+
+// 4 月：看着示意图选位置，选到了范围外面，ERROR，被炸晕
+// 9 月：选得准，还能往东挪十二格，PERFECT
+(function () {
+  const g = $('when-svg');
+  const panel = (px, label) => {
+    const w = svg('g', {}, g);
+    svg('rect', { x: px, y: 30, width: 600, height: 380, rx: 14, fill: '#fffdf8', stroke: '#cfc5b5', 'stroke-width': 2 }, w);
+    for (let i = 0; i <= 26; i++) svg('line', { x1: px + 40 + i * 20, y1: 80, x2: px + 40 + i * 20, y2: 360, stroke: i % 5 ? '#eee7da' : '#ddd3c2', 'stroke-width': 1 }, w);
+    for (let j = 0; j <= 14; j++) svg('line', { x1: px + 40, y1: 80 + j * 20, x2: px + 560, y2: 80 + j * 20, stroke: j % 5 ? '#eee7da' : '#ddd3c2', 'stroke-width': 1 }, w);
+    for (let i = 0; i <= 26; i += 5) { const t = svg('text', { x: px + 40 + i * 20, y: 74, 'text-anchor': 'middle', class: 'note', 'font-size': 13 }, w); t.textContent = (i - 10) * 16; }
+    svg('rect', { x: px + 240, y: 160, width: 200, height: 120, rx: 10, fill: 'rgba(217,119,43,.12)', stroke: '#d9772b', 'stroke-width': 3, 'stroke-dasharray': '10 7' }, w);
+    const t = svg('text', { x: px + 24, y: 62, class: 'lbl', 'font-size': 34 }, w); t.textContent = label;
+    return w;
+  };
+  window.WH = { a: panel(150, '4 月'), b: panel(900, '9 月') };
+  const sticker = (px) => { const s = svg('g', {}, g); svg('circle', { r: 64, fill: '#fff', stroke: '#fff', 'stroke-width': 6 }, s); svg('image', { href: '../开场/stickers/astra.png', x: -64, y: -64, width: 128, height: 128, 'clip-path': 'circle(64px)' }, s); return s; };
+  WH.sa = sticker(); WH.sb = sticker();
+  WH.dyn = svg('g', {}, g);
+})();
+function pin(x, y, color) { return `<g transform="translate(${x} ${y})"><path d="M0 0 C -14 -18 -16 -30 -16 -36 A16 16 0 1 1 16 -36 C 16 -30 14 -18 0 0Z" fill="${color}" stroke="#3a3631" stroke-width="2.5"/><circle cx="0" cy="-36" r="6" fill="#fff"/></g>`; }
+function burst(x, y, r, fill, op) { let d = ''; for (let i = 0; i < 16; i++) { const a = i / 16 * Math.PI * 2, rr = i % 2 ? r * 0.5 : r; d += (i ? 'L' : 'M') + (x + rr * Math.cos(a)).toFixed(1) + ' ' + (y + rr * Math.sin(a)).toFixed(1); } return `<path d="${d}Z" fill="${fill}" stroke="#3a3631" stroke-width="2.5" opacity="${op}"/>`; }
+function drawWhen(time) {
+  show('when', between('n0409', 'poly', time, 0.5, 0.4));
+  const a = since('n0409', time), b = since('n09', time);
+  WH.a.setAttribute('opacity', ease(a / 0.4) * (b > 0 ? 1 - 0.45 * ease(b / 0.5) : 1));
+  WH.b.setAttribute('opacity', ease(b / 0.4));
+  let h = '';
+  // 4 月
+  const ax = 150, shake = a > 2.1 ? 9 * Math.sin(a * 22) * Math.exp(-(a - 2.1) * 1.2) : 0;
+  WH.sa.setAttribute('transform', `translate(${ax + 40} 400) rotate(${shake})`);
+  WH.sa.setAttribute('opacity', ease((a - 0.2) / 0.4) * (b > 0 ? 1 - 0.45 * ease(b / 0.5) : 1));
+  if (a > 0.4 && a < 1.7) for (let i = 0; i < 3; i++) if (a > 0.5 + i * 0.3) h += `<circle cx="${ax + 120 + i * 22}" cy="${340 - i * 14}" r="${6 + i * 2}" fill="#fff" stroke="#8c8274" stroke-width="2"/>`;
+  if (a > 1.6) { const q = ease((a - 1.6) / 0.25); h += `<g opacity="${b > 0 ? 0.55 : 1}">` + pin(ax + 582, 250 - 60 * (1 - q), '#d9624f');
+    if (a > 1.9) { const e = clamp((a - 1.9) / 0.5); h += burst(ax + 582, 222, 70 * backOutLocal(e), '#f6c35a', 1 - 0.6 * clamp((a - 2.6) / 0.6)); h += `<text x="${ax + 560}" y="${150 - 6 * ease(e)}" text-anchor="middle" font-family="ZCOOL KuaiLe" font-size="${48 * ease(e / 0.6)}" fill="#d9624f">ERROR</text>`; }
+    h += '</g>'; }
+  if (a > 2.1) for (let i = 0; i < 3; i++) { const t = a * 4 + i * 2.09, sx = ax + 40 + Math.cos(t) * 62, sy = 316 + Math.sin(t) * 12;
+    h += `<path d="M0 -10 L3 -3 L10 -3 L4 2 L6 10 L0 5 L-6 10 L-4 2 L-10 -3 L-3 -3Z" transform="translate(${sx} ${sy}) scale(1.4)" fill="#f6d36b" stroke="#c9902a" opacity="${b > 0 ? 0.5 : 1}"/>`; }
+  // 9 月
+  const bx = 900;
+  WH.sb.setAttribute('opacity', ease(b / 0.3));
+  WH.sb.setAttribute('transform', `translate(${bx + 40} 400) rotate(${-6 * ease(b / 0.4)}) scale(${b > 0 ? backOutLocal(b / 0.45) : 0})`);
+  if (b > 0.9) {
+    const drop = ease((b - 0.9) / 0.25), slide = inout((b - 2.2) / 0.9);
+    const x = bx + 140 + 240 * slide, y = 230;
+    if (b > 1.9 && b < 3.4) h += `<path d="M${bx + 150} 140 H${bx + 370}" stroke="#d9772b" stroke-width="5" marker-end="url(#ah3)"/><text x="${bx + 260}" y="128" text-anchor="middle" class="lbl" font-size="26" fill="#d9772b">往东 12 格</text>`;
+    h += pin(x, y - 60 * (1 - drop), '#3a8a4a');
+  }
+  if (b > 3.3) { const e = clamp((b - 3.3) / 0.4); h += `<g transform="translate(${bx + 300} 120) rotate(-8) scale(${backOutLocal(e)})"><rect x="-130" y="-38" width="260" height="70" rx="12" fill="rgba(255,253,248,.9)" stroke="#d9a62b" stroke-width="5"/><text x="0" y="18" text-anchor="middle" font-family="ZCOOL KuaiLe" font-size="50" fill="#d9a62b">PERFECT</text></g>`;
+    for (let i = 0; i < 4; i++) { const t = b * 2 + i * 1.6; h += `<path d="M0 -12 L3 -3 L12 0 L3 3 L0 12 L-3 3 L-12 0 L-3 -3Z" transform="translate(${bx + 300 + Math.cos(t) * 170} ${120 + Math.sin(t) * 50}) scale(${0.8 + 0.3 * Math.sin(b * 6 + i)})" fill="#f6d36b"/>`; } }
+  WH.dyn.innerHTML = '<defs><marker id="ah3" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0 0 L8 4 L0 8z" fill="#d9772b"/></marker></defs>' + h;
+}
+function backOutLocal(x) { x = clamp(x); const c = 1.9; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); }
+
+window.drawBoard = function (time) {
+  // 段落标题卡"回顾"和艾尔大陆（与 elle.html 一致）
+  show('titlecard', ease(time / 0.4) * (1 - ease((time - 2.6) / 0.5)));
+  show('map', ease((since('sea', time) - 2.6) / 0.6) * (1 - ease((since('erase', time) - 1.6) / 0.6)));
+  $('sea-lbl').setAttribute('opacity', ease((since('sea', time) - 3.0) / 0.5));
+  const draw = { aier: since('aier', time), east: since('others', time), spawn: since('others', time) - 0.7 };
+  for (const k of ['aier', 'east', 'spawn']) {
+    $('o-' + k).setAttribute('stroke-dashoffset', 1 - inout(draw[k] / 0.9));
+    const f = since('fill', time) - (k === 'aier' ? 0 : k === 'east' ? 0.5 : 1.0);
+    const er = 1 - inout((since('erase', time) - (k === 'aier' ? 0.2 : k === 'east' ? 0.5 : 0.8)) / 0.7);
+    $('cc-' + k).setAttribute('r', R[k] * inout(f / 0.8) * er);
+    $('o-' + k).style.opacity = er;
+    $('l-' + k).style.opacity = ease((draw[k] - 0.7) / 0.4) * er;
+  }
+  show('tag', ease((since('aier', time) - 0.4) / 0.5) * (1 - ease((since('erase', time) - 1.6) / 0.5)));
+  const worldOut = 1 - ease((since('tl', time) - 0.2) / 0.5);
+  show('world', ease((since('erase', time) - 1.4) / 0.9) * worldOut);
+
+  // 时间线
+  const tlOp = between('tl', 'end', time, 0.6, 1.2, 0.4, 1.0);
+  show('tl', tlOp);
+  $('tl-line').setAttribute('x2', 90 + 1490 * inout((since('tl', time) - 0.4) / 1.2));
+  let focus = -1, best = -1e9;
+  for (const [m, i] of FOCUS) { const s = since(m, time); if (s >= 0 && s < 1e8 && -s > best) { best = -s; focus = i; } }
+  const all = since('tlall', time) >= 0;
+  NODES.forEach((n, i) => {
+    const s = since(n.on, time) - (n.d || 0) - (n.on === 'tl' ? 0.6 : 0);
+    const appear = ease(s / 0.4);
+    n.el.style.opacity = appear * (i === focus || all ? 1 : 0.75);
+    const pop = i === focus && !all ? 1.18 : 1;
+    n.el.style.transform = `translateY(${(1 - appear) * 12}px) scale(${pop})`;
+    n.el.classList.toggle('on', all ? since('tlall', time) > i * 0.15 : i === focus);
+  });
+
+  // 主画面
+  show('copy', between('tl', 'n2601', time, 0.5, 0.4, 0.5));
+  drawCopy(since('tl', time));
+
+  show('astra', between('n2601', 'methods', time, 0.6, 0.4));
+  show('methods', between('methods', 'n0409', time, 0.6, 0.4));
+  [...$('methods').children].forEach((c, i) => {
+    const a = ease((since('methods', time) - i * 0.6) / 0.5); c.style.opacity = a; c.style.transform = `translateY(${(1 - a) * 30}px) rotate(${(i - 1) * 1.5}deg)`;
+    c.querySelector('.x').style.opacity = ease((since('methods', time) - 3 - i * 0.5) / 0.2);
+  });
+
+  drawWhen(time);
+
+  // 切多边形
+  show('poly', between('poly', 'jigsaw', time, 0.5, 0.4));
+  const ps = since('poly', time);
+  POLY.forEach((p, i) => {
+    p.dot.setAttribute('r', 7 * ease((ps - 0.6 - i * 0.1) / 0.25));
+    p.edge.setAttribute('stroke-dashoffset', 1 - inout((ps - 2.8 - i * 0.12) / 0.8));
+    const f = ease((since('polyfill', time) - i * 0.18) / 0.4);
+    p.fill.setAttribute('opacity', f * 0.95);
+    p.text.setAttribute('opacity', f);
+  });
+  $('poly-c3').setAttribute('opacity', ease((ps - 2.5) / 0.5));
+  $('poly-c4').setAttribute('opacity', ease(since('polyfill', time) / 0.5));
+  const pf = since('polyfail', time);
+  $('poly-fail').setAttribute('opacity', ease(pf / 0.3));
+  $('poly-fail').setAttribute('transform', `translate(${pf > 0 && pf < 1.2 ? 8 * Math.sin(pf * 30) * (1 - pf / 1.2) : 0} ${-(1 - ease(pf / 0.4)) * 60})`);
+  $('poly-c5').setAttribute('opacity', ease((pf - 2) / 0.6));
+  $('poly-c6').setAttribute('opacity', ease((pf - 0.4) / 0.5));
+
+  // 拼图
+  show('jig', between('jigsaw', 'paint', time, 0.5, 0.4));
+  const js = since('jigsaw', time);
+  JIG.forEach((j, i) => {
+    const a = ease((js - 0.6 - i * 1.1) / 0.45);
+    j.grp.setAttribute('opacity', a);
+    j.grp.setAttribute('transform', `translate(0 ${(1 - a) * -40})`);
+    if (j.link) j.link.setAttribute('opacity', ease((js - 0.4 - i * 1.1) / 0.3));
+  });
+  const hard = since('jigsaw', time) - 17;
+  JIG_RING.setAttribute('opacity', ease(hard / 0.6) * (0.6 + 0.4 * Math.sin(time * 4)) * (1 - ease(since('slow', time) / 0.4)));
+  // 3-19b：一个一个放太慢（沙漏转），改用阵列，一下落下一整排
+  const sl = since('slow', time), ar = since('array', time);
+  $('hourglass').setAttribute('opacity', ease(sl / 0.4) * (1 - ease((ar - 1) / 0.4)));
+  $('hourglass').setAttribute('transform', `translate(1500 120) rotate(${180 * inout(((sl % 2.5) - 2) / 0.5)})`);
+  $('sand-top').setAttribute('transform', `scale(1 ${1 - clamp((sl % 2.5) / 2)})`);
+  $('sand-bot').setAttribute('transform', `scale(1 ${clamp((sl % 2.5) / 2)})`);
+  JIG.forEach(j => j.grp.style.filter = sl > 0 && ar < 0 ? `saturate(${0.6})` : '');
+  ARRAY.forEach((h, i) => { const a = ease((ar - 0.2) / 0.25); h.setAttribute('opacity', a); h.setAttribute('transform', `translate(0 ${-(1 - a) * 90})`); });
+  $('array-lbl').setAttribute('opacity', ease((ar - 0.6) / 0.4));
+
+  // 画图 → 五十二块
+  show('paint', between('paint', 'n2606', time, 0.5, 0.4));
+  const pa = since('paint', time);
+  BLOBS.forEach((b, i) => b.setAttribute('r', [110, 130, 120, 100, 70][i] * ease((pa - 0.8 - i * 0.5) / 1.0)));
+  const sh = since('shatter', time);
+  $('paint-prog').setAttribute('opacity', ease((sh + 2) / 0.5));
+  const n = Math.max(1, Math.min(52, Math.floor(1 + 51 * clamp(sh / 2.2))));
+  SHARDS.forEach((s, i) => s.setAttribute('opacity', i < n && sh > 0 ? 0.92 : 0));
+  $('paint-soft').setAttribute('opacity', 1 - 0.7 * ease(sh / 2));
+  $('paint-n').textContent = `读出分区：${n}`;
+  $('paint-n').setAttribute('opacity', ease(sh / 0.3));
+  $('paint-demo').setAttribute('opacity', ease(sh / 0.3));
+  const th = since('three', time);
+  $('paint-three').setAttribute('opacity', ease(th / 0.3));
+  [0, 1, 2].forEach(i => { const a = ease((th - i * 0.8) / 0.4); $('three' + i).setAttribute('opacity', a); });
+  $('paint-n').setAttribute('font-size', 30 + 14 * clamp(1 - Math.abs(sh - 2.4) / 0.6));
+
+  // 六月、10.11、10.20
+  show('flow', between('n2606', 'n2609', time, 0.5, 0.4));
+  $('flow-a').setAttribute('opacity', ease(since('n2606', time) / 0.5));
+  $('flow-b').setAttribute('opacity', ease((since('n2606', time) - 4) / 0.5));
+  $('flow-loop').setAttribute('opacity', ease(since('n1020', time) / 0.5));
+  $('flow-back').setAttribute('stroke-dashoffset', -time * 40);
+
+  show('test', between('n2609', 'n2610', time, 0.5, 0.4));
+  show('t-ds1', ease(since('ds', time) / 0.5));
+  show('t-glm1', ease(since('glmtest', time) / 0.5));
+  $('t-ds').style.opacity = 0.55 + 0.45 * (since('glmtest', time) < 0 ? 1 : 0.6);
+  show('join', between('n2610', 'd4old', time, 0.5, 0.4));
+
+  // 镜潮
+  show('d4', between('d4old', 'life', time, 0.5, 0.5));
+  show('d4-mk', ease(since('d4marked', time) / 0.6));
+  const sp = since('d4marked', time) - 0.8;
+  show('d4-stamp', ease(sp / 0.08));
+  $('d4-stamp').style.transform = `rotate(-8deg) scale(${sp < 0.12 ? 1.8 - 0.8 * clamp(sp / 0.12) : 1})`;
+  const cmp = since('compare', time);
+  show('d4-cap', 1 - ease(cmp / 0.4));
+  show('d4-manual', between('manual', 'compare', time, 0.5, 0.4));
+  show('d4-strike', ease((since('rewrite', time)) / 0.4));
+  show('d4-new', ease((since('rewrite', time) - 0.6) / 0.5));
+  show('d4-b', ease((cmp - 0.3) / 0.6));
+  show('d4-cmp', ease((cmp - 0.8) / 0.5));
+  $('d4-a').style.left = (120 + 0 * cmp) + 'px';
+
+  show('life', between('life', 'tlall', time, 0.5, 0.4));
+  [...$('life-rows').children].forEach((r, i) => { const a = ease((since('life', time) - 1 - i * 1.6) / 0.5); r.style.opacity = a; r.style.transform = `translateX(${(1 - a) * -30}px)`; });
+
+  show('year', between('tlall', 'end', time, 0.8, 1.0, 1.0, 1.5));
+};
+</script>
+<style>#line{position:relative} #rinReveal{position:absolute;inset:0;padding:inherit;box-sizing:border-box;pointer-events:none;white-space:inherit;color:var(--ink,#3a3631)}</style>
+<script>
+const fullRender=window.render;
+window.render=function(time){fullRender(time);const cue=window.TIMELINE.find(c=>time>=c.start&&time<c.end);const el=document.getElementById('line');let overlay=document.getElementById('rinReveal');
+ if(cue&&cue.who==='rin'){
+  const chars=Array.from(cue.text);const k=Math.min(chars.length,Math.max(1,Math.floor((time-cue.start)/cue.charStep)+1));
+  el.style.color='transparent';if(!overlay){overlay=document.createElement('span');overlay.id='rinReveal';el.appendChild(overlay);}overlay.textContent=chars.slice(0,k).join('');
+ }else{el.style.color='';if(overlay)overlay.remove();}
+};
+</script>
+<script src="../../音频/全片配音_20261118/editor_bridge.js?v=rin-600x170-20261122"></script>
+</body>
+</html>

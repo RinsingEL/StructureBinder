@@ -10,8 +10,8 @@ from run_fish_timeline import load_act_sentences
 import imageio_ffmpeg
 FF=imageio_ffmpeg.get_ffmpeg_exe();SR=48000;BEAT=60/108;STEP=.11462585034013606
 
-def read_audio(p,channels=2):
-    raw=subprocess.run([FF,'-v','error','-i',str(p),'-f','f32le','-ac',str(channels),'-ar',str(SR),'pipe:1'],capture_output=True,check=True).stdout
+def read_audio(p,channels=2,speed=1.0):
+    raw=subprocess.run([FF,'-v','error','-i',str(p),*(['-af',f'atempo={speed}'] if speed!=1.0 else []),'-f','f32le','-ac',str(channels),'-ar',str(SR),'pipe:1'],capture_output=True,check=True).stdout
     return np.frombuffer(raw,np.float32).reshape(-1,channels).copy()
 def write(p,x):
     assert np.isfinite(x).all() and np.max(np.abs(x))<1
@@ -28,7 +28,11 @@ def stime(t):
     ms=round(t*1000);h,ms=divmod(ms,3600000);m,ms=divmod(ms,60000);s,ms=divmod(ms,1000);return f'{h:02}:{m:02}:{s:02},{ms:03}'
 
 def main():
-    ap=argparse.ArgumentParser();ap.add_argument('--act',required=True);a=ap.parse_args();act=a.act
+    ap=argparse.ArgumentParser();ap.add_argument('--act',required=True);ap.add_argument('--voice-speed',type=float,default=1.0);ap.add_argument('--out-dir',type=Path);ap.add_argument('--music-dir',type=Path);a=ap.parse_args();act=a.act
+    assert .8<=a.voice_speed<=1.25
+    speed=a.voice_speed;out=a.out_dir.resolve() if a.out_dir else HERE
+    if speed!=1.0 and out==HERE:raise ValueError('Speed variants require a separate --out-dir')
+    out.mkdir(parents=True,exist_ok=True)
     timing=json.loads((HERE.parent/'全片配乐_v6'/f'timeline_{act}.json').read_text(encoding='utf8'))
     original=json.loads(json.dumps(timing));D=timing['duration'];n=round(D*SR)
     manifest=json.loads((HERE/'voices'/act/'manifest.json').read_text(encoding='utf8'));assert not manifest['errors']
@@ -44,12 +48,12 @@ def main():
         if g['who']=='rin':
             last=cs[-1];floor=start+(last['start']-requested)+len(last['text'])*STEP+.75
         else:
-            j=jobs[(g['who'],round(g['lineStart'],5))];floor=start+j['duration']+.12
+            j=jobs[(g['who'],round(g['lineStart'],5))];floor=start+j['duration']/speed+.12
     assert floor<D,(floor,D)
     voice=np.zeros((n,2),np.float32);bubbles=np.zeros(n,np.float32);duck=np.ones(n,np.float32)
     pulse=read_audio(HERE.parent/'气泡音候选_20261117/参考分析/参考方向_单音.wav',1)[:,0]*.70
-    cache=HERE/'cache'/act;cache.mkdir(parents=True,exist_ok=True)
-    report={'act':act,'duration':D,'source_music':'Gemini PR73 full score v6','bpm':108,'timing_shifts':changes,'voices':[],'rin':[]}
+    cache=out/'cache'/act;cache.mkdir(parents=True,exist_ok=True)
+    report={'act':act,'duration':D,'voice_speed':speed,'source_music':'Gemini PR73 full score v6','bpm':108,'timing_shifts':changes,'voices':[],'rin':[]}
     def duck_for(start,end,db):
         lo=max(0,round((start-.18)*SR));hi=min(n,round((end+.6)*SR));ts=np.arange(lo,hi)/SR
         curve=np.interp(ts,[start-.18,start+.05,end+.12,end+.6],[1,10**(db/20),10**(db/20),1])
@@ -74,7 +78,7 @@ def main():
                 duck_for(c['start'],c['revealEnd'],-3)
                 report['rin'].append({'text':c['text'],'start':c['start'],'sound_end':c['revealEnd'],'card_end':c['end'],'reading_hold':c['end']-c['revealEnd'],'pulses':count})
             continue
-        j=jobs[(g['who'],round(g['lineStart'],5))];p=HERE/'voices'/act/j['file'];audio=read_audio(p);length=len(audio)/SR
+        j=jobs[(g['who'],round(g['lineStart'],5))];p=HERE/'voices'/act/j['file'];audio=read_audio(p,speed=speed);length=len(audio)/SR
         assert start+length+.02<=next_start,(g['id'],start+length,next_start)
         audio=signal.sosfilt(signal.butter(2,70,'highpass',fs=SR,output='sos'),audio,axis=0).astype(np.float32)
         fade=min(240,len(audio)//4);audio[:fade]*=np.linspace(0,1,fade)[:,None];audio[-fade:]*=np.linspace(1,0,fade)[:,None]
@@ -82,7 +86,7 @@ def main():
         at=round(start*SR);voice[at:at+len(audio)]+=audio;duck_for(start,start+length,-7.5)
         wanted=''.join(norm(c['text']) for c in cs);actual='';times=[]
         for word in aligned[j['file']]['words']:
-            s=norm(word['word']);actual+=s;times.extend([word['start']]*len(s))
+            s=norm(word['word']);actual+=s;times.extend([word['start']/speed]*len(s))
         matcher=difflib.SequenceMatcher(None,wanted,actual,autojunk=False);mapping={}
         for block in matcher.get_matching_blocks():
             for k in range(block.size):mapping[block.a+k]=block.b+k
@@ -104,22 +108,50 @@ def main():
         for b in timing['beats']:
             cue=next((c for c in timing['cards'] if c.get('beat')==b['index']),None)
             if cue:b['t']=cue['start']
-    music=read_audio(HERE/f'{act}_Gemini配乐.wav');assert abs(len(music)-n)<3
+    # Marks belong to subtitle cards; preserve the original within-card offset.
+    for key,value in original.get('marks',{}).items():
+        idx=next((i for i,c in enumerate(original['cards']) if abs(c['start']-value)<.001),None)
+        if idx is not None:timing['marks'][key]=timing['cards'][idx]['start']
+    music=read_audio((a.music_dir or HERE)/f'{act}_Gemini配乐.wav');assert abs(len(music)-n)<3
     if len(music)<n:music=np.pad(music,((0,n-len(music)),(0,0)))
-    music=music[:n];speech=voice+bubbles[:,None]*.7071;write(HERE/f'{act}_人声与气泡.wav',speech)
+    music=music[:n];speech=voice+bubbles[:,None]*.7071;write(out/f'{act}_人声与气泡.wav',speech)
+    write(out/f'{act}_纯配音.wav',voice);write(out/f'{act}_气泡.wav',bubbles)
     mix=music*duck[:,None]+speech;mix*=min(1,.94/max(np.max(np.abs(mix)),1e-8));premix=cache/'premix.wav';write(premix,mix)
     m=loudness(premix);gain=min(-18.5-m['input_i'],-1.5-m['input_tp'])
-    final=HERE/f'{act}_混音.wav';subprocess.run([FF,'-y','-v','error','-i',str(premix),'-af',f'volume={gain}dB','-c:a','pcm_s24le',str(final)],check=True)
+    final=out/f'{act}_混音.wav';subprocess.run([FF,'-y','-v','error','-i',str(premix),'-af',f'volume={gain}dB','-c:a','pcm_s24le',str(final)],check=True)
     report['final_loudness']=loudness(final);report['master_gain_db']=gain
-    (HERE/f'mix_report_{act}.json').write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf8')
-    (HERE/f'timeline_{act}_配音.json').write_text(json.dumps(timing,ensure_ascii=False,indent=2),encoding='utf8')
-    (HERE/f'{act}_字幕.srt').write_text('\n\n'.join(f"{i+1}\n{stime(c['start'])} --> {stime(c['end'])}\n{c['text']}" for i,c in enumerate(timing['cards']))+'\n',encoding='utf8')
-    filename='opening.html' if act=='开场' else 'act2.html';source=ROOT/'devlog/视频素材'/act/filename
+    (out/f'mix_report_{act}.json').write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf8')
+    (out/f'timeline_{act}_配音.json').write_text(json.dumps(timing,ensure_ascii=False,indent=2),encoding='utf8')
+    (out/f'{act}_字幕.srt').write_text('\n\n'.join(f"{i+1}\n{stime(c['start'])} --> {stime(c['end'])}\n{c['text']}" for i,c in enumerate(timing['cards']))+'\n',encoding='utf8')
+    filename={'开场':'opening.html','第二段':'act2.html','第三段':'act3.html','第四段':'act4.html','第五段':'act5.html'}[act];source=ROOT/'devlog/视频素材'/act/filename
     html=source.read_text(encoding='utf8');html=html.replace('<head>','<head>\n<base href="'+source.parent.as_uri()+'/">',1)
     replacement='window.DURATION = '+str(D)+';\nconst VOICE_TIMING='+json.dumps(timing,ensure_ascii=False)+';\ntimeline.splice(0,timeline.length,...VOICE_TIMING.cards);'
     if act=='开场':replacement+='\nObject.assign(stamps,VOICE_TIMING.stamps);'
-    else:replacement+='\nbeatStarts.splice(0,beatStarts.length,...VOICE_TIMING.beats.map(b=>({beat:b.index,t:b.t})));\nfor(let i=0;i<beatStarts.length-1;i++){const b=beatStarts[i]; DUR[b.beat]=Math.min(DUR[b.beat],Math.max(.2,beatStarts[i+1].t-b.t-.05));}'
-    html,count=re.subn(r'window\.DURATION\s*=\s*[^;]+;',lambda _:replacement,html,count=1);assert count==1
+    elif act=='第二段':replacement+='\nbeatStarts.splice(0,beatStarts.length,...VOICE_TIMING.beats.map(b=>({beat:b.index,t:b.t})));\nfor(let i=0;i<beatStarts.length-1;i++){const b=beatStarts[i]; DUR[b.beat]=Math.min(DUR[b.beat],Math.max(.2,beatStarts[i+1].t-b.t-.05));}'
+    if act in ['开场','第二段']:
+        html,count=re.subn(r'window\.DURATION\s*=\s*[^;]+;',lambda _:replacement,html,count=1);assert count==1
+    else:
+        stage=(ROOT/'devlog/视频素材/common/stage.js').read_text(encoding='utf8')
+        injection='const VOICE_TIMING='+json.dumps(timing,ensure_ascii=False)+';\n'
+        injection+='''
+  if(timeline.length!==VOICE_TIMING.cards.length)throw Error('Subtitle card count changed');
+  timeline.forEach((c,i)=>{if(c.text!==VOICE_TIMING.cards[i].text)throw Error('Subtitle text changed at '+i);});
+  const oldLines={...lines};
+  timeline.splice(0,timeline.length,...timeline.map((c,i)=>({...c,...VOICE_TIMING.cards[i]})));
+  Object.assign(marks,VOICE_TIMING.marks);
+  for(const c of timeline)lines[c.id]=c.lineStart;
+  for(const key of Object.keys(pauseTime)){
+    const id=window.SCRIPT.lines[Number(key)].id;
+    pauseTime[key]+=lines[id]-oldLines[id];
+  }
+  window.DURATION=VOICE_TIMING.duration;
+'''
+        marker='  window.MARKS = marks;'
+        assert marker in stage
+        stage=stage.replace(marker,injection+marker,1)
+        tag='<script src="../common/stage.js"></script>'
+        assert tag in html
+        html=html.replace(tag,'<script>\n'+stage+'\n</script>',1)
     # Overlay a masked text twin: original text remains in layout, preventing line/box jitter.
     extension='''<style>#line{position:relative} #rinReveal{position:absolute;inset:0;padding:inherit;box-sizing:border-box;pointer-events:none;white-space:inherit;color:var(--ink,#3a3631)}</style>
 <script>
@@ -131,6 +163,6 @@ window.render=function(time){fullRender(time);const cue=window.TIMELINE.find(c=>
  }else{el.style.color='';if(overlay)overlay.remove();}
 };
 </script>'''
-    html=html.replace('</body>',extension+'\n</body>');(HERE/f'{act}_配音预览.html').write_text(html,encoding='utf8')
+    html=html.replace('</body>',extension+'\n</body>');(out/f'{act}_配音预览.html').write_text(html,encoding='utf8')
     print('STAGE_COMPLETE',act,report['final_loudness'],flush=True)
 if __name__=='__main__':main()
