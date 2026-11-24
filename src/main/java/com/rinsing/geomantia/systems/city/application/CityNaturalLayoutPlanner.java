@@ -22,18 +22,64 @@ final class CityNaturalLayoutPlanner {
         }
         if(perRow>1&&(perRow-1)*pitch>total)throw new IllegalArgumentException("CITY_TERRAIN_LINE_TOO_SHORT:"+layout.lineRef()+": available="+Math.round(total));
         for(int i=0;i<spans.size();i++) {
-            double at=i%perRow*pitch;int index=0;while(index+1<distances.length&&distances[index+1]<=at)index++;
-            var sample=line.samples().get(index);double x=sample.point().x(),z=sample.point().z();
-            if(index+1<distances.length) {
-                double part=(at-distances[index])/(distances[index+1]-distances[index]);var next=line.samples().get(index+1).point();
-                x+=(next.x()-x)*part;z+=(next.z()-z)*part;
-            }
             int retreat=layout.setbackBlocks()+maxSpan/2+(i/perRow)*(maxSpan+8);
-            int cx=(int)Math.round(x)-sample.normalX()*retreat,cz=(int)Math.round(z)-sample.normalZ()*retreat;
-            out.add(new Slot(new BlockPoint(cx-spans.get(i)/2,cz-spans.get(i)/2),
-                    new BlockPoint(cx+sample.normalX()*1000,cz+sample.normalZ()*1000)));
+            int span=spans.get(i);Slot chosen=null;
+            // The fixed retreat is only a first guess. A stair-stepped shore gives axis-aligned edge normals that can run
+            // along a diagonal coast into the water, bays and spits can put the far side in water, and coarse D3 cells
+            // hide wet edges. So: retreat along a normal averaged over nearby samples, then step further landward and
+            // slide a little along the line until the whole footprint is dry, inside the plan and clear of earlier slots.
+            int slideLimit=(int)Math.min(pitch/2,Math.max(0,total-i%perRow*pitch));
+            search:
+            for(int slide=0;slide<=slideLimit;slide+=4)
+                for(int extra=0;extra<=maxSpan+field.cellStepBlocks()*2;extra+=2) {
+                    double at=Math.min(total,i%perRow*pitch+slide);
+                    int index=0;while(index+1<distances.length&&distances[index+1]<=at)index++;
+                    double x=line.samples().get(index).point().x(),z=line.samples().get(index).point().z();
+                    if(index+1<distances.length&&distances[index+1]>distances[index]) {
+                        double part=(at-distances[index])/(distances[index+1]-distances[index]);var next=line.samples().get(index+1).point();
+                        x+=(next.x()-x)*part;z+=(next.z()-z)*part;
+                    }
+                    double nx=0,nz=0;
+                    for(int k=Math.max(0,index-NORMAL_WINDOW);k<=Math.min(line.samples().size()-1,index+NORMAL_WINDOW);k++){nx+=line.samples().get(k).normalX();nz+=line.samples().get(k).normalZ();}
+                    double length=Math.hypot(nx,nz);
+                    if(length<1e-9){nx=line.samples().get(index).normalX();nz=line.samples().get(index).normalZ();length=1;}
+                    nx/=length;nz/=length;
+                    int cx=(int)Math.round(x-nx*(retreat+extra)),cz=(int)Math.round(z-nz*(retreat+extra));
+                    BlockBounds box=new BlockBounds(cx-span/2,cz-span/2,cx-span/2+span-1,cz-span/2+span-1);
+                    if(!dryFootprint(field,box,LINE_WATER_MARGIN))continue;
+                    boolean clash=false;for(int j=0;j<out.size()&&!clash;j++)clash=overlaps(out.get(j),spans.get(j),box);
+                    if(clash)continue;
+                    chosen=new Slot(new BlockPoint(box.minX(),box.minZ()),new BlockPoint((int)Math.round(cx+nx*1000),(int)Math.round(cz+nz*1000)));
+                    break search;
+                }
+            if(chosen==null)throw new IllegalArgumentException("CITY_TERRAIN_LINE_NO_DRY_SLOT:"+layout.lineRef()+": unit="+i
+                    +"; the landward side of this line is water or too narrow here; reduce rows or units, or choose another line");
+            out.add(chosen);
         }
         return List.copyOf(out);
+    }
+    /** Extra blocks around a terrain-line footprint that must also be dry: coarse D3 cells can hide a wet edge. */
+    private static final int LINE_WATER_MARGIN=2;
+    /** Samples on each side averaged into the retreat direction, so one stair step does not decide it. */
+    private static final int NORMAL_WINDOW=3;
+    /** Every block of the box (plus margin) lies on sampled, dry, finite cells, and the footprint itself is not a cliff. */
+    static boolean dryFootprint(LandUseTerrainField field,BlockBounds box,int margin) {
+        BlockBounds wide=new BlockBounds(box.minX()-margin,box.minZ()-margin,box.maxX()+margin,box.maxZ()+margin);
+        if(!field.planningBounds().contains(wide.minX(),wide.minZ())||!field.planningBounds().contains(wide.maxX(),wide.maxZ()))return false;
+        int step=field.cellStepBlocks();double low=Double.POSITIVE_INFINITY,high=Double.NEGATIVE_INFINITY;
+        for(int cz=Math.floorDiv(wide.minZ(),step);cz<=Math.floorDiv(wide.maxZ(),step);cz++)
+            for(int cx=Math.floorDiv(wide.minX(),step);cx<=Math.floorDiv(wide.maxX(),step);cx++) {
+                var cell=field.cellAt(cx*step,cz*step);
+                if(cell.isEmpty())return false;var c=cell.get();
+                if(!c.sampled()||c.water()||!Double.isFinite(c.elevation()))return false;
+                boolean inside=c.blockMinX()<=box.maxX()&&c.blockMinX()+step>box.minX()&&c.blockMinZ()<=box.maxZ()&&c.blockMinZ()+step>box.minZ();
+                if(inside){low=Math.min(low,c.elevation());high=Math.max(high,c.elevation());}
+            }
+        return high-low<=8;
+    }
+    private static boolean overlaps(Slot slot,int span,BlockBounds box) {
+        int x=slot.origin().x(),z=slot.origin().z();
+        return x<=box.maxX()&&x+span-1>=box.minX()&&z<=box.maxZ()&&z+span-1>=box.minZ();
     }
 
     static List<BlockPoint> scatter(CityBlueprint.NaturalLayout layout,LandUseTerrainField field,

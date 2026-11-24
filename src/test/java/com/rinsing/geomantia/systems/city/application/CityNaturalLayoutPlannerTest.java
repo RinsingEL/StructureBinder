@@ -59,4 +59,38 @@ class CityNaturalLayoutPlannerTest {
         Set<BlockPoint> all=new HashSet<>();for(var parcel:result.values()){assertTrue(parcel.size()>1000);for(var p:parcel){assertTrue(domain.contains(p));assertTrue(all.add(p));}}
         assertTrue(all.size()>domain.size()*.9);assertTrue(all.size()<domain.size());
     }
+
+    /** A two-cell-wide spit: the old fixed retreat pushed the second row across it into the far water. */
+    static LandUseTerrainField spit() {
+        List<LandUseTerrainField.Cell> cells=new ArrayList<>();
+        for(int z=-12;z<=12;z++)for(int x=-12;x<=12;x++) {
+            boolean wet=x<0||x>1;
+            cells.add(new LandUseTerrainField.Cell(x,z,x*16,z*16,16,wet?60:64,0,0,0,wet,wet?4:0,wet?0:16,"plains",wet?"WATER":"PLAIN","p",true));
+        }
+        return new LandUseTerrainField(LandUseTerrainField.SCHEMA,"city",new BlockBounds(-192,-192,207,207),16,cells);
+    }
+    static boolean wholeFootprintDry(LandUseTerrainField field,BlockPoint origin,int span) {
+        for(int z=origin.z();z<origin.z()+span;z++)for(int x=origin.x();x<origin.x()+span;x++)
+            if(field.cellAt(x,z).map(LandUseTerrainField.Cell::water).orElse(true))return false;
+        return true;
+    }
+    @Test void terrainLineKeepsEveryFootprintBlockOnDryLand() {
+        var field=field(true);
+        for(var line:CityTerrainLines.extract(field)) {
+            if(line.samples().size()<8)continue;
+            var layout=new CityBlueprint.NaturalLayout("TERRAIN_LINE",line.id(),2,24,4,192);
+            List<CityNaturalLayoutPlanner.Slot> slots;
+            try{slots=CityNaturalLayoutPlanner.line(layout,field,List.of(14,14,14,14));}catch(IllegalArgumentException e){continue;}
+            for(var slot:slots)assertTrue(wholeFootprintDry(field,slot.origin(),14),line.id()+" "+slot);
+        }
+    }
+    @Test void terrainLineRefusesToCrossANarrowSpitIntoWater() {
+        var field=spit();
+        var line=CityTerrainLines.extract(field).stream().filter(l->l.samples().get(0).normalX()==1).max(Comparator.comparingInt(l->l.samples().size())).orElseThrow();
+        var one=CityNaturalLayoutPlanner.line(new CityBlueprint.NaturalLayout("TERRAIN_LINE",line.id(),1,32,4,192),field,List.of(16,16,16));
+        for(var slot:one)assertTrue(wholeFootprintDry(field,slot.origin(),16));
+        var error=assertThrows(IllegalArgumentException.class,()->CityNaturalLayoutPlanner.line(
+                new CityBlueprint.NaturalLayout("TERRAIN_LINE",line.id(),2,32,4,192),field,List.of(16,16,16,16,16,16)));
+        assertTrue(error.getMessage().startsWith("CITY_TERRAIN_LINE_NO_DRY_SLOT"));
+    }
 }
